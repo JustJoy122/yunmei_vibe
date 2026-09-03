@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">云莓智能</string>
+
+    <!-- 模板组件公共 -->
+    <string name="cancel">取消</string>
+    <string name="confirm">确定</string>
+    <string name="ok">好的</string>
+    <string name="processing">处理中…</string>
+    <string name="log_saved">日志已保存</string>
+    <string name="save_log">保存日志</string>
+    <string name="send_log">发送日志</string>
+    <string name="settings_page_scale">页面缩放</string>
+
+    <!-- 底部导航 -->
+    <string name="home">首页</string>
+    <string name="locks">门锁</string>
+    <string name="settings">设置</string>
+
+    <!-- 首页 -->
+    <string name="home_status_ready_title">默认门锁已就绪</string>
+    <string name="home_status_empty_title">未添加门锁</string>
+    <string name="home_status_add_action">去添加</string>
+    <string name="home_status_no_default_title">未设置默认门锁</string>
+    <string name="home_status_set_default_action">去设置</string>
+    <string name="home_mac">门锁号</string>
+
+    <!-- 门锁列表 -->
+    <string name="locks_empty">还没有门锁</string>
+    <string name="locks_empty_hint">登录拉取或扫码添加，开门时选择默认门锁</string>
+    <string name="locks_add_scan">扫码添加门锁</string>
+    <string name="locks_add_login">登录并拉取门锁</string>
+    <string name="locks_add_scan_hint">扫描分享二维码（yunmeiui:// 或 yunmeiui.xypp.cc 链接）</string>
+    <string name="locks_set_default">设为默认</string>
+    <string name="locks_delete">删除</string>
+    <string name="locks_detail">详情</string>
+    <string name="locks_deleted">门锁已删除</string>
+    <string name="locks_duplicate">该门锁已存在</string>
+    <string name="locks_default_set">已设为默认门锁</string>
+    <string name="locks_added">门锁已添加</string>
+    <string name="locks_add_failed">添加门锁失败</string>
+
+    <!-- 门锁详情 -->
+    <string name="lock_detail_label">锁标签</string>
+    <string name="lock_detail_mac">门锁号</string>
+    <string name="lock_detail_service_uuid">服务 UUID</string>
+    <string name="lock_detail_write_uuid">写入特征 UUID</string>
+    <string name="lock_detail_school">单位编号</string>
+    <string name="lock_detail_lock_no">门锁编号</string>
+    <string name="lock_detail_user_hash">用户名（HASH）</string>
+    <string name="lock_detail_account_saved">已保存账号</string>
+    <string name="lock_detail_account_unsaved">未保存账号</string>
+    <string name="lock_detail_share_qr">分享二维码</string>
+    <string name="lock_detail_share_qr_hint">对方扫码即可添加此门锁</string>
+    <string name="lock_detail_share">分享</string>
+    <string name="lock_detail_copy_link">复制链接</string>
+    <string name="lock_detail_copied">分享链接已复制</string>
+    <string name="lock_detail_back">返回</string>
+
+    <!-- 开门 -->
+    <string name="unlock_ready">等待开始</string>
+    <string name="unlock_open">开门</string>
+    <string name="unlock_opening">开门中…</string>
+    <string name="unlock_success">开门成功</string>
+    <string name="unlock_failed">开门失败</string>
+    <string name="unlock_battery">电量</string>
+    <string name="unlock_quick_connect">快速连接</string>
+    <string name="unlock_quick_connect_summary">已知门锁号时跳过扫描，直接连接</string>
+    <string name="unlock_get_code">获取开门密码</string>
+    <string name="unlock_code">开门密码</string>
+    <string name="unlock_code_hint">点击获取，用于门锁键盘开锁</string>
+    <string name="unlock_sign">打卡</string>
+    <string name="unlock_sign_success">打卡成功</string>
+    <string name="unlock_sign_failed">打卡失败</string>
+    <string name="unlock_sign_ask_title">打卡位置询问</string>
+    <string name="unlock_sign_ask_msg">即将进行打卡，您上次的打卡位置为：%1$s。请选择本次打卡的定位方式：</string>
+    <string name="unlock_sign_use_last">使用上次位置</string>
+    <string name="unlock_sign_relocate">重新定位并保存</string>
+    <string name="unlock_sign_locate">定位</string>
+    <string name="unlock_sign_location_denied">未授予定位权限</string>
+    <string name="unlock_sign_location_unavailable">定位服务不可用</string>
+    <string name="unlock_sign_location_timeout">定位超时</string>
+    <string name="unlock_no_account">当前门锁的账号未保存</string>
+    <string name="unlock_scanning">正在扫描</string>
+    <string name="unlock_connecting">正在连接</string>
+    <string name="unlock_connected">连接成功</string>
+    <string name="unlock_sending">正在发送数据</string>
+    <string name="unlock_device_not_found">设备未找到</string>
+    <string name="unlock_bluetooth_off">请先开启蓝牙</string>
+    <string name="unlock_bt_unsupported">设备不支持蓝牙</string>
+    <string name="unlock_auto_exit">开门成功，程序即将退出</string>
+    <string name="unlock_lock_unusable">当前门锁不可用，请重新登录或选择其他门锁</string>
+    <string name="unlock_code_failed">获取开锁密码失败</string>
+
+    <!-- 关于 -->
+    <string name="about">关于</string>
+    <string name="about_channel">测试版</string>
+    <string name="about_version_info_format">%1$s %2$s (%3$d)</string>
+    <string name="about_source_link" translatable="false">在%1$s 上查看源码</string>
+
+    <!-- 设置 -->
+    <string name="settings_account">账号</string>
+    <string name="settings_group_general">通用</string>
+    <string name="settings_group_account">账号</string>
+    <string name="settings_group_personalization">个性化</string>
+    <string name="settings_group_door">取码与打卡</string>
+    <string name="settings_group_display">界面显示</string>
+    <string name="settings_group_other">其他</string>
+    <string name="settings_check_update">检查更新</string>
+    <string name="settings_check_update_summary">在应用启动后自动检查是否有最新版</string>
+    <string name="settings_theme">主题设置</string>
+    <string name="settings_theme_summary">自定义更多主题选项</string>
+    <string name="settings_amoled">AMOLED 纯黑背景</string>
+    <string name="settings_amoled_summary">深色模式下使用纯黑背景</string>
+    <string name="settings_enable_predictive_back">预测性返回手势</string>
+    <string name="settings_enable_predictive_back_summary">启用对预测性返回手势的支持</string>
+    <string name="settings_color_style">色彩风格</string>
+    <string name="settings_color_spec">色彩标准</string>
+    <string name="settings_key_color">强调色</string>
+    <string name="settings_key_color_default">默认</string>
+    <string name="settings_page_scale_summary">调整全局显示比例</string>
+    <string name="settings_enable_blur">模糊</string>
+    <string name="settings_enable_blur_summary">启用顶栏和底栏的模糊效果</string>
+    <string name="settings_floating_bottom_bar">悬浮底栏</string>
+    <string name="settings_floating_bottom_bar_summary">使用 Apple 风格的悬浮底栏</string>
+    <string name="settings_enable_glass">液态玻璃</string>
+    <string name="settings_enable_glass_summary">启用悬浮底栏的液态玻璃效果</string>
+    <string name="color_red">红色</string>
+    <string name="color_pink">粉色</string>
+    <string name="color_purple">紫色</string>
+    <string name="color_deep_purple">深紫</string>
+    <string name="color_indigo">靛青</string>
+    <string name="color_blue">蓝色</string>
+    <string name="color_cyan">青色</string>
+    <string name="color_teal">青绿</string>
+    <string name="color_green">绿色</string>
+    <string name="color_yellow">黄色</string>
+    <string name="color_amber">琥珀</string>
+    <string name="color_orange">橙色</string>
+    <string name="color_brown">棕色</string>
+    <string name="color_blue_grey">灰蓝</string>
+    <string name="color_sakura">樱花</string>
+    <string name="settings_account_hint">登录并拉取学校与门锁</string>
+    <string name="settings_account_login">登录 / 切换账号</string>
+    <string name="settings_saved_accounts">已保存账号</string>
+    <string name="settings_saved_accounts_empty">无已保存账号</string>
+    <string name="settings_remove_account">移除</string>
+    <string name="settings_account_removed">账号已移除</string>
+    <string name="settings_appearance">外观</string>
+    <string name="settings_ui_mode">界面风格</string>
+    <string name="settings_ui_mode_summary">选择界面组件风格</string>
+    <string name="settings_theme_mode">深色模式</string>
+    <string name="settings_theme_mode_summary">颜色主题与深浅色</string>
+    <string name="settings_theme_mode_system">跟随系统</string>
+    <string name="settings_theme_mode_light">浅色</string>
+    <string name="settings_theme_mode_dark">深色</string>
+    <string name="settings_theme_mode_monet_system">莫奈·跟随系统</string>
+    <string name="settings_theme_mode_monet_light">莫奈·浅色</string>
+    <string name="settings_theme_mode_monet_dark">莫奈·深色</string>
+    <string name="settings_theme_mode_amoled">深色·AMOLED</string>
+    <string name="settings_monet">莫奈取色</string>
+    <string name="settings_monet_summary">跟随壁纸动态取色</string>
+    <string name="settings_blur">背景毛玻璃</string>
+    <string name="settings_floating_bar">悬浮底栏</string>
+    <string name="settings_floating_bar_blur">底栏毛玻璃</string>
+    <string name="settings_function">开门功能</string>
+    <string name="settings_auto_connect">自动开门</string>
+    <string name="settings_auto_connect_summary">启动应用后自动打开默认门锁</string>
+    <string name="settings_auto_exit">开门后自动退出</string>
+    <string name="settings_auto_exit_summary">开门成功后退出应用</string>
+    <string name="settings_auto_code">自动获取密码</string>
+    <string name="settings_auto_code_summary">进入首页自动获取开门密码</string>
+    <string name="settings_always_code">无绑定账号时用首个账号</string>
+    <string name="settings_always_code_summary">获取密码时若该门锁账号未保存，使用第一个已保存账号</string>
+    <string name="settings_hide_sign">隐藏打卡按钮</string>
+    <string name="settings_hide_code">隐藏密码按钮</string>
+    <string name="settings_sign_location_mode">打卡定位方式</string>
+    <string name="settings_sign_location_ask">每次询问</string>
+    <string name="settings_sign_location_rel">重新定位并保存</string>
+    <string name="settings_sign_location_lst">使用上次位置</string>
+    <string name="settings_danger_title">危险操作提醒</string>
+    <string name="settings_danger_msg">警告！同时打开「自动开门」和「开门后自动退出」会导致应用一启动就开门并退出，之后无法再进行其他操作。您只应该在确定风险后执行此操作。确定要执行该操作吗？</string>
+    <string name="settings_danger_confirm">确定</string>
+    <string name="settings_danger_give_up">放弃</string>
+    <string name="settings_danger_again_title">危险操作再次提醒</string>
+    <string name="settings_danger_again_msg">警告！您正在执行的操作确实非常危险。您不应该为了图方便而忽视风险，请只在确定不使用本应用其他功能时执行此操作。再次确定，要执行该操作吗？</string>
+    <string name="settings_danger_final_title">最后提醒</string>
+    <string name="settings_danger_final_msg">确认操作后将同时打开这两项功能。请再次确认。如需恢复，可选择清除软件数据或重新安装。您确定要打开吗？</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_about_summary">打开云莓智能官网</string>
+
+    <!-- 登录 -->
+    <string name="login_title">登录</string>
+    <string name="login_skip_selection">暂不添加，先进入主界面</string>
+    <string name="login_skip_selection_hint">账号已保存，可稍后在「门锁」页扫码添加</string>
+    <string name="login_username">账号</string>
+    <string name="login_password">密码</string>
+    <string name="login_show_password">显示密码</string>
+    <string name="login_submit">登录</string>
+    <string name="login_use_saved">使用已保存账号</string>
+    <string name="login_save_current">保存此账号</string>
+    <string name="login_logging_in">登录中…</string>
+    <string name="login_choose_school">选择要添加门锁的学校</string>
+    <string name="login_choose_lock">选择要添加的门锁</string>
+    <string name="login_no_school">账号不属于任何一所学校，请检查后重新添加</string>
+    <string name="login_no_lock">当前账号不存在任何门锁</string>
+    <string name="login_lock_added">门锁添加完成</string>
+    <string name="login_success">登录成功</string>
+    <string name="login_error_unknown">发生了未知错误，请尝试重新提交</string>
+    <string name="login_pick_saved_account">选择账号</string>
+
+    <!-- OOBE 开箱向导 -->
+
+    <!-- 扫码 -->
+    <string name="scan_title">扫码添加门锁</string>
+    <string name="scan_hint">将门锁分享二维码置于框内即可自动识别</string>
+    <string name="scan_cancelled">取消扫描</string>
+    <string name="scan_invalid">无法识别的门锁二维码</string>
+    <string name="scan_permission_denied">未授予相机权限</string>
+</resources>

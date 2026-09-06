@@ -2,6 +2,7 @@ package com.yunmei.client.ui.screen.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yunmei.client.R
 import com.yunmei.client.YunMeiApp
 import com.yunmei.client.data.ble.UnlockManager
 import com.yunmei.client.data.local.StoredUser
@@ -28,6 +29,8 @@ sealed interface HomeEvent {
 class HomeViewModel : ViewModel() {
 
     private val container get() = YunMeiApp.app.container
+
+    private fun str(resId: Int): String = YunMeiApp.app.getString(resId)
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -81,7 +84,7 @@ class HomeViewModel : ViewModel() {
                 quickConnect = settings.quickConnect,
                 settings = settings,
                 progress = if (opening) it.progress else 0,
-                statusText = if (opening) it.statusText else "等待开始",
+                statusText = if (opening) it.statusText else str(R.string.unlock_ready),
             )
         }
         // 自动获取密码：进入首页即取码（仅取一次）。
@@ -110,15 +113,15 @@ class HomeViewModel : ViewModel() {
 
     private fun doOpenDoor() {
         val lock = currentLock ?: run {
-            _uiState.update { it.copy(statusText = "未添加门锁，请先在「门锁」页添加") }
+            _uiState.update { it.copy(statusText = str(R.string.unlock_no_locks)) }
             return
         }
         if (_uiState.value.isOpening) return
         if (!lock.isUsable) {
-            _uiState.update { it.copy(statusText = "当前门锁不可用，请先登录或选择其他门锁") }
+            _uiState.update { it.copy(statusText = str(R.string.unlock_lock_unusable)) }
             return
         }
-        _uiState.update { it.copy(isOpening = true, progress = 0, battery = null, statusText = "正在准备") }
+        _uiState.update { it.copy(isOpening = true, progress = 0, battery = null, statusText = str(R.string.unlock_preparing)) }
         container.unlockManager.openDoor(lock, _uiState.value.quickConnect, object : UnlockManager.Listener {
             override fun onProgress(percent: Int, message: String) {
                 _uiState.update { it.copy(progress = percent, statusText = message) }
@@ -129,7 +132,7 @@ class HomeViewModel : ViewModel() {
             }
 
             override fun onSuccess() {
-                _uiState.update { it.copy(isOpening = false, progress = 100, statusText = "开门成功") }
+                _uiState.update { it.copy(isOpening = false, progress = 100, statusText = str(R.string.unlock_success)) }
                 if (_uiState.value.settings.autoExit) {
                     _events.tryEmit(HomeEvent.AutoExitRequested)
                 }
@@ -142,7 +145,7 @@ class HomeViewModel : ViewModel() {
     }
 
     fun openDoorDenied() {
-        _uiState.update { it.copy(isOpening = false, statusText = "您拒绝了权限请求") }
+        _uiState.update { it.copy(isOpening = false, statusText = str(R.string.unlock_permission_denied)) }
     }
 
     fun setQuickConnect(value: Boolean) {
@@ -165,7 +168,7 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             val user = findUser(lock)
             if (user == null) {
-                _uiState.update { it.copy(codeLoading = false, codeError = "当前门锁的账号未保存") }
+                _uiState.update { it.copy(codeLoading = false, codeError = str(R.string.unlock_no_account)) }
                 return@launch
             }
             runCatching { container.repository.getLockPassword(user, lock) }
@@ -174,7 +177,7 @@ class HomeViewModel : ViewModel() {
                 }
                 .onFailure { error ->
                     _uiState.update {
-                        it.copy(codeLoading = false, codeError = error.message ?: "获取开锁密码失败")
+                        it.copy(codeLoading = false, codeError = error.message ?: str(R.string.unlock_code_failed))
                     }
                 }
         }
@@ -184,7 +187,7 @@ class HomeViewModel : ViewModel() {
     fun sign() {
         val lock = currentLock ?: return
         if (findUser(lock) == null) {
-            _uiState.update { it.copy(signMessage = "当前门锁的账号未保存") }
+            _uiState.update { it.copy(signMessage = str(R.string.unlock_no_account)) }
             return
         }
         viewModelScope.launch {
@@ -201,7 +204,7 @@ class HomeViewModel : ViewModel() {
     }
 
     fun signLocationDenied() {
-        _uiState.update { it.copy(signMessage = "未授予定位权限") }
+        _uiState.update { it.copy(signMessage = str(R.string.unlock_sign_location_denied)) }
     }
 
     fun resolveSignAsk(choice: SignAskChoice) {
@@ -229,7 +232,7 @@ class HomeViewModel : ViewModel() {
     private suspend fun useLastLocation() {
         val last = container.appPreferences.getLastLocation()
         if (last.isBlank()) {
-            _uiState.update { it.copy(signMessage = "上次定位信息不存在，请重新定位") }
+            _uiState.update { it.copy(signMessage = str(R.string.unlock_sign_last_missing)) }
         } else {
             doSign(last)
         }
@@ -245,7 +248,7 @@ class HomeViewModel : ViewModel() {
                 doSign(location)
             }
             .onFailure { error ->
-                _uiState.update { it.copy(signing = false, signMessage = error.message ?: "定位失败") }
+                _uiState.update { it.copy(signing = false, signMessage = error.message ?: str(R.string.unlock_sign_location_failed)) }
             }
     }
 
@@ -258,7 +261,7 @@ class HomeViewModel : ViewModel() {
                 _uiState.update { it.copy(signing = false, signMessage = message) }
             }
             .onFailure { error ->
-                _uiState.update { it.copy(signing = false, signMessage = error.message ?: "打卡失败") }
+                _uiState.update { it.copy(signing = false, signMessage = error.message ?: str(R.string.unlock_sign_failed)) }
             }
     }
 

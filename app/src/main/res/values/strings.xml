@@ -91,6 +91,11 @@
     <string name="unlock_auto_exit">开门成功，程序即将退出</string>
     <string name="unlock_lock_unusable">当前门锁不可用，请重新登录或选择其他门锁</string>
     <string name="unlock_code_failed">获取开锁密码失败</string>
+    <string name="unlock_no_locks">未添加门锁，请先在「门锁」页添加</string>
+    <string name="unlock_preparing">正在准备</string>
+    <string name="unlock_permission_denied">您拒绝了权限请求</string>
+    <string name="unlock_sign_last_missing">上次定位信息不存在，请重新定位</string>
+    <string name="unlock_sign_location_failed">定位失败</string>
 
     <!-- 关于 -->
     <string name="about">关于</string>

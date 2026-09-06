@@ -3,3 +3,7 @@ build/
 local.properties
 .idea/
 *.iml
+
+# 本地构建日志与依赖树（含本机路径，勿提交）
+log/
+txt/

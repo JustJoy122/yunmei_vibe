@@ -172,7 +172,7 @@ base64 -w0 release.keystore
 ### 7.3 流程说明
 
 1. 检出代码，配置 JDK 21 与 Gradle 缓存；
-2. 接受 Android SDK 许可并安装 `platforms;android-37`、`build-tools;36.0.0`；
+2. 接受 Android SDK 许可并安装 `platforms;android-37.0`、`build-tools;36.0.0`；
 3. 从 secret 解码 keystore；
 4. 构建 `assembleDebug` 与 `assembleRelease`；
 5. 按命名规则重命名两个 APK，并生成 `SHA256SUMS.txt`；

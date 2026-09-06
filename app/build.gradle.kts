@@ -1,9 +1,32 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
 }
+
+// 签名配置：优先读取根目录 keystore.properties（已加入 .gitignore，勿提交），
+// 不存在时回退到环境变量（GitHub Actions 注入）。
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use(keystoreProperties::load)
+}
+
+val releaseStoreFile: File? = keystoreProperties.getProperty("storeFile")
+    ?.let { rootProject.file(it) }
+    ?: System.getenv("RELEASE_KEYSTORE_FILE")?.let { File(it) }
+
+val releaseStorePassword = keystoreProperties.getProperty("storePassword")
+    ?: System.getenv("RELEASE_KEYSTORE_PASSWORD").orEmpty()
+
+val releaseKeyAlias = keystoreProperties.getProperty("keyAlias")
+    ?: System.getenv("RELEASE_KEY_ALIAS").orEmpty()
+
+val releaseKeyPassword = keystoreProperties.getProperty("keyPassword")
+    ?: System.getenv("RELEASE_KEY_PASSWORD").orEmpty()
 
 android {
     namespace = "com.yunmei.client"
@@ -14,14 +37,28 @@ android {
         applicationId = "com.yunmei.client"
         minSdk = 26
         targetSdk = 37
-        versionCode = 22
-        versionName = "0.3.9"
+        versionCode = 23
+        versionName = "0.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseStoreFile?.exists() == true) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseStoreFile?.exists() == true) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

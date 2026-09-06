@@ -7,3 +7,8 @@ local.properties
 # 本地构建日志与依赖树（含本机路径，勿提交）
 log/
 txt/
+
+# 签名密钥（绝不提交）
+keystore.properties
+*.jks
+*.keystore

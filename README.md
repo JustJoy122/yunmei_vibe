@@ -2,7 +2,7 @@
 
 宿舍智能门锁 Android 客户端。基于 Jetpack Compose 与 **KernelSU-Style-UI-Kit** 组件库，
 提供 **Material 3 Expressive / Miuix 双 UI 风格**（可切换），后端与 BLE 协议
-1:1 移植自已验证的旧项目 `yunmei_unintelligent-master`（Java）。
+1:1 移植自已验证的旧项目 `[yunmei_unintelligent-master](https://github.com/zxy19/yunmei_unintelligent)`（Java）。
 
 - 包名：`com.yunmei.client`
 - 当前版本：`0.4.0 (versionCode 23)`
@@ -203,4 +203,4 @@ app/src/main/java/com/yunmei/client/
 
 ## 许可证
 
-本项目暂未声明开源许可证。
+[GPL-3.0](LICENSE.txt)

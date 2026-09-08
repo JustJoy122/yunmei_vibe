@@ -1,4 +1,4 @@
-# Changelog - 云莓智能
+# Changelog - 云莓氛围
 
 所有值得注意的项目变更都会记录在此文件中。
 
@@ -8,7 +8,25 @@
 ---
 ## [Unreleased]
 
-## [0.4.0]
+## [0.4.1] - 2026-09-08
+
+### 添加
+- 静态回退版 SVG 图标：`assets/yunmei-static-background.svg`（浅色背景 + 深色线条 LOGO）与 `assets/yunmei-static-transparent.svg`（透明背景，仅核心 LOGO）；色值取自静态回退图标资源，背景 `#D4E3FF`、线条 `#004784`
+- 首页状态卡 `StatusTag` 组件：从 KernelSU 原样移植（Material / Miuix 双实现）
+- `docs/DEVELOPMENT.md`：技术栈、软件运行要求、构建说明、项目结构、兼容性等开发文档（由 README 移入）
+
+### 更改
+- **包名变更：`com.yunmei.client` → `com.yunmei.vibe`**（`applicationId`、`namespace`、全部源码 `package`/`import` 及源码目录已同步更新，旧包名零残留）
+- 项目更名：应用显示名改为「云莓氛围」，工程名 / 目录名改为 `YunmeiVibe`（`rootProject.name`、主题名 `Theme.YunmeiVibe`、产物命名 `YunmeiVibe-v*.apk` 同步更新）
+- 关于页整体底色修复：Material 关于页 `Scaffold` 移除混入的 InstallerX `surfaceContainer` 背景，恢复 KernelSU Kit 全局主题色
+- 首页状态 Banner 重做：Material / Miuix 均直接复用 KernelSU 原版 `StatusCard` 实现；绿色 = 已设默认门锁，红色 = 未设默认 / 无门锁（两者仅文字不同）
+- `README.md` 大幅改版：新增徽章、致谢、隐私处理、声明等章节，开发相关内容移至 `docs/DEVELOPMENT.md`
+- `LICENSE.txt` 修正为 GNU GPL v3 完全原文，便于 GitHub 正确识别许可证
+
+### 修复
+- Material 关于页状态卡与 InstallerX 原版不一致：半透明容器下仍保留默认阴影，改为 blur 分支的全 0 阴影（`defaultElevation` 等五档均 0）
+
+## [0.4.0] - 2026-09-06
 
 ### 添加
 - 发布规范文档 `docs/RELEASE.md`：版本号、签名、构建变体、产物命名、更新日志、CI 发布与许可证说明

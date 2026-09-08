@@ -29,16 +29,16 @@ val releaseKeyPassword = keystoreProperties.getProperty("keyPassword")
     ?: System.getenv("RELEASE_KEY_PASSWORD").orEmpty()
 
 android {
-    namespace = "com.yunmei.client"
+    namespace = "com.yunmei.vibe"
     compileSdk = 37
     compileSdkMinor = 0
 
     defaultConfig {
-        applicationId = "com.yunmei.client"
+        applicationId = "com.yunmei.vibe"
         minSdk = 26
         targetSdk = 37
-        versionCode = 23
-        versionName = "0.4.0"
+        versionCode = 24
+        versionName = "0.4.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">云莓智能</string>
+    <string name="app_name">云莓氛围</string>
 
     <!-- 模板组件公共 -->
     <string name="cancel">取消</string>

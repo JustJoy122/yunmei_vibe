@@ -1,6 +1,6 @@
 # 发布规范（Release Process）
 
-本文档定义「云莓智能 (YunmeiNew)」的标准化发布流程，涵盖版本号、构建变体、
+本文档定义 YunmeiVibe 工程（应用显示名「云莓氛围」）的标准化发布流程，涵盖版本号、构建变体、
 签名、产物命名、更新日志、GitHub Actions 自动化与开源许可证。
 
 ## 目录
@@ -116,13 +116,13 @@ GitHub Actions 使用同名 secret 注入（见第 7 节）。
 统一命名为：
 
 ```
-YunMei-v{versionName}-{variant}.apk
+YunmeiVibe-v{versionName}-{variant}.apk
 ```
 
 | 示例 | 说明 |
 | --- | --- |
-| `YunMei-v0.4.0-debug.apk` | Debug 变体 |
-| `YunMei-v0.4.0-release.apk` | Release 变体 |
+| `YunmeiVibe-v0.4.0-debug.apk` | Debug 变体 |
+| `YunmeiVibe-v0.4.0-release.apk` | Release 变体 |
 
 额外约定：
 

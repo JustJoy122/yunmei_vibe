@@ -85,8 +85,8 @@ jobs:
         run: |
           mkdir -p dist
           VERSION="${{ steps.version.outputs.version }}"
-          cp app/build/outputs/apk/debug/app-debug.apk "dist/YunMei-v${VERSION}-debug.apk"
-          cp app/build/outputs/apk/release/app-release.apk "dist/YunMei-v${VERSION}-release.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/YunmeiVibe-v${VERSION}-debug.apk"
+          cp app/build/outputs/apk/release/app-release.apk "dist/YunmeiVibe-v${VERSION}-release.apk"
           (cd dist && sha256sum *.apk > SHA256SUMS.txt)
           ls -la dist
 

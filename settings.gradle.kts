@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "YunmeiNew"
+rootProject.name = "YunmeiVibe"
 include(":app")

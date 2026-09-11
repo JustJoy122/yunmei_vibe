@@ -57,12 +57,6 @@
             </intent-filter>
         </activity>
 
-        <!-- 扫码添加门锁：复用 zxing-android-embedded 的 CaptureActivity。 -->
-        <activity
-            android:name="com.journeyapps.barcodescanner.CaptureActivity"
-            android:screenOrientation="portrait"
-            tools:replace="android:screenOrientation" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

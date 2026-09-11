@@ -1,6 +1,7 @@
 package com.yunmei.vibe.ui.screen.about
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -12,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.twotone.Code
+import androidx.compose.material.icons.twotone.Copyright
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -23,10 +26,16 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.yunmei.vibe.ui.component.material.SegmentedColumn
-import com.yunmei.vibe.ui.component.material.SegmentedListItem
+import com.yunmei.vibe.R
+import com.yunmei.vibe.ui.component.setting.NavigationItemWidget
 
+/**
+ * 关于页（Material）。
+ * 功能项卡片组复用 InstallerX Revived 的 NavigationItemWidget / BaseWidget（两项：
+ * 查看源代码 / 开放源代码许可）；页面配色保持 KernelSU Kit 全局主题色。
+ */
 @Composable
 fun AboutScreenMaterial(
     state: AboutUiState,
@@ -75,17 +84,22 @@ fun AboutScreenMaterial(
                 }
             }
             item {
-                SegmentedColumn(
+                Column(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    content = state.links.map { linkInfo ->
-                        {
-                            SegmentedListItem(
-                                onClick = { actions.onOpenLink(linkInfo.url) },
-                                headlineContent = { Text(linkInfo.fullText) }
-                            )
-                        }
-                    }
-                )
+                ) {
+                    NavigationItemWidget(
+                        icon = Icons.TwoTone.Code,
+                        title = stringResource(R.string.about_view_source_code),
+                        description = stringResource(R.string.about_view_source_code_summary),
+                        onClick = actions.onOpenSource,
+                    )
+                    NavigationItemWidget(
+                        icon = Icons.TwoTone.Copyright,
+                        title = stringResource(R.string.about_open_source_license),
+                        description = stringResource(R.string.about_open_source_license_summary),
+                        onClick = actions.onOpenLicense,
+                    )
+                }
                 Spacer(
                     Modifier.height(
                         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +

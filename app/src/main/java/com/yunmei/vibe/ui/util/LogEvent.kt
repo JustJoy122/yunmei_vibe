@@ -8,10 +8,20 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.zip.GZIPOutputStream
 
+/** 本工程规范英文名（日志文件名前缀的唯一来源，避免多处硬编码）。 */
+const val APP_NAME_EN = "YunmeiVibe"
+
+/**
+ * 日志文件名：`YunmeiVibe_log_yyyyMMdd_HHmmss.txt.gz`
+ * 内容为 gzip 压缩的纯文本报告，因此保留 `.txt.gz` 后缀（保存/分享 Intent 使用 application/gzip）。
+ */
+fun bugreportFileName(): String {
+    val current = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+    return "${APP_NAME_EN}_log_${current}.txt.gz"
+}
+
 fun getBugreportFile(context: Context): File {
-    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH_mm")
-    val current = LocalDateTime.now().format(formatter)
-    val targetFile = File(context.cacheDir, "YunMei_bugreport_${current}.txt.gz")
+    val targetFile = File(context.cacheDir, bugreportFileName())
 
     val report = buildString {
         appendLine("App: ${getAppVersion(context)}")

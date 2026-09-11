@@ -9,16 +9,16 @@ import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.navigation3.LocalNavigator
+import com.yunmei.vibe.ui.navigation3.Route
+
+/** 「查看源代码」目标仓库。 */
+private const val SOURCE_CODE_URL = "https://github.com/JustJoy122/yunmei_vibe"
 
 @Composable
 fun AboutScreen() {
     val navigator = LocalNavigator.current
     val uriHandler = LocalUriHandler.current
-    // 保留「查看源代码」（GitHub）入口，其余频道入口去除。
-    val htmlString = stringResource(
-        id = R.string.about_source_link,
-        "<b><a href=\"https://github.com/chenaizhang/KernelSU-Style-UI-Kit\">Github</a></b>"
-    )
+
     val state = AboutUiState(
         title = stringResource(R.string.about),
         appName = stringResource(R.string.app_name),
@@ -29,11 +29,12 @@ fun AboutScreen() {
             BuildConfig.VERSION_NAME,
             BuildConfig.VERSION_CODE,
         ),
-        links = extractLinks(htmlString),
     )
+    // 「获取更新」入口已移除（检查更新统一由设置页负责），关于页仅保留两项。
     val actions = AboutScreenActions(
         onBack = dropUnlessResumed { navigator.pop() },
-        onOpenLink = uriHandler::openUri,
+        onOpenSource = { uriHandler.openUri(SOURCE_CODE_URL) },
+        onOpenLicense = dropUnlessResumed { navigator.push(Route.OpenSourceLicense) },
     )
 
     when (LocalUiMode.current) {

@@ -1,0 +1,22 @@
+{
+  "uniqueId": "com.yunmei.upstream:yunmei-unintelligent",
+  "name": "yunmei_unintelligent",
+  "description": "MIT · 原后端与 BLE 协议参考实现",
+  "website": "https://github.com/zxy19/yunmei_unintelligent",
+  "developers": [
+    {
+      "name": "zxypp",
+      "organisationUrl": "https://github.com/zxy19"
+    }
+  ],
+  "organization": {
+    "name": "zxy19"
+  },
+  "scm": {
+    "connection": "scm:git:https://github.com/zxy19/yunmei_unintelligent.git",
+    "url": "https://github.com/zxy19/yunmei_unintelligent"
+  },
+  "licenses": [
+    "MIT"
+  ]
+}

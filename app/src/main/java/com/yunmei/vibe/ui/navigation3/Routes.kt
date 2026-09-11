@@ -21,11 +21,6 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object Login : Route
 
-    /** 扫码添加门锁（结果通过 Navigator.setResult 回传）。 */
-    @Parcelize
-    @Serializable
-    data object Scan : Route
-
     /** 主题设置二级页（模板 ColorPalette 同款）。 */
     @Parcelize
     @Serializable
@@ -35,6 +30,11 @@ sealed interface Route : NavKey, Parcelable {
     @Parcelize
     @Serializable
     data object About : Route
+
+    /** 开放源代码许可页（复用 InstallerX Revived 的 License 页）。 */
+    @Parcelize
+    @Serializable
+    data object OpenSourceLicense : Route
 
     /** 门锁详情。 */
     @Parcelize

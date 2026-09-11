@@ -5,10 +5,54 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+每个版本条目均附 GitHub 版本对比链接（`v{上一个版本号}...v{当前版本号}`），
+并在文件末尾维护链接定义，使版本号在 Markdown 渲染时可点击。
+
 ---
 ## [Unreleased]
 
+**Full changelog**: [v0.4.2...HEAD](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.2...HEAD)
+
+## [0.4.2] - 2026-09-11
+
+**Full changelog**: [v0.4.1...v0.4.2](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.1...v0.4.2)
+
+### 添加
+- 实装「检查更新」：设置页开关（`check_update`）接入真实逻辑，应用启动后自检一次 GitHub Releases latest（`ui/util/UpdateChecker.kt`，逻辑对齐 KernelSU-Style-UI-Kit 的 `checkNewVersion()`，含语义化版本比较与 Debug 产物跳过）；发现更高正式版本时弹窗提示并跳转下载页
+- 开放源代码许可页（`Route.OpenSourceLicense`）：移植 InstallerX Revived 的 AboutLibraries 实现，Material / Miuix 双实现，列出全部第三方库及其作者、许可证与主页，支持查看许可证完整原文
+- AboutLibraries 配置：`app/config/libraries/*.json` 注入 4 个非 Gradle 上游（KernelSU-Style-UI-Kit、InstallerX Revived、KernelSU、yunmei_unintelligent），`app/config/licenses/GPL-3.0-only.json` 补齐 GPL-3.0 完整许可证正文
+- 门锁页「扫码添加」弹窗菜单（`ui/component/scan/ScanAddLockMenu.kt`）：相机拍照（`ACTION_IMAGE_CAPTURE` + FileProvider 临时文件）与相册选择（Photo Picker）两条取图路径
+- 静态图二维码解码 `ui/util/QrDecoder.kt`：基于 ZXing core，含按需下采样以避免大图 OOM
+- 通用「操作菜单」组件 `ActionMenuItem` / `ActionMenuBottomSheet`（Material）/ `ActionMenuDialog`（Miuix），供「扫码添加」与「发送日志」共用
+- `LockStore.revision` 数据变更信号：`add` / `remove` / `setDefault` / `setMac` 成功后自增，供 UI 层响应式刷新
+- `DuplicateLockException`：区分「同标签门锁已存在」与其他添加失败，便于精确提示
+- 新增字符串：`scan_camera` / `scan_gallery` / `scan_image_unreadable` / `locks_add_incomplete` / `update_available_*` 等
+
+### 更改
+- 首页状态 Banner 改为响应式刷新：`HomeViewModel` 订阅 `LockStore.revision`（`drop(1)` 跳过初值），在门锁页添加、设为默认或删除门锁后立即生效，无轮询、无定时器
+- 门锁页提示文案全面资源化：`LocksViewModel` 中写死的中文改走 `strings.xml`（`locks_added` / `locks_deleted` / `locks_default_set` / `locks_duplicate` / `locks_add_failed`），其中带门锁名的三条改为 `%1$s` 参数化，展示文案与原先一致
+- 关于页精简为两项卡片组：仅保留「查看源代码」与「开放源代码许可」，「获取更新」入口移除（检查更新统一由设置页负责）
+- 门锁页「扫码添加」由整页扫码改为弹窗菜单选择（相机 / 相册），去掉一个二级页面
+- 「发送日志」与「扫码添加」改为共用同一套操作菜单组件，删除各自重复的弹窗实现
+- 日志文件名统一为 `YunmeiVibe_log_yyyyMMdd_HHmmss.txt.gz`（`APP_NAME_EN` 常量统一前缀，gzip 内容配 `.gz` 后缀）
+- `README.md`：标题加入 SVG LOGO、修正「相关文档」链接与排序、致谢改写并新增第三方库清单入口、声明改为可折叠 `<details>`、末尾新增 Star 呼吁
+- `assets/yunmei-static-*.svg`：画布缩放对齐（`translate(-54.43 -52.41) scale(0.29877)`），仅调整 `<g transform>`，路径数据与色值不变
+
+### 修复
+- 门锁页添加 / 设为默认后首页 Banner 不实时刷新：改为订阅 `LockStore.revision` 响应式刷新，切回首页即为最新状态
+- 开放源代码许可页 GPL-3.0 许可证正文为空（content 长度 0）：按 AboutLibraries 配置约定补写 `licenses/GPL-3.0-only.json`（含 `name` 与 hash 键），正文恢复为 GPL-3.0 完整原文
+- 日志文件后缀与内容不符：gzip 压缩内容统一命名 `.txt.gz`
+- 「同标签门锁已存在」原本以异常消息形式携带中文文案上抛，改为专用异常类型 + 字符串资源，提示文案可国际化
+
+### 移除
+- 旧扫码页 `ui/screen/scan/ScanScreen.kt` 及 `Route.Scan` 导航键、`MainActivity` 的 `entry<Route.Scan>` 入口、`SCAN_RESULT_KEY` 结果回传链路与 `LocksScreen` 中的结果观察者
+- `zxing-android-embedded` 依赖，以及清单中 `com.journeyapps.barcodescanner.CaptureActivity` 声明（新扫码流程只需 ZXing core）
+- 无用资源与代码：`ui/screen/about/AboutUtils.kt`、`res/drawable/ic_logo.xml`、`res/values/colors.xml`、旧扫码字符串 `scan_title` / `scan_hint` / `scan_cancelled`
+- 26 条无落点的遗留字符串：旧设置项、旧登录提示、旧更新提示共 24 条（均已被新键取代），以及 `locks_detail`、`about_source_link` 两条已无对应入口的旧文案
+
 ## [0.4.1] - 2026-09-08
+
+**Full changelog**: [v0.4.0...v0.4.1](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.0...v0.4.1)
 
 ### 添加
 - 静态回退版 SVG 图标：`assets/yunmei-static-background.svg`（浅色背景 + 深色线条 LOGO）与 `assets/yunmei-static-transparent.svg`（透明背景，仅核心 LOGO）；色值取自静态回退图标资源，背景 `#D4E3FF`、线条 `#004784`
@@ -27,6 +71,8 @@
 - Material 关于页状态卡与 InstallerX 原版不一致：半透明容器下仍保留默认阴影，改为 blur 分支的全 0 阴影（`defaultElevation` 等五档均 0）
 
 ## [0.4.0] - 2026-09-06
+
+**Full changelog**: [v0.3.9...v0.4.0](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.9...v0.4.0)
 
 ### 添加
 - 发布规范文档 `docs/RELEASE.md`：版本号、签名、构建变体、产物命名、更新日志、CI 发布与许可证说明
@@ -48,6 +94,8 @@
 
 ## [0.3.9]
 
+**Full changelog**: [v0.3.8...v0.3.9](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.8...v0.3.9)
+
 ### 添加
 - 关于页：Material 主题下 Logo 跟随 Monet 动态取色（使用 `ic_launcher_monochrome` + `primary` tint）
 - AboutStatusCard：基于 InstallerX Revived 的状态卡片组件（含动态渐变背景）
@@ -68,6 +116,8 @@
 
 ## [0.3.8]
 
+**Full changelog**: [v0.3.7...v0.3.8](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.7...v0.3.8)
+
 ### 添加
 - `AnimatedFluidBackground`：InstallerX Revived 动态渐变背景组件（原样移植）
 - `AboutStatusCard`：InstallerX 状态卡片初始实现
@@ -82,6 +132,8 @@
 
 ## [0.3.7]
 
+**Full changelog**: [v0.3.6...v0.3.7](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.6...v0.3.7)
+
 ### 更改
 - 桌面图标复查：确认 `mipmap-anydpi-v26/ic_launcher.xml` 中前景层严格位于 66dp 安全区内
 - Miuix 关于页：无外框无卡片，`ic_launcher_monochrome` + `textureBlur` 蒙版融合全局彩虹背景
@@ -91,6 +143,8 @@
 ---
 
 ## [0.3.6]
+
+**Full changelog**: [v0.3.5...v0.3.6](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.5...v0.3.6)
 
 ### 添加
 - 应用内图标动态取色逻辑：
@@ -107,6 +161,8 @@
 
 ## [0.3.5]
 
+**Full changelog**: [v0.3.4...v0.3.5](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.4...v0.3.5)
+
 ### 添加
 - 自适应桌面图标（AdaptiveIconDrawable）完整实现：
   - `foreground`：云莓 Logo 路径（#004784 线条）
@@ -118,6 +174,8 @@
 ---
 
 ## [0.3.4]
+
+**Full changelog**: [v0.3.3...v0.3.4](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.3...v0.3.4)
 
 ### 更改
 - 首页状态 Banner UI 精简：
@@ -132,6 +190,8 @@
 ---
 
 ## [0.3.3]
+
+**Full changelog**: [v0.3.2...v0.3.3](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.2...v0.3.3)
 
 ### 添加
 - 首页状态 Banner：基于模板 PermissionCard/PermissionCardMiuix 结构移植
@@ -148,6 +208,8 @@
 
 ## [0.3.2]
 
+**Full changelog**: [v0.3.1...v0.3.2](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.1...v0.3.2)
+
 ### 更改
 - "隐藏辅助按钮"拆分为两个独立子项：
   - 隐藏打卡按钮（LocationOff 图标）
@@ -158,6 +220,8 @@
 
 ## [0.3.1]
 
+**Full changelog**: [v0.3.0...v0.3.1](https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.0...v0.3.1)
+
 ### 更改
 - 版本号递增规范：versionCode 14 / versionName 0.3.1（同时递增）
 
@@ -167,6 +231,8 @@
 ---
 
 ## [0.3.0]
+
+**Full changelog**: [v0.2.4...v0.3.0](https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.4...v0.3.0)
 
 ### 添加
 - 关于页：复用 KernelSU-Style-UI-Kit 完整 UI（动态渐变背景、Logo、版本号、卡片列表）
@@ -183,6 +249,8 @@
 ---
 
 ## [0.2.4]
+
+**Full changelog**: [v0.2.3...v0.2.4](https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.3...v0.2.4)
 
 ### 添加
 - Miuix 设置分栏标题：复用 InstallerX Revived 的 `SmallTitle` 官方组件（14sp Bold + `onBackgroundVariant`）
@@ -201,6 +269,8 @@
 
 ## [0.2.3]
 
+**Full changelog**: [v0.2.2...v0.2.3](https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.2...v0.2.3)
+
 ### 修复
 - 冷启动底栏切换卡顿：将 ViewModel 存储读取移入 `Dispatchers.IO`
 - Miuix 莫奈开关偶发自动返回上一级：
@@ -210,6 +280,8 @@
 ---
 
 ## [0.2.2]
+
+**Full changelog**: [v0.2.1...v0.2.2](https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.1...v0.2.2)
 
 ### 更改
 - AMOLED 开关：Material 模式下始终可见且可调（移除 `enabled = isDark` 限制）
@@ -221,6 +293,8 @@
 
 ## [0.2.1]
 
+**Full changelog**: [v0.2.0...v0.2.1](https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.0...v0.2.1)
+
 ### 更改
 - 业务功能开关从"主题设置"二级页全部移回一级设置页
 - 一级设置页按功能分组：开门行为 / 界面显示 / 实验功能
@@ -229,6 +303,8 @@
 ---
 
 ## [0.2.0]
+
+**Full changelog**: [v0.1.3...v0.2.0](https://github.com/JustJoy122/yunmei_vibe/compare/v0.1.3...v0.2.0)
 
 ### 添加
 - 主题设置二级页：完整 ColorPaletteScreen（模板原样移植）：
@@ -248,6 +324,8 @@
 
 ## [0.1.3]
 
+**Full changelog**: [v0.1.2...v0.1.3](https://github.com/JustJoy122/yunmei_vibe/compare/v0.1.2...v0.1.3)
+
 ### 添加
 - 游客模式：启动直接进主界面，无门锁不阻塞
 - 登录页新增"先看看，暂不登录"入口
@@ -265,6 +343,8 @@
 
 ## [0.1.2]
 
+**Full changelog**: [v0.1.1...v0.1.2](https://github.com/JustJoy122/yunmei_vibe/compare/v0.1.1...v0.1.2)
+
 ### 修复
 - `ClassNotFoundException: MainActivity`：清单中 `.MainActivity` → `.ui.MainActivity`
 - 恢复 `MissingClass` lint 检查
@@ -272,6 +352,8 @@
 ---
 
 ## [0.1.1]
+
+**Full changelog**: [v0.1.0...v0.1.1](https://github.com/JustJoy122/yunmei_vibe/compare/v0.1.0...v0.1.1)
 
 ### 修复
 - Compose BOM `2026.05.01` 预发布版本导致白屏闪退：升级至 `2026.08.00`（全栈稳定版 1.12.0）
@@ -282,6 +364,8 @@
 ---
 
 ## [0.1.0]
+
+**Full changelog**: 首个版本，无对比基线（[v0.1.0](https://github.com/JustJoy122/yunmei_vibe/releases/tag/v0.1.0)）
 
 ### 添加
 - 基于 KernelSU-Style-UI-Kit 的全新 UI 框架（Material 3 Expressive / Miuix 双主题）
@@ -305,3 +389,31 @@
 - 门锁列表解析：兼容裸数组 / `data` / `list` / `result` 包装格式
 - FastBle JCenter 依赖 404：改为本地 AAR 文件依赖
 - Miuix 官方依赖不可用：改为 Material3 + MIUI 风格 token 近似
+
+<!--
+版本对比链接定义（Keep a Changelog 惯例）。
+注意：标签需与标题中的 [x.y.z] 完全一致，Markdown 渲染时版本号才可点击。
+-->
+[Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.9...v0.4.0
+[0.3.9]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.8...v0.3.9
+[0.3.8]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.7...v0.3.8
+[0.3.7]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.6...v0.3.7
+[0.3.6]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.5...v0.3.6
+[0.3.5]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.4...v0.3.5
+[0.3.4]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.3...v0.3.4
+[0.3.3]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.4...v0.3.0
+[0.2.4]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.1.3...v0.2.0
+[0.1.3]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/JustJoy122/yunmei_vibe/releases/tag/v0.1.0

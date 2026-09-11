@@ -23,7 +23,7 @@
 | 加密存储 | AndroidX Security Crypto | 1.1.0 |
 | 偏好存储 | DataStore Preferences | 1.1.1 |
 | 蓝牙 | FastBleLib（本地 AAR） | 2.3.4 |
-| 二维码 | ZXing Core / zxing-android-embedded | 3.5.3 / 4.3.0 |
+| 二维码 | ZXing Core（静态图解码 + 二维码生成） | 3.5.3 |
 | 系统反射 | HiddenApiBypass | 6.1 |
 
 ### 构建工具链
@@ -121,7 +121,7 @@ app/src/main/java/com/yunmei/client/
     ├── component/           # 模板组件（原样复用）：SegmentedList/ExpressiveSwitch/TonalCard/
     │                        #   SnackBar/DropdownItem/EditText/WarningCard/FloatingBottomBar/
     │                        #   dialog(rememberConfirmDialog/rememberLoadingDialog) …
-    ├── navigation3/         # 模板导航：Route/Navigator（navigateForResult 回传扫码结果）
+    ├── navigation3/         # 模板导航：Route/Navigator
     ├── viewmodel/           # MainActivityViewModel（主题热切换）、SettingsViewModel
     └── screen/
         ├── home/            # 首页：状态 Banner + 开门/取码/打卡 + 开门相关开关
@@ -129,7 +129,6 @@ app/src/main/java/com/yunmei/client/
         ├── settings/        # 主设置页：检查更新/账号/界面风格/主题设置/发送日志/关于
         ├── themesettings/   # 主题设置二级页：样机预览/莫奈/AMOLED/预测性返回/缩放/毛玻璃等
         ├── login/           # 登录：学校选择→门锁选择→保存账号
-        ├── scan/            # 扫码添加（zxing-android-embedded，模板顶栏外壳）
         ├── lockdetail/      # 门锁详情：UUID/分享二维码/复制链接/设默认/删除
         └── about/           # 关于页（Material / Miuix 两套）
 ```
@@ -137,7 +136,7 @@ app/src/main/java/com/yunmei/client/
 每个页面遵循模板库的 `Screen → UiState/Actions → Material/Miuix` 分层，
 两个风格变体使用完全相同的 ViewModel 与状态。
 
-## 与[原项目](https://github.com/zxy19/yunmei_unintelligent)的兼容性
+## 与 [原项目](https://github.com/zxy19/yunmei_unintelligent) 的兼容性
 
 - 分享协议：`https://yunmeiui.xypp.cc/#/lock_info/<Base64>`（9 段 `|` 格式）可双向解析，
   支持 `addlock/`、`lock_id/`、`lock_info/`、`lockInfo/` 前缀与 4 段旧格式。

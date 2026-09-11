@@ -1,3 +1,5 @@
+import com.mikepenz.aboutlibraries.plugin.DuplicateMode
+import com.mikepenz.aboutlibraries.plugin.DuplicateRule
 import java.util.Properties
 
 plugins {
@@ -5,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.aboutLibraries)
 }
 
 // 签名配置：优先读取根目录 keystore.properties（已加入 .gitignore，勿提交），
@@ -37,8 +40,8 @@ android {
         applicationId = "com.yunmei.vibe"
         minSdk = 26
         targetSdk = 37
-        versionCode = 24
-        versionName = "0.4.1"
+        versionCode = 25
+        versionName = "0.4.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -80,6 +83,23 @@ android {
     lint {
         abortOnError = true
         checkReleaseBuilds = false
+    }
+}
+
+// 开放源代码许可页的库清单由 AboutLibraries 在构建期自动生成（InstallerX Revived 同款）。
+// 额外库（非 Gradle 依赖的上游项目）通过 configPath 下的 libraries/*.json 注入。
+aboutLibraries {
+    collect {
+        configPath = file("config")
+    }
+    license {
+        // 上游项目使用的许可证（GPL-3.0 / MIT）补全全文，
+        // 否则 configPath 下 libraries/*.json 里的 licenses 引用无法解析。
+        additionalLicenses.addAll("MIT")
+    }
+    library {
+        duplicationMode = DuplicateMode.MERGE
+        duplicationRule = DuplicateRule.SIMPLE
     }
 }
 
@@ -135,7 +155,6 @@ dependencies {
     // 加密存储（账号/门锁敏感数据）与二维码能力。
     implementation(libs.androidx.security.crypto)
     implementation(libs.zxing.core)
-    implementation(libs.zxing.embedded)
 
     // 偏好设置（DataStore）。
     implementation(libs.hiddenapibypass)
@@ -143,6 +162,10 @@ dependencies {
 
     // FastBle 2.3.4 原本托管在已停服的 JCenter；改用本地 AAR，让构建不依赖外部镜像。
     implementation(files("libs/FastBleLib-2.3.4.aar"))
+
+    // 开放源代码许可页（AboutLibraries，与 InstallerX Revived 同款实现）。
+    implementation(libs.aboutlibraries.core)
+    implementation(libs.aboutlibraries.compose.m3)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

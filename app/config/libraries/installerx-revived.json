@@ -1,0 +1,26 @@
+{
+  "uniqueId": "com.yunmei.upstream:installerx-revived",
+  "name": "InstallerX Revived",
+  "description": "GPL-3.0 · 本项目关于页 / 许可页 / 状态卡的模板来源",
+  "website": "https://github.com/wxxsfxyzm/InstallerX-Revived",
+  "developers": [
+    {
+      "name": "iamr0s",
+      "organisationUrl": "https://github.com/iamr0s"
+    },
+    {
+      "name": "InstallerX Revived contributors",
+      "organisationUrl": "https://github.com/wxxsfxyzm/InstallerX-Revived"
+    }
+  ],
+  "organization": {
+    "name": "InstallerX Revived"
+  },
+  "scm": {
+    "connection": "scm:git:https://github.com/wxxsfxyzm/InstallerX-Revived.git",
+    "url": "https://github.com/wxxsfxyzm/InstallerX-Revived"
+  },
+  "licenses": [
+    "GPL-3.0-only"
+  ]
+}

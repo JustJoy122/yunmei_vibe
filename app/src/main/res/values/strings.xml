@@ -33,12 +33,12 @@
     <string name="locks_add_scan_hint">扫描分享二维码（yunmeiui:// 或 yunmeiui.xypp.cc 链接）</string>
     <string name="locks_set_default">设为默认</string>
     <string name="locks_delete">删除</string>
-    <string name="locks_detail">详情</string>
-    <string name="locks_deleted">门锁已删除</string>
+    <string name="locks_deleted">%1$s 已删除</string>
     <string name="locks_duplicate">该门锁已存在</string>
-    <string name="locks_default_set">已设为默认门锁</string>
-    <string name="locks_added">门锁已添加</string>
+    <string name="locks_default_set">%1$s 已设为默认门锁</string>
+    <string name="locks_added">%1$s 已添加</string>
     <string name="locks_add_failed">添加门锁失败</string>
+    <string name="locks_add_incomplete">门锁数据不完整，无法添加</string>
 
     <!-- 门锁详情 -->
     <string name="lock_detail_label">锁标签</string>
@@ -101,10 +101,23 @@
     <string name="about">关于</string>
     <string name="about_channel">测试版</string>
     <string name="about_version_info_format">%1$s %2$s (%3$d)</string>
-    <string name="about_source_link" translatable="false">在%1$s 上查看源码</string>
+    <string name="about_view_source_code">查看源代码</string>
+    <string name="about_view_source_code_summary">在 GitHub 上查看源代码</string>
+    <string name="about_open_source_license">开放源代码许可</string>
+    <string name="about_open_source_license_summary">查看本应用所使用的第三方开源库及其许可证信息</string>
+
+    <!-- 开放源代码许可页（AboutLibraries，对齐 InstallerX Revived） -->
+    <string name="license">许可证：%1$s</string>
+    <string name="visit_home_page">访问主页</string>
+    <string name="close">关闭</string>
+    <string name="no_license_text">无许可证文本</string>
+
+    <!-- 检查更新 -->
+    <string name="update_available_title">发现新版本</string>
+    <string name="update_available_message">检测到新版本 %1$s，是否前往下载？</string>
+    <string name="update_confirm">前往下载</string>
 
     <!-- 设置 -->
-    <string name="settings_account">账号</string>
     <string name="settings_group_general">通用</string>
     <string name="settings_group_account">账号</string>
     <string name="settings_group_personalization">个性化</string>
@@ -148,27 +161,13 @@
     <string name="settings_account_hint">登录并拉取学校与门锁</string>
     <string name="settings_account_login">登录 / 切换账号</string>
     <string name="settings_saved_accounts">已保存账号</string>
-    <string name="settings_saved_accounts_empty">无已保存账号</string>
     <string name="settings_remove_account">移除</string>
-    <string name="settings_account_removed">账号已移除</string>
-    <string name="settings_appearance">外观</string>
     <string name="settings_ui_mode">界面风格</string>
     <string name="settings_ui_mode_summary">选择界面组件风格</string>
-    <string name="settings_theme_mode">深色模式</string>
-    <string name="settings_theme_mode_summary">颜色主题与深浅色</string>
     <string name="settings_theme_mode_system">跟随系统</string>
     <string name="settings_theme_mode_light">浅色</string>
     <string name="settings_theme_mode_dark">深色</string>
-    <string name="settings_theme_mode_monet_system">莫奈·跟随系统</string>
-    <string name="settings_theme_mode_monet_light">莫奈·浅色</string>
-    <string name="settings_theme_mode_monet_dark">莫奈·深色</string>
-    <string name="settings_theme_mode_amoled">深色·AMOLED</string>
     <string name="settings_monet">莫奈取色</string>
-    <string name="settings_monet_summary">跟随壁纸动态取色</string>
-    <string name="settings_blur">背景毛玻璃</string>
-    <string name="settings_floating_bar">悬浮底栏</string>
-    <string name="settings_floating_bar_blur">底栏毛玻璃</string>
-    <string name="settings_function">开门功能</string>
     <string name="settings_auto_connect">自动开门</string>
     <string name="settings_auto_connect_summary">启动应用后自动打开默认门锁</string>
     <string name="settings_auto_exit">开门后自动退出</string>
@@ -192,7 +191,6 @@
     <string name="settings_danger_final_title">最后提醒</string>
     <string name="settings_danger_final_msg">确认操作后将同时打开这两项功能。请再次确认。如需恢复，可选择清除软件数据或重新安装。您确定要打开吗？</string>
     <string name="settings_about">关于</string>
-    <string name="settings_about_summary">打开云莓智能官网</string>
 
     <!-- 登录 -->
     <string name="login_title">登录</string>
@@ -207,19 +205,13 @@
     <string name="login_logging_in">登录中…</string>
     <string name="login_choose_school">选择要添加门锁的学校</string>
     <string name="login_choose_lock">选择要添加的门锁</string>
-    <string name="login_no_school">账号不属于任何一所学校，请检查后重新添加</string>
-    <string name="login_no_lock">当前账号不存在任何门锁</string>
-    <string name="login_lock_added">门锁添加完成</string>
-    <string name="login_success">登录成功</string>
-    <string name="login_error_unknown">发生了未知错误，请尝试重新提交</string>
-    <string name="login_pick_saved_account">选择账号</string>
 
     <!-- OOBE 开箱向导 -->
 
-    <!-- 扫码 -->
-    <string name="scan_title">扫码添加门锁</string>
-    <string name="scan_hint">将门锁分享二维码置于框内即可自动识别</string>
-    <string name="scan_cancelled">取消扫描</string>
+    <!-- 扫码（相机拍照 / 相册选择，由 ScanAddLockMenu 弹窗菜单承载） -->
     <string name="scan_invalid">无法识别的门锁二维码</string>
     <string name="scan_permission_denied">未授予相机权限</string>
+    <string name="scan_camera">相机扫描</string>
+    <string name="scan_gallery">相册选择</string>
+    <string name="scan_image_unreadable">无法读取所选图片</string>
 </resources>

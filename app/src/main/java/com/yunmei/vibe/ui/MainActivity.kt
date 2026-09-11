@@ -39,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,20 +53,22 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.component.bottombar.BottomBar
 import com.yunmei.vibe.ui.component.bottombar.MainPagerState
 import com.yunmei.vibe.ui.component.bottombar.SideRail
 import com.yunmei.vibe.ui.component.bottombar.rememberMainPagerState
+import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
 import com.yunmei.vibe.ui.navigation3.LocalNavigator
 import com.yunmei.vibe.ui.navigation3.Navigator
 import com.yunmei.vibe.ui.navigation3.Route
 import com.yunmei.vibe.ui.navigation3.rememberNavigator
 import com.yunmei.vibe.ui.screen.about.AboutScreen
 import com.yunmei.vibe.ui.screen.home.HomePager
+import com.yunmei.vibe.ui.screen.license.LicenseScreen
 import com.yunmei.vibe.ui.screen.locks.LocksPager
 import com.yunmei.vibe.ui.screen.login.LoginScreen
 import com.yunmei.vibe.ui.screen.lockdetail.LockDetailScreen
-import com.yunmei.vibe.ui.screen.scan.ScanScreen
 import com.yunmei.vibe.ui.screen.settings.SettingPager
 import com.yunmei.vibe.ui.screen.themesettings.ThemeSettingsScreen
 import com.yunmei.vibe.ui.theme.LocalColorMode
@@ -135,10 +139,38 @@ class MainActivity : ComponentActivity() {
                         initialPage = currentSelectedPage,
                         onPageChanged = viewModel::setSelectedMainPage,
                         onAutoOpenRequested = viewModel::requestAutoOpen,
+                        onUpdateCheckRequested = viewModel::checkUpdateOnStartup,
                         autoOpenTrigger = viewModel.autoOpenTrigger,
                     )
                 }
                 TemplateTheme(appSettings = appSettings, uiMode = uiMode) {
+                    // 应用启动自检更新：check_update 开启且存在更高的正式 Release 时弹窗提示。
+                    // Debug 包不会产生结果（见 ui/util/UpdateChecker.kt 的 BuildConfig.DEBUG 判断）。
+                    val latestVersion by viewModel.latestVersion.collectAsStateWithLifecycle()
+                    val uriHandler = LocalUriHandler.current
+                    val updateDialog = rememberConfirmDialog(
+                        onConfirm = {
+                            latestVersion?.downloadUrl
+                                ?.takeIf { it.isNotBlank() }
+                                ?.let(uriHandler::openUri)
+                            viewModel.dismissUpdate()
+                        },
+                        onDismiss = { viewModel.dismissUpdate() },
+                    )
+                    val updateTitle = stringResource(R.string.update_available_title)
+                    val updateMessageFormat = stringResource(R.string.update_available_message)
+                    val updateConfirmLabel = stringResource(R.string.update_confirm)
+                    val updateCancelLabel = stringResource(R.string.cancel)
+                    LaunchedEffect(latestVersion) {
+                        latestVersion?.let { info ->
+                            updateDialog.showConfirm(
+                                title = updateTitle,
+                                content = updateMessageFormat.format(info.versionName),
+                                confirm = updateConfirmLabel,
+                                dismiss = updateCancelLabel,
+                            )
+                        }
+                    }
                     // 稳定化 NavDisplay 参数：主题热切换（莫奈开关等）时参数引用保持不变，
                     // NavDisplay 被 strong skipping 跳过，避免导航场景/手势状态 churn
                     // 导致的 stale 手势误派发（navigationevent b/375343407）。
@@ -173,9 +205,9 @@ class MainActivity : ComponentActivity() {
                         entryProvider {
                             entry<Route.Main> { mainScreenEntry() }
                             entry<Route.Login> { LoginScreen() }
-                            entry<Route.Scan> { ScanScreen() }
                             entry<Route.ThemeSettings> { ThemeSettingsScreen() }
                             entry<Route.About> { AboutScreen() }
+                            entry<Route.OpenSourceLicense> { LicenseScreen() }
                             entry<Route.LockDetail> { route -> LockDetailScreen(route.label) }
                         }
                     val navEntryProvider = remember { freshEntryProvider }
@@ -213,6 +245,7 @@ fun MainScreen(
     initialPage: Int = 0,
     onPageChanged: (Int) -> Unit = {},
     onAutoOpenRequested: () -> Unit = {},
+    onUpdateCheckRequested: () -> Unit = {},
     autoOpenTrigger: kotlinx.coroutines.flow.StateFlow<Long> = kotlinx.coroutines.flow.MutableStateFlow(0L),
 ) {
     val navController = LocalNavigator.current
@@ -245,8 +278,10 @@ fun MainScreen(
     }
 
     // 自动开门：每次进入主界面检查一次，同一进程内只触发一次（由 MainActivityViewModel 消费标记保证）。
+    // 启动自检更新：同一进程内也只触发一次，受设置页「检查更新」开关控制。
     LaunchedEffect(Unit) {
         onAutoOpenRequested()
+        onUpdateCheckRequested()
     }
 
     // 自动开门触发后，把 Pager 切回「首页」，由 HomePager 消费触发值执行开门。

@@ -1,0 +1,22 @@
+{
+  "uniqueId": "com.yunmei.upstream:kernelsu-style-ui-kit",
+  "name": "KernelSU-Style-UI-Kit",
+  "description": "GPL-3.0 · 本项目 UI 组件模板来源",
+  "website": "https://github.com/chenaizhang/KernelSU-Style-UI-Kit",
+  "developers": [
+    {
+      "name": "chenaizhang",
+      "organisationUrl": "https://github.com/chenaizhang"
+    }
+  ],
+  "organization": {
+    "name": "chenaizhang"
+  },
+  "scm": {
+    "connection": "scm:git:https://github.com/chenaizhang/KernelSU-Style-UI-Kit.git",
+    "url": "https://github.com/chenaizhang/KernelSU-Style-UI-Kit"
+  },
+  "licenses": [
+    "GPL-3.0-only"
+  ]
+}

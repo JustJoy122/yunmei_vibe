@@ -16,11 +16,11 @@ retrofit = "2.11.0"
 okhttp = "4.12.0"
 coil = "2.7.0"
 securityCrypto = "1.1.0"
-zxingEmbedded = "4.3.0"
 zxingCore = "3.5.3"
 materialKolor = "5.0.0"
 haze = "1.7.0"
 miuix = "0.9.3"
+aboutLibraries = "15.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -49,7 +49,6 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
-zxing-embedded = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxingEmbedded" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
 material-kolor = { group = "com.materialkolor", name = "material-kolor", version.ref = "materialKolor" }
 hiddenapibypass = { module = "org.lsposed.hiddenapibypass:hiddenapibypass", version = "6.1" }
@@ -58,6 +57,9 @@ miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui-android", version.ref = "m
 miuix-icons = { module = "top.yukonga.miuix.kmp:miuix-icons-android", version.ref = "miuix" }
 miuix-blur = { module = "top.yukonga.miuix.kmp:miuix-blur-android", version.ref = "miuix" }
 miuix-preference = { module = "top.yukonga.miuix.kmp:miuix-preference-android", version.ref = "miuix" }
+# 开放源代码许可页（InstallerX Revived 同款 AboutLibraries 实现）。
+aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
+aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -65,3 +67,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }

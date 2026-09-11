@@ -27,6 +27,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.twotone.Code
+import androidx.compose.material.icons.twotone.Copyright
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -49,6 +52,7 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
@@ -433,14 +437,32 @@ private fun AboutContent(
                             Color.Transparent,
                         ),
                     ) {
-                        state.links.forEach {
-                            ArrowPreference(
-                                title = it.fullText,
-                                onClick = {
-                                    actions.onOpenLink(it.url)
-                                }
-                            )
-                        }
+                        ArrowPreference(
+                            title = stringResource(R.string.about_view_source_code),
+                            summary = stringResource(R.string.about_view_source_code_summary),
+                            startAction = {
+                                Icon(
+                                    imageVector = Icons.TwoTone.Code,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(R.string.about_view_source_code),
+                                    tint = colorScheme.onBackground,
+                                )
+                            },
+                            onClick = actions.onOpenSource,
+                        )
+                        ArrowPreference(
+                            title = stringResource(R.string.about_open_source_license),
+                            summary = stringResource(R.string.about_open_source_license_summary),
+                            startAction = {
+                                Icon(
+                                    imageVector = Icons.TwoTone.Copyright,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(R.string.about_open_source_license),
+                                    tint = colorScheme.onBackground,
+                                )
+                            },
+                            onClick = actions.onOpenLicense,
+                        )
                     }
                     Spacer(
                         Modifier.height(

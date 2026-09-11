@@ -134,6 +134,8 @@ YunmeiVibe-v{versionName}-{variant}.apk
 - 提交信息遵循 **Conventional Commits**：
   `feat:`（新功能）、`fix:`（修复）、`chore:`（杂项）、`docs:`（文档）、`refactor:`（重构）、`perf:`（性能）。
 - 更新日志维护在 `CHANGELOG.md`，格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
+- 每个版本条目需附 GitHub 版本对比链接 `https://github.com/JustJoy122/yunmei_vibe/compare/v{上一个版本号}...v{当前版本号}`（首个版本除外），
+  并在文件末尾维护 `[x.y.z]: ...` 链接定义，保证 Markdown 渲染时版本号可点击。
 - 每次发布将 `[Unreleased]` 段内容归入对应版本号，并注明日期与 `versionCode`。
 - 发布说明应面向用户，按 **Added / Changed / Fixed / Removed / Security** 分类。
 

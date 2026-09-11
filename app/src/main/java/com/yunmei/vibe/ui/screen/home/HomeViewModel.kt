@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -49,6 +50,14 @@ class HomeViewModel : ViewModel() {
     init {
         container.unlockManager.onMacDiscovered = { lock, mac ->
             container.lockStore.setMac(lock.label, mac)
+        }
+        // 门锁数据（列表 / 默认门锁）变更时响应式刷新首页 Banner：
+        // 在门锁页添加门锁或设默认后切回首页立即生效，无需进入二级页面再返回。
+        // 仅在数据真正变更时由 LockStore.revision 自增触发一次，无轮询/定时器。
+        viewModelScope.launch {
+            container.lockStore.revision.drop(1).collect {
+                loadLockAndSettings()
+            }
         }
     }
 

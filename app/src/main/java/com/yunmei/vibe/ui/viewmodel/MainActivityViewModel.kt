@@ -10,11 +10,15 @@ import com.yunmei.vibe.data.repository.SettingsRepository
 import com.yunmei.vibe.data.repository.SettingsRepositoryImpl
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.theme.ThemeController
+import com.yunmei.vibe.ui.util.LatestVersionInfo
+import com.yunmei.vibe.ui.util.checkNewVersion
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivityViewModel(
     savedStateHandle: SavedStateHandle,
@@ -38,6 +42,11 @@ class MainActivityViewModel(
     val autoOpenTrigger: StateFlow<Long> = _autoOpenTrigger.asStateFlow()
     private var autoOpenConsumed = false
 
+    /** 应用启动自检发现的可用更新（仅 Release 版本会写入，Debug 恒为 null）。 */
+    private val _latestVersion = MutableStateFlow<LatestVersionInfo?>(null)
+    val latestVersion: StateFlow<LatestVersionInfo?> = _latestVersion.asStateFlow()
+    private var updateCheckStarted = false
+
     init {
         prefs.registerOnSharedPreferenceChangeListener(listener)
     }
@@ -49,6 +58,27 @@ class MainActivityViewModel(
 
     fun setSelectedMainPage(page: Int) {
         mainPageState.updateSelectedPage(page)
+    }
+
+    /**
+     * 应用启动自检更新（对齐 KernelSU-Style-UI-Kit 的 `HomeViewModel.refresh()`）：
+     * 读取设置页「检查更新」开关（`check_update`）后执行一次 `checkNewVersion()`；
+     * 仅当存在更高的正式 Release 版本时才写入状态，交由壳层弹窗提示。
+     */
+    fun checkUpdateOnStartup() {
+        if (updateCheckStarted) return
+        updateCheckStarted = true
+        viewModelScope.launch {
+            if (!settingRepo.checkUpdate) return@launch
+            val info = withContext(Dispatchers.IO) { checkNewVersion() }
+            if (info.hasUpdate) {
+                _latestVersion.value = info
+            }
+        }
+    }
+
+    fun dismissUpdate() {
+        _latestVersion.value = null
     }
 
     fun requestAutoOpen() {

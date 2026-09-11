@@ -2,7 +2,9 @@ package com.yunmei.vibe.ui.screen.locks
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
+import com.yunmei.vibe.data.local.DuplicateLockException
 import com.yunmei.vibe.data.model.Lock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +17,10 @@ import kotlinx.coroutines.withContext
 class LocksViewModel : ViewModel() {
 
     private val container get() = YunMeiApp.app.container
+
+    private fun str(resId: Int): String = YunMeiApp.app.getString(resId)
+
+    private fun str(resId: Int, vararg args: Any): String = YunMeiApp.app.getString(resId, *args)
 
     private val _uiState = MutableStateFlow(LocksUiState())
     val uiState: StateFlow<LocksUiState> = _uiState.asStateFlow()
@@ -39,24 +45,24 @@ class LocksViewModel : ViewModel() {
     fun setDefault(lock: Lock) {
         container.lockStore.setDefault(lock)
         refresh()
-        showMessage("${lock.label} 已设为默认门锁")
+        showMessage(str(R.string.locks_default_set, lock.label))
     }
 
     fun delete(lock: Lock) {
         container.lockStore.remove(lock.label)
         refresh()
-        showMessage("${lock.label} 已删除")
+        showMessage(str(R.string.locks_deleted, lock.label))
     }
 
     /** 解析扫码/链接得到的内容并添加门锁（兼容 addlock/、lock_id/、lock_info/、lockInfo/ 前缀）。 */
     fun addLockFromShare(raw: String) {
         val lock = Lock.from(raw)
         if (lock == null) {
-            showMessage("无法识别的门锁二维码")
+            showMessage(str(R.string.scan_invalid))
             return
         }
         if (!lock.isUsable) {
-            showMessage("门锁数据不完整，无法添加")
+            showMessage(str(R.string.locks_add_incomplete))
             return
         }
         viewModelScope.launch {
@@ -65,9 +71,11 @@ class LocksViewModel : ViewModel() {
                     container.lockStore.add(lock)
                 }
                 refresh()
-                showMessage("${lock.label} 已添加")
-            } catch (e: IllegalStateException) {
-                showMessage(e.message ?: "添加门锁失败")
+                showMessage(str(R.string.locks_added, lock.label))
+            } catch (_: DuplicateLockException) {
+                showMessage(str(R.string.locks_duplicate))
+            } catch (_: IllegalStateException) {
+                showMessage(str(R.string.locks_add_failed))
             }
         }
     }

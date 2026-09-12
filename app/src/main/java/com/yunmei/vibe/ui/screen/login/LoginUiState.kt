@@ -17,6 +17,12 @@ data class LoginUiState(
     val lockChoices: List<Lock>? = null,
     /** 显示密码明文；每次进入登录页默认关闭（星号显示）。 */
     val showPassword: Boolean = false,
+    /**
+     * 是否正在复用已保存账号的凭证。
+     * 已保存账号只存密码 MD5（见 [com.yunmei.vibe.data.local.StoredUser]），不能回填进密码输入框，
+     * 因此选中已保存账号时输入框留空并置此标记：显示占位提示、禁用「显示密码」开关。
+     */
+    val usingSavedCredential: Boolean = false,
 )
 
 @Immutable

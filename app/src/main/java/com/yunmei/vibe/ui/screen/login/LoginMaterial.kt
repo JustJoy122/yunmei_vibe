@@ -199,7 +199,16 @@ fun LoginScreenMaterial(
                             PasswordVisualTransformation()
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        placeholder = { Text("") },
+                        // 已保存账号不回填密码（只存 MD5），用占位提示说明「无需重复输入」。
+                        placeholder = {
+                            Text(
+                                if (state.usingSavedCredential) {
+                                    stringResource(R.string.login_password_saved)
+                                } else {
+                                    ""
+                                }
+                            )
+                        },
                     )
                 }
             )
@@ -209,7 +218,14 @@ fun LoginScreenMaterial(
                 content = listOf {
                     SegmentedCheckboxItem(
                         title = stringResource(R.string.login_show_password),
+                        summary = if (state.usingSavedCredential) {
+                            stringResource(R.string.login_show_password_saved)
+                        } else {
+                            null
+                        },
                         checked = state.showPassword,
+                        // 已保存凭证时没有可供显示的密码明文，直接禁用开关，避免暴露 MD5 串。
+                        enabled = !state.usingSavedCredential,
                         onCheckedChange = actions.onToggleShowPassword,
                     )
                 }

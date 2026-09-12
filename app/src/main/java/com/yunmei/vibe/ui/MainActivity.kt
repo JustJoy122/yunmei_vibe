@@ -59,6 +59,7 @@ import com.yunmei.vibe.ui.component.bottombar.MainPagerState
 import com.yunmei.vibe.ui.component.bottombar.SideRail
 import com.yunmei.vibe.ui.component.bottombar.rememberMainPagerState
 import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
+import com.yunmei.vibe.ui.component.message.GlobalMessageHost
 import com.yunmei.vibe.ui.navigation3.LocalNavigator
 import com.yunmei.vibe.ui.navigation3.Navigator
 import com.yunmei.vibe.ui.navigation3.Route
@@ -353,7 +354,9 @@ fun MainScreen(
             val navBarBottomPadding = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
 
             when (uiMode) {
-                UiMode.Material -> androidx.compose.material3.Scaffold {
+                UiMode.Material -> androidx.compose.material3.Scaffold(
+                    snackbarHost = { GlobalMessageHost() },
+                ) {
                     Row {
                         SideRail(
                             blurBackdrop = blurBackdrop,
@@ -368,7 +371,9 @@ fun MainScreen(
                     }
                 }
 
-                UiMode.Miuix -> Scaffold { _ ->
+                UiMode.Miuix -> Scaffold(
+                    snackbarHost = { GlobalMessageHost() },
+                ) { _ ->
                     Row {
                         SideRail(
                             blurBackdrop = blurBackdrop,
@@ -397,11 +402,17 @@ fun MainScreen(
             }
 
             when (uiMode) {
-                UiMode.Material -> androidx.compose.material3.Scaffold(bottomBar = bottomBar) { innerPadding ->
+                UiMode.Material -> androidx.compose.material3.Scaffold(
+                    snackbarHost = { GlobalMessageHost() },
+                    bottomBar = bottomBar,
+                ) { innerPadding ->
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
 
-                UiMode.Miuix -> Scaffold(bottomBar = bottomBar) { innerPadding ->
+                UiMode.Miuix -> Scaffold(
+                    snackbarHost = { GlobalMessageHost() },
+                    bottomBar = bottomBar,
+                ) { innerPadding ->
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
             }

@@ -19,16 +19,24 @@ fun AboutScreen() {
     val navigator = LocalNavigator.current
     val uriHandler = LocalUriHandler.current
 
+    // 版本号按构建类型区分，统一在此生成（Material / Miuix 两个主题共用同一个 state，不各自硬编码）：
+    // - Debug：测试版 {versionName} (CI #{run_number})；本地未注入 BUILD_STAMP 时显示「本地」
+    // - Release：正式版 {versionName}
+    val versionInfo = if (BuildConfig.DEBUG) {
+        val buildStamp = BuildConfig.BUILD_STAMP
+        if (buildStamp.isBlank() || buildStamp == "0") {
+            stringResource(R.string.about_version_debug_local, BuildConfig.VERSION_NAME)
+        } else {
+            stringResource(R.string.about_version_debug, BuildConfig.VERSION_NAME, buildStamp)
+        }
+    } else {
+        stringResource(R.string.about_version_release, BuildConfig.VERSION_NAME)
+    }
+
     val state = AboutUiState(
         title = stringResource(R.string.about),
         appName = stringResource(R.string.app_name),
-        // 与 InstallerX Revived 一致：「通道 版本名 (版本号)」。
-        versionInfo = stringResource(
-            id = R.string.about_version_info_format,
-            stringResource(id = R.string.about_channel),
-            BuildConfig.VERSION_NAME,
-            BuildConfig.VERSION_CODE,
-        ),
+        versionInfo = versionInfo,
     )
     // 「获取更新」入口已移除（检查更新统一由设置页负责），关于页仅保留两项。
     val actions = AboutScreenActions(

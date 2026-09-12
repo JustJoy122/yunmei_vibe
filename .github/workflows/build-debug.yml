@@ -1,4 +1,4 @@
-name: Build Debug
+name: 构建 Debug 包
 
 # 日常 Push 自动构建 Debug：
 # 本地不需要构建，推送到 main 由 Actions 出 Debug APK，并发布到 Debug 更新渠道（ci-* Pre-release）。
@@ -29,36 +29,36 @@ env:
 
 jobs:
   debug:
-    name: Assemble Debug
+    name: 编译 Debug 包
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: 拉取代码
+        uses: actions/checkout@v6
         with:
           # 需要取到 v* tag，用于生成 Full changelog 对比链接
           fetch-depth: 0
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: 设置 JDK 21
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
 
       # Gradle 缓存：依赖（~/.gradle/caches）、wrapper 与 configuration cache 一并复用
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: 设置 Gradle
+        uses: gradle/actions/setup-gradle@v6
 
-      - name: Accept Android SDK licenses
+      - name: 接受 Android SDK 许可
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
-      - name: Install required Android SDK packages
+      - name: 安装所需的 Android SDK 组件
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             "$ANDROID_PLATFORM" \
             "$ANDROID_BUILD_TOOLS" > /dev/null
 
-      - name: Read version info
+      - name: 读取版本信息
         id: version
         run: |
           VERSION_NAME=$(sed -n 's/.*versionName *= *"\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)
@@ -72,13 +72,13 @@ jobs:
           echo "versionName=$VERSION_NAME versionCode=$VERSION_CODE dateStamp=$DATE_STAMP buildStamp=$BUILD_STAMP"
 
       # 构建输出同时落盘，失败时随日志一起上传；-PbuildStamp 写入 BuildConfig.BUILD_STAMP
-      - name: Build Debug APK
+      - name: 构建 Debug 安装包
         run: |
           chmod +x gradlew
           set -o pipefail
           ./gradlew --no-daemon assembleDebug -PbuildStamp="$BUILD_STAMP" 2>&1 | tee gradle-build.log
 
-      - name: Package artifact
+      - name: 打包构建产物
         run: |
           mkdir -p dist
           APK="YunmeiVibe-v${{ steps.version.outputs.name }}-debug-ci${{ steps.version.outputs.date_stamp }}-${{ github.run_number }}.apk"
@@ -86,15 +86,15 @@ jobs:
           (cd dist && sha256sum *.apk > SHA256SUMS.txt)
           ls -la dist
 
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+      - name: 上传 Debug 安装包
+        uses: actions/upload-artifact@v7
         with:
           name: YunmeiVibe-debug-ci${{ steps.version.outputs.date_stamp }}-run${{ github.run_number }}
           path: dist/
           retention-days: 7
 
       # 失败时把「核心报错 + 完整日志 + 报告」打包，便于直接下载后丢给 AI 修复
-      - name: Collect failure logs
+      - name: 收集失败日志
         if: failure()
         run: |
           mkdir -p ci-logs
@@ -110,9 +110,9 @@ jobs:
           echo "--- errors-summary.txt ---"
           cat ci-logs/errors-summary.txt 2>/dev/null || true
 
-      - name: Upload build logs on failure
+      - name: 失败时上传构建日志
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-logs-run${{ github.run_number }}
           path: ci-logs/
@@ -123,7 +123,7 @@ jobs:
       # tag 形如 ci-20260912-14（日期 + run_number），同一天多次构建互不覆盖；
       # 带 pre-release 标记的 Release 不会出现在 /releases/latest，正式更新检查不受影响。
       # 不删除、不清算任何历史 ci-* 标签与 Release，便于回溯每次构建。
-      - name: Publish debug channel pre-release
+      - name: 发布 Debug 更新渠道预发布版
         if: success() && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

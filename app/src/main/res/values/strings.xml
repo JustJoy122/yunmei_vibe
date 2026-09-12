@@ -99,8 +99,10 @@
 
     <!-- 关于 -->
     <string name="about">关于</string>
-    <string name="about_channel">测试版</string>
-    <string name="about_version_info_format">%1$s %2$s (%3$d)</string>
+    <!-- 关于页版本号：按构建类型区分（Debug 带 CI 构建号，Release 显示正式版） -->
+    <string name="about_version_debug">测试版 %1$s (CI #%2$s)</string>
+    <string name="about_version_debug_local">测试版 %1$s (本地)</string>
+    <string name="about_version_release">正式版 %1$s</string>
     <string name="about_view_source_code">查看源代码</string>
     <string name="about_view_source_code_summary">在 GitHub 上查看源代码</string>
     <string name="about_open_source_license">开放源代码许可</string>
@@ -198,11 +200,22 @@
     <string name="login_skip_selection_hint">账号已保存，可稍后在「门锁」页扫码添加</string>
     <string name="login_username">账号</string>
     <string name="login_password">密码</string>
+    <string name="login_password_saved">已保存，无需重复输入</string>
     <string name="login_show_password">显示密码</string>
+    <string name="login_show_password_saved">已保存账号无需显示密码</string>
     <string name="login_submit">登录</string>
     <string name="login_use_saved">使用已保存账号</string>
     <string name="login_save_current">保存此账号</string>
     <string name="login_logging_in">登录中…</string>
+    <!-- 登录失败：页面内错误条（认证失败用 error 语义色，由模板的页面内错误组件承载） -->
+    <string name="login_error_empty_input">请输入账号与密码</string>
+    <string name="login_error_credentials">账号或密码错误，请重试</string>
+    <string name="login_error_failed">登录失败：%1$s</string>
+    <string name="login_error_no_school">账号不属于任何一所学校，请检查后重新添加</string>
+    <!-- 登录成功：跨页面提示（返回主界面后由全局提示宿主弹出） -->
+    <string name="login_result_no_lock">登录成功，但该账号下暂无门锁，请前往门锁页添加</string>
+    <string name="login_result_lock_added">登录成功，已添加门锁</string>
+    <string name="login_result_locks_failed">登录成功，但获取门锁失败：%1$s</string>
     <string name="login_choose_school">选择要添加门锁的学校</string>
     <string name="login_choose_lock">选择要添加的门锁</string>
 

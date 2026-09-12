@@ -14,7 +14,16 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
-class YunMeiException(message: String) : Exception(message)
+/** 业务异常基类。 */
+open class YunMeiException(message: String) : Exception(message)
+
+/**
+ * 服务端明确拒绝登录（账号或密码错误等业务性鉴权失败）。
+ *
+ * 与网络异常、HTTP 500、JSON 解析失败区分开，登录页据此给出「账号或密码错误」的中文友好提示，
+ * 其余异常则保留原始信息并加中文前缀。继承 [YunMeiException]，既有 `catch (YunMeiException)` 不受影响。
+ */
+class YunMeiAuthException(message: String) : YunMeiException(message)
 
 /**
  * 云莓智能业务仓库。
@@ -30,10 +39,15 @@ class YunMeiRepository(private val client: YunMeiApiClient) {
     suspend fun login(username: String, passwordMd5: String): LoginUser = mutex.withLock {
         val response = client.api(YunMeiApiClient.BASE_URL).login(username, passwordMd5)
         val user = response.o
-        if (!response.success || user?.token.isNullOrBlank() || user?.userId.isNullOrBlank()) {
-            throw YunMeiException(response.msg ?: "登录失败")
+        // 服务端 success=false：账号/密码不被接受，属业务性鉴权失败。
+        if (!response.success) {
+            throw YunMeiAuthException(response.msg ?: "登录失败")
         }
-        val safeUser = user ?: throw YunMeiException(response.msg ?: "登录失败")
+        // 以下属异常响应体（服务端 bug 或接口变更），归为预期外错误。
+        val safeUser = user ?: throw YunMeiException("登录响应缺少用户信息")
+        if (safeUser.token.isNullOrBlank() || safeUser.userId.isNullOrBlank()) {
+            throw YunMeiException("登录响应缺少凭证")
+        }
         this.username = username
         this.usernameMd5 = Md5.hex(username)
         client.token = safeUser.token

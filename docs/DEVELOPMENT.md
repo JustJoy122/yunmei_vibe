@@ -99,12 +99,63 @@ miuix 0.9.3、materialKolor 5.0.0、navigation3 1.1.2）为设备实测可用组
 > [!WARNING] 警告
 > 不要回退到 compose-bom 2026.05.01：其解析出的 Compose 1.12.0-alpha03 预发布版与 miuix 存在二进制不兼容，会导致启动白屏闪退
 
+## Git 与 CI 工作流
+
+本项目采用「**本地不构建、Push 后由 GitHub Actions 自动构建**」的流程：日常提交由 CI 产出 Debug APK，
+只有**手动打 Tag** 才会触发正式发布。
+
+### 日常开发
+
+```bash
+git add -A
+git commit -m "fix: ..."
+git push          # 推送 main 即触发 Build Debug
+```
+
+| 项目 | 说明 |
+| --- | --- |
+| 触发条件 | push 到 `main`；仅改 `**.md` 与 `docs/**` 时不触发 |
+| 工作流 | `.github/workflows/build-debug.yml` |
+| 构建 | 配置 JDK 21 + Gradle 缓存（`gradle/actions/setup-gradle`）→ `./gradlew --no-daemon assembleDebug -PbuildStamp=<run_number>` |
+| 产物 | Actions 页 Artifacts：`YunmeiVibe-debug-ci<YYYYMMDD>-run<N>`（APK + `SHA256SUMS.txt`，保留 7 天） |
+| 失败日志 | 失败时额外上传 `build-logs-run<N>`：`errors-summary.txt`（聚合核心报错）、`gradle-build.log`、`**/build/reports/**`、Gradle daemon 日志 |
+| Debug 更新渠道 | 构建成功后自动发布 Pre-release，tag 为 `ci-YYYYMMDD-<run_number>`（如 `ci-20260912-14`），带 `prerelease` + `latest=false`；**历史标签全部保留**，可回溯任意一次构建 |
+| 更新检查 | Debug 包读 `/releases` 列表中 run_number 最大的 `ci-*`，与本地 `BuildConfig.BUILD_STAMP`（CI 由 `-PbuildStamp` 注入，本地构建为 `0`）比较，**远端更大才提示更新**；同一天多次构建也能正确收到提示 |
+
+失败排查：下载 `build-logs-run<N>` → 先看 `errors-summary.txt`（已聚合 `e:` / `FAILURE:` /
+`* What went wrong` / `Caused by:` / `Execution failed for task` 等关键行），需要上下文时再查 `gradle-build.log`。
+
+### 发布正式版本
+
+正式版本**只由用户手动打 Tag** 触发，CI 不会自动打 Tag、也不会按分支发布：
+
+```bash
+git tag v0.4.3
+git push origin v0.4.3    # 只推单个 tag → 触发 Release 工作流
+```
+
+`.github/workflows/release.yml` 的触发条件只有 `v*` Tag 与 `workflow_dispatch`，不含任何 `branches:`。
+
+### 禁止事项
+
+- ❌ **`git push --tags`**：会一次性推送本地全部 Tag，可能误触发 Release 工作流并发布半成品；
+  请始终使用 `git push origin vX.Y.Z` 只推单个 Tag。
+- ❌ 给 `release.yml` 添加 `branches:` 触发条件：日常 push 必须永远不会产出正式 Release。
+- ❌ 改了 `versionCode` / `versionName` 却忘记补 `CHANGELOG.md` 对应版本段：Release 说明由 CI 从
+  `CHANGELOG.md` 抽取，缺失时会提示"未找到对应条目"。
+
+### 工作流一览
+
+| 工作流 | 触发 | 产物 |
+| --- | --- | --- |
+| `build-debug.yml` | push `main`（忽略 `**.md`、`docs/**`）、手动 | Debug APK artifact（7 天）+ Pre-release `ci-YYYYMMDD-<run_number>` |
+| `release.yml` | Tag `v*`、手动 | Debug / Release APK + `SHA256SUMS.txt` → 正式 Release |
+
 ## 项目结构
 
 ```
-app/src/main/java/com/yunmei/client/
+app/src/main/java/com/yunmei/vibe/
 ├── YunMeiApp.kt             # Application：崩溃兜底 + BleManager 初始化 + AppContainer
-├── MainActivity.kt          # 主壳：3 tab Pager + 悬浮底栏/横屏侧栏 + navigation3 二级页
 ├── core/di/AppContainer.kt  # 手动依赖容器
 ├── data/                    # 后端数据层（旧项目 1:1 移植）
 │   ├── network/             #   Retrofit：login / userschool / getuserlock / sign / lockpassword
@@ -117,6 +168,7 @@ app/src/main/java/com/yunmei/client/
 │   ├── preferences/         #   DataStore：quickConnect/autoConnect/autoExit/... 全部功能开关
 │   └── security/Md5.kt      #   小写 32 位 MD5
 └── ui/
+    ├── MainActivity.kt      # 主壳：3 tab Pager + 悬浮底栏/横屏侧栏 + navigation3 二级页
     ├── theme/               # 模板主题系统：TemplateTheme 按 UiMode 分派 Material/Miuix
     ├── component/           # 模板组件（原样复用）：SegmentedList/ExpressiveSwitch/TonalCard/
     │                        #   SnackBar/DropdownItem/EditText/WarningCard/FloatingBottomBar/

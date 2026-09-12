@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      深色（系统 night）下的清单主题：对齐 KernelSU-Style-UI-Kit 的 values-night/themes.xml
+      （父主题由 Theme.Material.Light 换成 Theme.Material），并显式指定开屏底色。
+
+      系统在进程启动前就用本主题绘制开屏窗口 / API 31+ 的 SplashScreen，
+      若不覆盖底色，深色模式下会落到浅色窗口底（全白开屏），即本次修复的问题。
+
+      注：values/ 中的 Theme.YunmeiVibe.Dark / Theme.YunmeiVibe.Amoled 使用固定色值，
+      在 night 配置下按默认配置回退即可命中，无需在此重复声明。
+    -->
+    <style name="Theme.YunmeiVibe" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background_dark</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/splash_background_dark</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
+    </style>
+
+</resources>

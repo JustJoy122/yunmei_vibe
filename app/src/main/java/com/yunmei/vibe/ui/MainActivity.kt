@@ -76,6 +76,7 @@ import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBar
 import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBarBlur
 import com.yunmei.vibe.ui.theme.TemplateTheme
+import com.yunmei.vibe.ui.theme.ThemeController
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
 import com.yunmei.vibe.ui.util.rememberContentReady
 import com.yunmei.vibe.ui.viewmodel.MainActivityViewModel
@@ -87,8 +88,34 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 class MainActivity : ComponentActivity() {
 
+    /**
+     * 应用「开屏（窗口）底色」主题，必须在 `super.onCreate()`（进而 `setContentView`）之前调用。
+     *
+     * 系统在进程启动前就已按清单主题绘制开屏窗口 / API 31+ 的 SplashScreen，那一帧只能跟随
+     * **系统**深浅色（见 `res/values-night/themes.xml`）；这里再按**应用内**主题设置把应用窗口
+     * 底色对齐到最终配色，保证系统开屏 → Compose 首帧之间无闪白、无跳色：
+     *
+     * - 应用内深色 + AMOLED 开关 → 纯黑（`Theme.YunmeiVibe.Amoled`）
+     * - 应用内深色（未开 AMOLED）→ 深色 surface（`Theme.YunmeiVibe.Dark`）
+     * - 应用内浅色 → 保持清单主题不变（浅色）
+     *
+     * `color_mode` / `amoled` 复用 [ThemeController.getAppSettings] 读取，与应用内配色逻辑同源。
+     */
+    private fun applyStartupTheme() {
+        val appSettings = ThemeController.getAppSettings(this)
+        val colorMode = appSettings.colorMode
+        val systemNight = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        val darkTheme = colorMode.isDark || (colorMode.isSystem && systemNight)
+        if (!darkTheme) return
+        // `DARK_AMOLED` 为历史遗留的合并模式，与独立的 amoled 开关等价处理。
+        val amoled = appSettings.amoled || colorMode.isAmoled
+        setTheme(if (amoled) R.style.Theme_YunmeiVibe_Amoled else R.style.Theme_YunmeiVibe_Dark)
+    }
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
+        applyStartupTheme()
         super.onCreate(savedInstanceState)
 
         setContent {

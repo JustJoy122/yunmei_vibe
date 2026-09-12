@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      开屏（窗口）底色。
+
+      开屏窗口由系统在 Compose 组合与 DataStore/SharedPreferences 读取之前绘制，
+      此时既拿不到 Monet 动态取色，也拿不到 materialkolor 生成的配色，因此这里只能使用固定色值，
+      且取值必须与 Compose 首帧的背景一致，避免出现跳色：
+
+      - splash_background_dark：Material 3 深色主题的 surface 常量（与 materialkolor 深色方案的 surface 同档）
+      - splash_background_amoled：AMOLED 纯黑，对应设置页「AMOLED 纯黑背景」开关
+    -->
+    <color name="splash_background_dark">#141218</color>
+    <color name="splash_background_amoled">#000000</color>
+
+</resources>

@@ -43,6 +43,11 @@ android {
         versionCode = 25
         versionName = "0.4.2"
 
+        // CI 构建号：GitHub Actions 在 Debug 工作流里通过 -PbuildStamp=<run_number> 注入，
+        // App 内 Debug 更新检查据此与远端 ci-* 标签的 run_number 精确比较；
+        // 本地构建（未传参）为 "0"，即任何 CI 产物都视为更新。见 .github/workflows/build-debug.yml。
+        buildConfigField("String", "BUILD_STAMP", "\"${project.findProperty("buildStamp") ?: "0"}\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

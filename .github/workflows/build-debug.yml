@@ -1,0 +1,169 @@
+name: Build Debug
+
+# 日常 Push 自动构建 Debug：
+# 本地不需要构建，推送到 main 由 Actions 出 Debug APK，并发布到 Debug 更新渠道（ci-* Pre-release）。
+on:
+  push:
+    branches:
+      - main
+    # 纯文档改动不触发构建，省 CI 额度
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  workflow_dispatch:
+
+# 创建 Debug 渠道 Pre-release 需要写权限
+permissions:
+  contents: write
+
+# 同一分支的旧构建直接取消，避免排队浪费额度
+concurrency:
+  group: build-debug-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ANDROID_PLATFORM: "platforms;android-37.0"
+  ANDROID_BUILD_TOOLS: "build-tools;36.0.0"
+  # CI 构建号：注入 BuildConfig.BUILD_STAMP，供 App 内 Debug 更新检查做「远端 run_number > 本地」比较
+  BUILD_STAMP: ${{ github.run_number }}
+
+jobs:
+  debug:
+    name: Assemble Debug
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # 需要取到 v* tag，用于生成 Full changelog 对比链接
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # Gradle 缓存：依赖（~/.gradle/caches）、wrapper 与 configuration cache 一并复用
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Install required Android SDK packages
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "$ANDROID_PLATFORM" \
+            "$ANDROID_BUILD_TOOLS" > /dev/null
+
+      - name: Read version info
+        id: version
+        run: |
+          VERSION_NAME=$(sed -n 's/.*versionName *= *"\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)
+          VERSION_CODE=$(sed -n 's/.*versionCode *= *\([0-9]*\).*/\1/p' app/build.gradle.kts | head -n 1)
+          DATE_STAMP=$(date -u +%Y%m%d)
+          {
+            echo "name=$VERSION_NAME"
+            echo "code=$VERSION_CODE"
+            echo "date_stamp=$DATE_STAMP"
+          } >> "$GITHUB_OUTPUT"
+          echo "versionName=$VERSION_NAME versionCode=$VERSION_CODE dateStamp=$DATE_STAMP buildStamp=$BUILD_STAMP"
+
+      # 构建输出同时落盘，失败时随日志一起上传；-PbuildStamp 写入 BuildConfig.BUILD_STAMP
+      - name: Build Debug APK
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew --no-daemon assembleDebug -PbuildStamp="$BUILD_STAMP" 2>&1 | tee gradle-build.log
+
+      - name: Package artifact
+        run: |
+          mkdir -p dist
+          APK="YunmeiVibe-v${{ steps.version.outputs.name }}-debug-ci${{ steps.version.outputs.date_stamp }}-${{ github.run_number }}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/$APK"
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt)
+          ls -la dist
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: YunmeiVibe-debug-ci${{ steps.version.outputs.date_stamp }}-run${{ github.run_number }}
+          path: dist/
+          retention-days: 7
+
+      # 失败时把「核心报错 + 完整日志 + 报告」打包，便于直接下载后丢给 AI 修复
+      - name: Collect failure logs
+        if: failure()
+        run: |
+          mkdir -p ci-logs
+          cp gradle-build.log ci-logs/ 2>/dev/null || true
+          cp -r "$HOME/.gradle/daemon" ci-logs/gradle-daemon 2>/dev/null || true
+          find . -path ./.git -prune -o -type d -name reports -print 2>/dev/null | while read -r dir; do
+            parent=$(dirname "$dir")
+            mkdir -p "ci-logs/$parent"
+            cp -r "$dir" "ci-logs/$parent/" 2>/dev/null || true
+          done
+          grep -nE "^(e: |w: .*error|FAILURE:|> Task .*FAILED|\* What went wrong|Caused by:|Execution failed for task)" \
+            gradle-build.log > ci-logs/errors-summary.txt 2>/dev/null || true
+          echo "--- errors-summary.txt ---"
+          cat ci-logs/errors-summary.txt 2>/dev/null || true
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-run${{ github.run_number }}
+          path: ci-logs/
+          retention-days: 7
+          if-no-files-found: warn
+
+      # Debug 更新渠道：Pre-release（prerelease + latest=false）。
+      # tag 形如 ci-20260912-14（日期 + run_number），同一天多次构建互不覆盖；
+      # 带 pre-release 标记的 Release 不会出现在 /releases/latest，正式更新检查不受影响。
+      # 不删除、不清算任何历史 ci-* 标签与 Release，便于回溯每次构建。
+      - name: Publish debug channel pre-release
+        if: success() && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ci-${{ steps.version.outputs.date_stamp }}-${{ github.run_number }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+        run: |
+          # 对比基线：优先上一个 ci-* 标签；尚无 CI 构建时回退到最近的正式版本 tag（如 v0.4.1）
+          PREV_CI=$(gh release list --limit 100 --json tagName \
+            --jq '[.[] | select(.tagName | startswith("ci-"))][0].tagName // empty')
+          if [ -z "$PREV_CI" ]; then
+            PREV_CI=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          fi
+          echo "compare base: ${PREV_CI:-<none>}"
+
+          {
+            echo "Debug 自动构建（CI 更新渠道）"
+            echo
+            echo "- 版本：$VERSION_NAME (versionCode $VERSION_CODE)"
+            echo "- CI 构建号：$BUILD_STAMP"
+            echo "- 提交：$GITHUB_SHA"
+            echo "- 运行：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            if [ -n "$PREV_CI" ]; then
+              echo
+              echo "**Full changelog**: [$PREV_CI...$TAG]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/$PREV_CI...$TAG)"
+            fi
+            echo
+            echo "> 本 Release 带 pre-release 标记且 latest=false，不会进入正式更新渠道（/releases/latest）。"
+          } > "$RUNNER_TEMP/notes.md"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # 同一 run 的重跑：tag 已存在，只覆盖资产与说明，不做任何删除
+            gh release upload "$TAG" dist/*.apk dist/SHA256SUMS.txt --clobber
+            gh release edit "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$TAG" \
+              --title "CI Debug $TAG" \
+              --prerelease \
+              --latest=false \
+              --target "$GITHUB_SHA" \
+              --notes-file "$RUNNER_TEMP/notes.md" \
+              dist/*.apk dist/SHA256SUMS.txt
+          fi

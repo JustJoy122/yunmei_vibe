@@ -1,8 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <!--
+      浅色开屏/窗口底色：沿用 KernelSU-Style-UI-Kit 的 Theme.Material.Light.NoActionBar，
+      窗口底色由 Light 父主题提供（未显式覆盖，保持原有浅色表现）。
+      深色（系统 night）由 res/values-night/themes.xml 覆盖。
+    -->
     <style name="Theme.YunmeiVibe" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
+    </style>
+
+    <!--
+      应用内「深色」但系统仍为浅色时的开屏底色：由 MainActivity 在 super.onCreate() 之前切换，
+      使应用窗口底色与应用内配色一致，避免系统开屏与 Compose 首帧之间闪白。
+    -->
+    <style name="Theme.YunmeiVibe.Dark" parent="Theme.YunmeiVibe">
+        <item name="android:windowBackground">@color/splash_background_dark</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/splash_background_dark</item>
+    </style>
+
+    <!--
+      应用内「深色 + AMOLED」时的开屏底色：纯黑，与设置页「AMOLED 纯黑背景」开关语义一致。
+      同样由 MainActivity 在 super.onCreate() 之前切换。
+    -->
+    <style name="Theme.YunmeiVibe.Amoled" parent="Theme.YunmeiVibe">
+        <item name="android:windowBackground">@color/splash_background_amoled</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/splash_background_amoled</item>
     </style>
 
 </resources>

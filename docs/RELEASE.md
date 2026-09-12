@@ -141,9 +141,18 @@ YunmeiVibe-v{versionName}-{variant}.apk
 
 ## 7. GitHub Actions 自动化
 
-工作流文件：`.github/workflows/release.yml`。
+本项目有两个工作流，职责严格分离：
 
-### 7.1 触发方式
+| 工作流 | 触发 | 用途 |
+| --- | --- | --- |
+| `.github/workflows/release.yml` | 推送 `v*` **Tag**、手动 | 正式发布（Debug + Release APK + `SHA256SUMS.txt`） |
+| `.github/workflows/build-debug.yml` | push `main`（忽略 `**.md`、`docs/**`）、手动 | 日常 Debug 构建 + `ci-YYYYMMDD-<run_number>` Pre-release（Debug 更新渠道，历史全部保留） |
+
+> [!IMPORTANT] 硬性约束
+> `release.yml` **只允许监听 Tag，绝不监听分支**，保证日常 push 永远不会产出正式 Release。
+> 日常开发流程、失败日志提取方式与禁止事项见 [开发相关](DEVELOPMENT.md) 的「Git 与 CI 工作流」。
+
+### 7.1 触发方式（release.yml）
 
 - **自动**：推送 `v*` 标签（如 `v0.4.0`）即触发。
 - **手动**：仓库 Actions 页 → *Release* → *Run workflow*。

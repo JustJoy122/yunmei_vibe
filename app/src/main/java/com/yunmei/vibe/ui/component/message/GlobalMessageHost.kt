@@ -74,7 +74,8 @@ private fun materialToneColors(tone: UiMessageTone): Pair<Color, Color> {
     val scheme = MaterialTheme.colorScheme
     return when (tone) {
         UiMessageTone.Error -> scheme.error to scheme.onError
-        UiMessageTone.Warning -> scheme.tertiary to scheme.onTertiary
+        // 警告色与 Miuix 保持一致，统一取 tertiaryContainer 一族（两套主题表现一致）。
+        UiMessageTone.Warning -> scheme.tertiaryContainer to scheme.onTertiaryContainer
         UiMessageTone.Success -> scheme.primary to scheme.onPrimary
     }
 }

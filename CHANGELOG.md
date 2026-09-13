@@ -11,7 +11,38 @@
 ---
 ## [Unreleased]
 
-**Full changelog**: [v0.4.2...HEAD](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.2...HEAD)
+**Full changelog**: [v0.4.3...HEAD](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.3...HEAD)
+
+## [0.4.3] - 2026-09-12
+
+**Full changelog**: [v0.4.2...v0.4.3](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.2...v0.4.3)
+
+### 添加
+- 日常 Debug 自动构建工作流 `.github/workflows/build-debug.yml`：push `main`（忽略 `**.md`、`docs/**`）即自动构建 Debug APK 并上传 artifact（保留 7 天）；构建失败时额外上传 `build-logs-run<N>`（含聚合核心报错的 `errors-summary.txt`、完整 Gradle 日志与 `**/build/reports/**`）
+- Debug 更新渠道：构建成功自动发布 `ci-YYYYMMDD-<run_number>` Pre-release（`prerelease` + `latest=false`，不影响正式更新渠道），发布说明附与前一个 CI 构建（或最近正式版本）的 Full changelog 对比链接
+- CI 构建号 `BuildConfig.BUILD_STAMP`：由 `-PbuildStamp=<run_number>` 注入，App 内 Debug 更新检查据此精确判断是否存在更新的 CI 构建
+- 跨页面提示机制：新增 `UiMessage.kt`（`UiMessageBus`，`Channel` 缓冲）与 `GlobalMessageHost`，Material 复用模板 `SnackBarHost`、Miuix 使用官方 `Snackbar`，返回目标页后提示仍完整可见
+- 深色模式开屏适配：新增 `values-night/themes.xml`、`values/colors.xml` 与 `Theme.YunmeiVibe.Dark` / `Theme.YunmeiVibe.Amoled`，开屏窗口底色跟随系统深色与 AMOLED 开关
+- 关于页列表复用 InstallerX Revived 的 `SegmentedColumn`（新增 `ui/component/setting/SegmentedColumn.kt`）
+
+### 更改
+- 关于页版本号按构建类型区分：Debug 显示 `测试版 0.4.3 (CI #N)`（本地无构建号时显示「本地」），Release 显示 `正式版 0.4.3`
+- 关于页卡片与列表样式对齐 InstallerX Revived：卡片几何与 `useBlur` 分支 1:1 复用，容器色改为 `surfaceContainerHigh`，列表项由 `SegmentedColumn` 成组
+- 登录失败提示分类：新增 `YunMeiAuthException`，账号/密码错误提示「账号或密码错误，请重试」，其他异常提示「登录失败：{原始信息}」（原始信息单行化并截断）
+- 登录成功类提示改为跨页面 Snackbar，并按语义取色：无门锁用警告色、已添加门锁用 `primary`
+- 警告提示色统一为 `tertiaryContainer` / `onTertiaryContainer`（Material 与 Miuix 表现一致）
+- CI 工作流步骤名中文化，并升级 `actions/checkout`、`actions/setup-java`、`gradle/actions/setup-gradle` 至 v6
+- `README.md` 修正第三方依赖清单链接路径（`doc/` → `docs/`）
+- 文档：`docs/DEVELOPMENT.md` 新增「Git 与 CI 工作流」章节，`docs/RELEASE.md` 补充双工作流职责与「release 只监听 Tag」硬性约束
+
+### 修复
+- 已保存账号点击「显示密码」显示出一串密码 MD5：不再把摘要回填密码输入框，改为占位提示「已保存，无需重复输入」并禁用「显示密码」开关，登录仍直接复用已保存凭证
+- 登录成功/失败提示随登录页被销毁一闪而过：改为跨页面提示，返回主界面后仍可见
+- 系统深色模式下开屏仍为全白：补齐 night 主题并显式指定 `windowBackground` / `windowSplashScreenBackground`
+- 深色模式下关于页顶部信息卡与下方列表项出现重叠观感：改用 `SegmentedColumn` 成组，并恢复卡片实色容器与默认阴影（`useBlur` 分支不再被写死）
+
+### 验证
+- **已验证：已通过实地门锁测试，确认功能可用。**
 
 ## [0.4.2] - 2026-09-11
 
@@ -394,7 +425,8 @@
 版本对比链接定义（Keep a Changelog 惯例）。
 注意：标签需与标题中的 [x.y.z] 完全一致，Markdown 渲染时版本号才可点击。
 -->
-[Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.3.9...v0.4.0

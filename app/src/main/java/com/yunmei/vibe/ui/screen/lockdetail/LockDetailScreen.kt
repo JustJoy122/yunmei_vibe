@@ -5,6 +5,13 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -76,6 +83,9 @@ import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+
+/** 二维码展开/折叠动画时长（200–300ms 区间，与 InstallerX Revived 的手风琴写法一致）。 */
+private const val QR_ANIM_DURATION_MS = 250
 
 @Composable
 fun LockDetailScreen(label: String) {
@@ -263,7 +273,34 @@ private fun LockDetailScreenMaterial(
                 }
             )
 
-            if (showQr) {
+            // 「分享二维码」开关行单独成组：二维码紧贴其下方展开（手风琴式），不再出现在按钮上方。
+            SegmentedColumn(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                content = listOf {
+                    SegmentedListItem(
+                        onClick = onToggleQr,
+                        headlineContent = { Text(stringResource(R.string.lock_detail_share_qr)) },
+                        leadingContent = { Icon(Icons.Filled.QrCode2, null) },
+                    )
+                }
+            )
+
+            // 展开/折叠动画：复用 InstallerX Revived 各页面通用的手风琴写法
+            // （fadeIn + expandVertically 自顶向下展开，fadeOut + shrinkVertically 向上收起）。
+            // 卡片圆角、底色、内边距仍由主题组件 TonalCard 提供，不硬编码。
+            AnimatedVisibility(
+                visible = showQr,
+                enter = fadeIn(tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing)) +
+                    expandVertically(
+                        animationSpec = tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing),
+                        expandFrom = Alignment.Top,
+                    ),
+                exit = fadeOut(tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing)) +
+                    shrinkVertically(
+                        animationSpec = tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing),
+                        shrinkTowards = Alignment.Top,
+                    ),
+            ) {
                 TonalCard(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Column(
                         modifier = Modifier
@@ -294,13 +331,6 @@ private fun LockDetailScreenMaterial(
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 content = listOf(
-                    {
-                        SegmentedListItem(
-                            onClick = onToggleQr,
-                            headlineContent = { Text(stringResource(R.string.lock_detail_share_qr)) },
-                            leadingContent = { Icon(Icons.Filled.QrCode2, null) },
-                        )
-                    },
                     {
                         SegmentedListItem(
                             onClick = actions.onShare,
@@ -437,7 +467,39 @@ private fun LockDetailScreenMiuix(
                     )
                 }
 
-                if (showQr) {
+                // 「分享二维码」开关行单独成卡：二维码紧贴其下方展开（手风琴式），不再出现在按钮上方。
+                Card(
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .fillMaxWidth(),
+                ) {
+                    BasicComponent(
+                        title = stringResource(R.string.lock_detail_share_qr),
+                        startAction = {
+                            MiuixIcon(
+                                imageVector = Icons.Filled.QrCode2,
+                                tint = colorScheme.onSurface,
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = onToggleQr,
+                    )
+                }
+
+                // 与 Material 分支完全相同的展开/折叠动画；卡片圆角、底色、内边距由 Miuix 主题 Card 提供。
+                AnimatedVisibility(
+                    visible = showQr,
+                    enter = fadeIn(tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing)) +
+                        expandVertically(
+                            animationSpec = tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing),
+                            expandFrom = Alignment.Top,
+                        ),
+                    exit = fadeOut(tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing)) +
+                        shrinkVertically(
+                            animationSpec = tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing),
+                            shrinkTowards = Alignment.Top,
+                        ),
+                ) {
                     Card(
                         modifier = Modifier
                             .padding(top = 12.dp)
@@ -473,17 +535,6 @@ private fun LockDetailScreenMiuix(
                         .padding(top = 12.dp)
                         .fillMaxWidth(),
                 ) {
-                    BasicComponent(
-                        title = stringResource(R.string.lock_detail_share_qr),
-                        startAction = {
-                            MiuixIcon(
-                                imageVector = Icons.Filled.QrCode2,
-                                tint = colorScheme.onSurface,
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = onToggleQr,
-                    )
                     BasicComponent(
                         title = stringResource(R.string.lock_detail_share),
                         startAction = {

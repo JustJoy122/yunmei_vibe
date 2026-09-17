@@ -331,8 +331,8 @@ fun ThemeSettingsMaterial(
                     )
 
                     AnimatedVisibility(visible = uiState.enablePredictiveBack) {
-                        // 两条菜单并列：动画样式（复用 InstallerX Revived 的四档，不含「无」）+ 返回方向。
-                        // 样式为 KernelSU-Style-UI-Kit 的 SegmentedDropdownItem，与上方「色彩风格 / 色彩标准」同款。
+                        // 动画样式（复用 InstallerX Revived 的四档，不含「无」）；样式为 KernelSU-Style-UI-Kit
+                        // 的 SegmentedDropdownItem，与上方「色彩风格 / 色彩标准」同款。
                         SegmentedColumn(
                             modifier = Modifier.padding(top = 4.dp),
                             content = listOf(
@@ -346,21 +346,30 @@ fun ThemeSettingsMaterial(
                                             actions.onSetPredictiveBackAnimation(animations[index].value)
                                         }
                                     )
-                                },
-                                {
-                                    SegmentedDropdownItem(
-                                        icon = Icons.Rounded.SwapHoriz,
-                                        title = stringResource(R.string.settings_predictive_back_direction),
-                                        summary = stringResource(R.string.settings_predictive_back_direction_summary),
-                                        items = directionItems,
-                                        selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
-                                        onItemSelected = { index ->
-                                            actions.onSetPredictiveBackExitDirection(directions[index].value)
-                                        }
-                                    )
                                 }
                             )
                         )
+
+                        // 返回方向仅对「缩放」档生效，与上游 InstallerX 的显示逻辑一致。
+                        AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
+                            SegmentedColumn(
+                                modifier = Modifier.padding(top = 4.dp),
+                                content = listOf(
+                                    {
+                                        SegmentedDropdownItem(
+                                            icon = Icons.Rounded.SwapHoriz,
+                                            title = stringResource(R.string.settings_predictive_back_direction),
+                                            summary = stringResource(R.string.settings_predictive_back_direction_summary),
+                                            items = directionItems,
+                                            selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
+                                            onItemSelected = { index ->
+                                                actions.onSetPredictiveBackExitDirection(directions[index].value)
+                                            }
+                                        )
+                                    }
+                                )
+                            )
+                        }
                     }
                 }
 

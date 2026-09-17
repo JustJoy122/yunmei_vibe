@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -17,12 +18,14 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -38,6 +41,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -51,12 +57,14 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SinglePaneSceneStrategy
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackCornerRadius
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
 import com.yunmei.vibe.ui.animation.predictiveback.predictiveBackSpecs
 import com.yunmei.vibe.ui.component.bottombar.BottomBar
@@ -236,46 +244,87 @@ class MainActivity : ComponentActivity() {
                     // 预测性返回：动画档位/方向来自设置；开关关闭时不启用返回动画（等价 InstallerX 的「无」档），
                     // 由下面 entry 内的 NavigationBackHandler 拦掉手势，页面不再跟随手指位移。
                     val layoutDirection = LocalLayoutDirection.current
+                    val density = LocalDensity.current
+                    val currentAnimation = PredictiveBackAnimation.fromValueOrDefault(uiState.predictiveBackAnimation)
+                    val currentExitDirection = PredictiveBackExitDirection.fromValueOrDefault(uiState.predictiveBackExitDirection)
                     val navSpecs = remember(
                         uiState.predictiveBackEnabled,
-                        uiState.predictiveBackAnimation,
-                        uiState.predictiveBackExitDirection,
+                        currentAnimation,
+                        currentExitDirection,
                         layoutDirection,
+                        density,
                     ) {
                         predictiveBackSpecs<androidx.navigation3.runtime.NavKey>(
                             enabled = uiState.predictiveBackEnabled,
-                            animation = PredictiveBackAnimation.fromValueOrDefault(uiState.predictiveBackAnimation),
-                            exitDirection = PredictiveBackExitDirection.fromValueOrDefault(uiState.predictiveBackExitDirection),
+                            animation = currentAnimation,
+                            exitDirection = currentExitDirection,
                             layoutDirection = layoutDirection,
+                            density = density,
                         )
                     }
                     // entryProvider 被 remember 缓存（见下），拦截标记必须用 State 传递，否则会捕获初次组合的旧值。
                     val interceptPredictiveBack = rememberUpdatedState(
                         !uiState.predictiveBackEnabled && navigator.backStackSize() > 1
                     )
+                    // 页面效果层（复刻 InstallerX NavDisplayEffects）：圆角裁剪始终开启，
+                    // All（AOSP / 缩放 / 经典档）或 Leading（Miuix 档）；底色取各主题的 surface / surfaceContainer。
+                    val roundAllCorners = uiState.predictiveBackEnabled &&
+                        currentAnimation != PredictiveBackAnimation.MIUIX
+                    val pageBackdropColor = when (uiMode) {
+                        UiMode.Material -> MaterialTheme.colorScheme.surfaceContainer
+                        UiMode.Miuix -> MiuixTheme.colorScheme.surface
+                    }
 
                     // entryProvider：组合上下文构建（inline 需要），remember 缓存首次实例保证跨重组引用稳定。
                     val freshEntryProvider: (androidx.navigation3.runtime.NavKey) -> androidx.navigation3.runtime.NavEntry<androidx.navigation3.runtime.NavKey> =
                         entryProvider {
                             entry<Route.Main> {
-                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { mainScreenEntry() }
+                                PredictiveBackEntry(
+                                    interceptPredictiveBack,
+                                    navOnBack,
+                                    roundAllCorners,
+                                    pageBackdropColor,
+                                ) { mainScreenEntry() }
                             }
                             entry<Route.Login> {
-                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { LoginScreen() }
+                                PredictiveBackEntry(
+                                    interceptPredictiveBack,
+                                    navOnBack,
+                                    roundAllCorners,
+                                    pageBackdropColor,
+                                ) { LoginScreen() }
                             }
                             entry<Route.ThemeSettings> {
-                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { ThemeSettingsScreen() }
+                                PredictiveBackEntry(
+                                    interceptPredictiveBack,
+                                    navOnBack,
+                                    roundAllCorners,
+                                    pageBackdropColor,
+                                ) { ThemeSettingsScreen() }
                             }
                             entry<Route.About> {
-                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { AboutScreen() }
+                                PredictiveBackEntry(
+                                    interceptPredictiveBack,
+                                    navOnBack,
+                                    roundAllCorners,
+                                    pageBackdropColor,
+                                ) { AboutScreen() }
                             }
                             entry<Route.OpenSourceLicense> {
-                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { LicenseScreen() }
+                                PredictiveBackEntry(
+                                    interceptPredictiveBack,
+                                    navOnBack,
+                                    roundAllCorners,
+                                    pageBackdropColor,
+                                ) { LicenseScreen() }
                             }
                             entry<Route.LockDetail> { route ->
-                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) {
-                                    LockDetailScreen(route.label)
-                                }
+                                PredictiveBackEntry(
+                                    interceptPredictiveBack,
+                                    navOnBack,
+                                    roundAllCorners,
+                                    pageBackdropColor,
+                                ) { LockDetailScreen(route.label) }
                             }
                         }
                     val navEntryProvider = remember { freshEntryProvider }
@@ -473,6 +522,8 @@ fun MainScreen(
 private fun PredictiveBackEntry(
     interceptPredictiveBack: State<Boolean>,
     onBack: () -> Unit,
+    roundAllCorners: Boolean,
+    backdropColor: Color,
     content: @Composable () -> Unit,
 ) {
     val intercept by interceptPredictiveBack
@@ -482,7 +533,27 @@ private fun PredictiveBackEntry(
         isBackEnabled = intercept,
         onBackCompleted = onBack,
     )
-    content()
+
+    // 页面效果层：复刻 InstallerX NavDisplayEffects 的圆角裁剪
+    // （enableCornerClip + cornerClipRadius + cornerClipMode）与 backdropColor。
+    // 圆角只在过渡进行中生效：上游该层用于让进入页与底色之间露出圆角缝隙，
+    // 静止时页面铺满、圆角不可见，因此静止态用 RectangleShape，避免对现有页面造成任何视觉副作用。
+    val animatedScope = LocalNavAnimatedContentScope.current
+    val cornerRadius = PredictiveBackCornerRadius
+    val clipShape = when {
+        !animatedScope.transition.isRunning -> RectangleShape
+        roundAllCorners -> RoundedCornerShape(cornerRadius)
+        else -> RoundedCornerShape(topStart = cornerRadius, bottomStart = cornerRadius)
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backdropColor)
+            .clip(clipShape),
+    ) {
+        content()
+    }
 }
 
 @Composable

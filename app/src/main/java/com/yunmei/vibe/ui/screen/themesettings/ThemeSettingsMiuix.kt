@@ -408,23 +408,26 @@ fun ThemeSettingsMiuix(
                                             actions.onSetPredictiveBackAnimation(animations[index].value)
                                         }
                                     )
-                                    OverlayDropdownPreference(
-                                        title = stringResource(R.string.settings_predictive_back_direction),
-                                        summary = stringResource(R.string.settings_predictive_back_direction_summary),
-                                        items = directionItems,
-                                        startAction = {
-                                            Icon(
-                                                Icons.Rounded.SwapHoriz,
-                                                modifier = Modifier.padding(end = 6.dp),
-                                                contentDescription = stringResource(R.string.settings_predictive_back_direction),
-                                                tint = colorScheme.onBackground
-                                            )
-                                        },
-                                        selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
-                                        onSelectedIndexChange = { index ->
-                                            actions.onSetPredictiveBackExitDirection(directions[index].value)
-                                        }
-                                    )
+                                    // 返回方向仅对「缩放」档生效，与上游 InstallerX 的显示逻辑一致。
+                                    AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
+                                        OverlayDropdownPreference(
+                                            title = stringResource(R.string.settings_predictive_back_direction),
+                                            summary = stringResource(R.string.settings_predictive_back_direction_summary),
+                                            items = directionItems,
+                                            startAction = {
+                                                Icon(
+                                                    Icons.Rounded.SwapHoriz,
+                                                    modifier = Modifier.padding(end = 6.dp),
+                                                    contentDescription = stringResource(R.string.settings_predictive_back_direction),
+                                                    tint = colorScheme.onBackground
+                                                )
+                                            },
+                                            selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
+                                            onSelectedIndexChange = { index ->
+                                                actions.onSetPredictiveBackExitDirection(directions[index].value)
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }

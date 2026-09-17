@@ -34,6 +34,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.scene.Scene
@@ -228,6 +229,13 @@ private const val MIUIX_COVERED_ALPHA = 0.9f
 private val MiuixMotion = spring<Float>(dampingRatio = 1.0f, stiffness = 1600.0f)
 
 /**
+ * 与 [MiuixMotion] 参数完全相同、仅目标类型不同的位移动效：
+ * Compose 的 `slideInHorizontally` / `slideOutHorizontally` 形参是 `FiniteAnimationSpec<IntOffset>`，
+ * 不能与 alpha 用的 `FiniteAnimationSpec<Float>` 共用同一个实例（两者收敛时序一致，故参数一字不改）。
+ */
+private val MiuixOffsetMotion = spring<IntOffset>(dampingRatio = 1.0f, stiffness = 1600.0f)
+
+/**
  * Miuix 档：push/pop 都用 miuix 默认过渡。进入页自尾部整屏滑入（RTL 镜像）；被覆盖页向前端视差 1/4 宽、
  * alpha 1 → 0.9；返回时二者反向（被覆盖页 alpha 0.9 → 1）。上游把圆角裁剪与暗化放在独立的
  * `NavDisplayEffects` 层（圆角裁剪见 MainActivity 的页面效果层实现）。
@@ -244,11 +252,11 @@ private fun <T : Any> miuixPush(rtl: Boolean): AnimatedContentTransitionScope<Sc
     return {
         ContentTransform(
             targetContentEnter = slideInHorizontally(
-                animationSpec = MiuixMotion,
+                animationSpec = MiuixOffsetMotion,
                 initialOffsetX = { full -> (enterSign * full).toInt() },
             ),
             initialContentExit = slideOutHorizontally(
-                animationSpec = MiuixMotion,
+                animationSpec = MiuixOffsetMotion,
                 targetOffsetX = { full -> (coverSign * full * MIUIX_COVERED_PARALLAX).toInt() },
             ) + fadeOut(targetAlpha = MIUIX_COVERED_ALPHA, animationSpec = MiuixMotion),
         )
@@ -261,11 +269,11 @@ private fun <T : Any> miuixPop(rtl: Boolean): AnimatedContentTransitionScope<Sce
     return {
         ContentTransform(
             targetContentEnter = slideInHorizontally(
-                animationSpec = MiuixMotion,
+                animationSpec = MiuixOffsetMotion,
                 initialOffsetX = { full -> (coverSign * full * MIUIX_COVERED_PARALLAX).toInt() },
             ) + fadeIn(initialAlpha = MIUIX_COVERED_ALPHA, animationSpec = MiuixMotion),
             initialContentExit = slideOutHorizontally(
-                animationSpec = MiuixMotion,
+                animationSpec = MiuixOffsetMotion,
                 targetOffsetX = { full -> (enterSign * full).toInt() },
             ),
         )

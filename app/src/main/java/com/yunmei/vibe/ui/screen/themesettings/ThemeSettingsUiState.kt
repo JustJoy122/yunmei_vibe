@@ -29,5 +29,7 @@ data class ThemeSettingsActions(
     val onSetEnableFloatingBottomBar: (Boolean) -> Unit,
     val onSetEnableFloatingBottomBarBlur: (Boolean) -> Unit,
     val onSetEnablePredictiveBack: (Boolean) -> Unit,
+    val onSetPredictiveBackAnimation: (String) -> Unit,
+    val onSetPredictiveBackExitDirection: (String) -> Unit,
     val onSetPageScale: (Float) -> Unit,
 )

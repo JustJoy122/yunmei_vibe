@@ -103,6 +103,9 @@ class MainActivityViewModel(
             enableFloatingBottomBar = settingRepo.enableFloatingBottomBar,
             enableFloatingBottomBarBlur = settingRepo.enableFloatingBottomBarBlur,
             uiMode = UiMode.fromValue(settingRepo.uiMode),
+            predictiveBackEnabled = settingRepo.enablePredictiveBack,
+            predictiveBackAnimation = settingRepo.predictiveBackAnimation,
+            predictiveBackExitDirection = settingRepo.predictiveBackExitDirection,
         )
     }
 
@@ -119,6 +122,8 @@ class MainActivityViewModel(
             "enable_floating_bottom_bar",
             "enable_floating_bottom_bar_blur",
             "enable_predictive_back",
+            "predictive_back_animation",
+            "predictive_back_exit_direction",
             "page_scale",
             "ui_mode",
         )

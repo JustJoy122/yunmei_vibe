@@ -49,12 +49,14 @@ import androidx.compose.material.icons.filled.Brightness7
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.BlurOn
 import androidx.compose.material.icons.rounded.CallToAction
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Style
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.ButtonGroupDefaults
@@ -96,6 +98,8 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.materialkolor.rememberDynamicColorScheme
 import com.yunmei.vibe.R
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedDropdownItem
 import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
@@ -292,7 +296,25 @@ fun ThemeSettingsMaterial(
                     )
                 )
 
+                // 返回动画选项（顺序必须与枚举 entries 一致，避免 selectedIndex 错位）
+                val animations = PredictiveBackAnimation.entries
+                val directions = PredictiveBackExitDirection.entries
+                val currentAnimation = PredictiveBackAnimation.fromValueOrDefault(uiState.predictiveBackAnimation)
+                val currentDirection = PredictiveBackExitDirection.fromValueOrDefault(uiState.predictiveBackExitDirection)
+                val animationItems = listOf(
+                    stringResource(R.string.settings_predictive_back_animation_aosp),
+                    stringResource(R.string.settings_predictive_back_animation_miuix),
+                    stringResource(R.string.settings_predictive_back_animation_scale),
+                    stringResource(R.string.settings_predictive_back_animation_classic),
+                )
+                val directionItems = listOf(
+                    stringResource(R.string.settings_predictive_back_direction_follow_gesture),
+                    stringResource(R.string.settings_predictive_back_direction_always_right),
+                    stringResource(R.string.settings_predictive_back_direction_always_left),
+                )
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    // 开关 + 菜单联动（结构对齐「莫奈取色 → 强调色」）：开关关闭即不启用返回动画，菜单整组收起。
                     SegmentedColumn(
                         modifier = Modifier.padding(top = 4.dp),
                         content = listOf(
@@ -307,6 +329,39 @@ fun ThemeSettingsMaterial(
                             }
                         )
                     )
+
+                    AnimatedVisibility(visible = uiState.enablePredictiveBack) {
+                        // 两条菜单并列：动画样式（复用 InstallerX Revived 的四档，不含「无」）+ 返回方向。
+                        // 样式为 KernelSU-Style-UI-Kit 的 SegmentedDropdownItem，与上方「色彩风格 / 色彩标准」同款。
+                        SegmentedColumn(
+                            modifier = Modifier.padding(top = 4.dp),
+                            content = listOf(
+                                {
+                                    SegmentedDropdownItem(
+                                        icon = Icons.Rounded.Animation,
+                                        title = stringResource(R.string.settings_predictive_back_animation),
+                                        items = animationItems,
+                                        selectedIndex = animations.indexOf(currentAnimation).coerceAtLeast(0),
+                                        onItemSelected = { index ->
+                                            actions.onSetPredictiveBackAnimation(animations[index].value)
+                                        }
+                                    )
+                                },
+                                {
+                                    SegmentedDropdownItem(
+                                        icon = Icons.Rounded.SwapHoriz,
+                                        title = stringResource(R.string.settings_predictive_back_direction),
+                                        summary = stringResource(R.string.settings_predictive_back_direction_summary),
+                                        items = directionItems,
+                                        selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
+                                        onItemSelected = { index ->
+                                            actions.onSetPredictiveBackExitDirection(directions[index].value)
+                                        }
+                                    )
+                                }
+                            )
+                        )
+                    }
                 }
 
                 // 按模板逻辑：模糊/悬浮底栏/液态玻璃为 Miuix 主题独占（Material 底栏不使用

@@ -56,6 +56,8 @@ class SettingsViewModel(
                     colorStyle = repo.colorStyle,
                     colorSpec = repo.colorSpec,
                     enablePredictiveBack = repo.enablePredictiveBack,
+                    predictiveBackAnimation = repo.predictiveBackAnimation,
+                    predictiveBackExitDirection = repo.predictiveBackExitDirection,
                     enableBlur = repo.enableBlur,
                     enableFloatingBottomBar = repo.enableFloatingBottomBar,
                     enableFloatingBottomBarBlur = repo.enableFloatingBottomBarBlur,
@@ -157,6 +159,18 @@ class SettingsViewModel(
     fun setEnablePredictiveBack(enabled: Boolean) {
         repo.enablePredictiveBack = enabled
         _uiState.update { it.copy(enablePredictiveBack = enabled) }
+    }
+
+    /** 返回动画档位（aosp / miuix / scale / ksu_classic），取值与 InstallerX Revived 一致。 */
+    fun setPredictiveBackAnimation(animation: String) {
+        repo.predictiveBackAnimation = animation
+        _uiState.update { it.copy(predictiveBackAnimation = animation) }
+    }
+
+    /** 返回方向（follow_gesture / always_right / always_left），仅「缩放」档生效。 */
+    fun setPredictiveBackExitDirection(direction: String) {
+        repo.predictiveBackExitDirection = direction
+        _uiState.update { it.copy(predictiveBackExitDirection = direction) }
     }
 
     fun setPageScale(scale: Float) {

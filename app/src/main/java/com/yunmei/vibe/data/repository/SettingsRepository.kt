@@ -10,6 +10,8 @@ interface SettingsRepository {
     var colorStyle: String
     var colorSpec: String
     var enablePredictiveBack: Boolean
+    var predictiveBackAnimation: String
+    var predictiveBackExitDirection: String
     var enableBlur: Boolean
     var enableFloatingBottomBar: Boolean
     var enableFloatingBottomBarBlur: Boolean

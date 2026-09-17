@@ -43,7 +43,11 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Style
+import androidx.compose.material.icons.rounded.Animation
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Wallpaper
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -344,6 +348,23 @@ fun ThemeSettingsMiuix(
                         }
                     }
 
+                    // 返回动画选项（顺序必须与枚举 entries 一致，避免 selectedIndex 错位）
+                    val animations = PredictiveBackAnimation.entries
+                    val directions = PredictiveBackExitDirection.entries
+                    val currentAnimation = PredictiveBackAnimation.fromValueOrDefault(uiState.predictiveBackAnimation)
+                    val currentDirection = PredictiveBackExitDirection.fromValueOrDefault(uiState.predictiveBackExitDirection)
+                    val animationItems = listOf(
+                        stringResource(R.string.settings_predictive_back_animation_aosp),
+                        stringResource(R.string.settings_predictive_back_animation_miuix),
+                        stringResource(R.string.settings_predictive_back_animation_scale),
+                        stringResource(R.string.settings_predictive_back_animation_classic),
+                    )
+                    val directionItems = listOf(
+                        stringResource(R.string.settings_predictive_back_direction_follow_gesture),
+                        stringResource(R.string.settings_predictive_back_direction_always_right),
+                        stringResource(R.string.settings_predictive_back_direction_always_left),
+                    )
+
                     Card(
                         modifier = Modifier
                             .padding(top = 12.dp)
@@ -366,6 +387,46 @@ fun ThemeSettingsMiuix(
                                     actions.onSetEnablePredictiveBack(it)
                                 }
                             )
+
+                            // 开关 + 菜单联动（与上方「莫奈取色 → 强调色」完全同款结构）：
+                            // 开关关闭即不启用返回动画，两条菜单整组收起。
+                            AnimatedVisibility(visible = uiState.enablePredictiveBack) {
+                                Column {
+                                    OverlayDropdownPreference(
+                                        title = stringResource(R.string.settings_predictive_back_animation),
+                                        items = animationItems,
+                                        startAction = {
+                                            Icon(
+                                                Icons.Rounded.Animation,
+                                                modifier = Modifier.padding(end = 6.dp),
+                                                contentDescription = stringResource(R.string.settings_predictive_back_animation),
+                                                tint = colorScheme.onBackground
+                                            )
+                                        },
+                                        selectedIndex = animations.indexOf(currentAnimation).coerceAtLeast(0),
+                                        onSelectedIndexChange = { index ->
+                                            actions.onSetPredictiveBackAnimation(animations[index].value)
+                                        }
+                                    )
+                                    OverlayDropdownPreference(
+                                        title = stringResource(R.string.settings_predictive_back_direction),
+                                        summary = stringResource(R.string.settings_predictive_back_direction_summary),
+                                        items = directionItems,
+                                        startAction = {
+                                            Icon(
+                                                Icons.Rounded.SwapHoriz,
+                                                modifier = Modifier.padding(end = 6.dp),
+                                                contentDescription = stringResource(R.string.settings_predictive_back_direction),
+                                                tint = colorScheme.onBackground
+                                            )
+                                        },
+                                        selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
+                                        onSelectedIndexChange = { index ->
+                                            actions.onSetPredictiveBackExitDirection(directions[index].value)
+                                        }
+                                    )
+                                }
+                            }
                         }
 
                         var sliderValue by remember(uiState.pageScale) { mutableFloatStateOf(uiState.pageScale) }

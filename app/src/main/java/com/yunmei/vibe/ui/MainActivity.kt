@@ -29,6 +29,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
@@ -54,6 +56,9 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.yunmei.vibe.R
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
+import com.yunmei.vibe.ui.animation.predictiveback.predictiveBackSpecs
 import com.yunmei.vibe.ui.component.bottombar.BottomBar
 import com.yunmei.vibe.ui.component.bottombar.MainPagerState
 import com.yunmei.vibe.ui.component.bottombar.SideRail
@@ -228,15 +233,50 @@ class MainActivity : ComponentActivity() {
                             SinglePaneSceneStrategy()
                         )
                     }
+                    // 预测性返回：动画档位/方向来自设置；开关关闭时不启用返回动画（等价 InstallerX 的「无」档），
+                    // 由下面 entry 内的 NavigationBackHandler 拦掉手势，页面不再跟随手指位移。
+                    val layoutDirection = LocalLayoutDirection.current
+                    val navSpecs = remember(
+                        uiState.predictiveBackEnabled,
+                        uiState.predictiveBackAnimation,
+                        uiState.predictiveBackExitDirection,
+                        layoutDirection,
+                    ) {
+                        predictiveBackSpecs<androidx.navigation3.runtime.NavKey>(
+                            enabled = uiState.predictiveBackEnabled,
+                            animation = PredictiveBackAnimation.fromValueOrDefault(uiState.predictiveBackAnimation),
+                            exitDirection = PredictiveBackExitDirection.fromValueOrDefault(uiState.predictiveBackExitDirection),
+                            layoutDirection = layoutDirection,
+                        )
+                    }
+                    // entryProvider 被 remember 缓存（见下），拦截标记必须用 State 传递，否则会捕获初次组合的旧值。
+                    val interceptPredictiveBack = rememberUpdatedState(
+                        !uiState.predictiveBackEnabled && navigator.backStackSize() > 1
+                    )
+
                     // entryProvider：组合上下文构建（inline 需要），remember 缓存首次实例保证跨重组引用稳定。
                     val freshEntryProvider: (androidx.navigation3.runtime.NavKey) -> androidx.navigation3.runtime.NavEntry<androidx.navigation3.runtime.NavKey> =
                         entryProvider {
-                            entry<Route.Main> { mainScreenEntry() }
-                            entry<Route.Login> { LoginScreen() }
-                            entry<Route.ThemeSettings> { ThemeSettingsScreen() }
-                            entry<Route.About> { AboutScreen() }
-                            entry<Route.OpenSourceLicense> { LicenseScreen() }
-                            entry<Route.LockDetail> { route -> LockDetailScreen(route.label) }
+                            entry<Route.Main> {
+                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { mainScreenEntry() }
+                            }
+                            entry<Route.Login> {
+                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { LoginScreen() }
+                            }
+                            entry<Route.ThemeSettings> {
+                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { ThemeSettingsScreen() }
+                            }
+                            entry<Route.About> {
+                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { AboutScreen() }
+                            }
+                            entry<Route.OpenSourceLicense> {
+                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) { LicenseScreen() }
+                            }
+                            entry<Route.LockDetail> { route ->
+                                PredictiveBackEntry(interceptPredictiveBack, navOnBack) {
+                                    LockDetailScreen(route.label)
+                                }
+                            }
                         }
                     val navEntryProvider = remember { freshEntryProvider }
 
@@ -246,6 +286,9 @@ class MainActivity : ComponentActivity() {
                             entryDecorators = navEntryDecorators,
                             onBack = navOnBack,
                             sceneStrategies = navSceneStrategies,
+                            transitionSpec = navSpecs.transition,
+                            popTransitionSpec = navSpecs.pop,
+                            predictivePopTransitionSpec = navSpecs.predictivePop,
                             entryProvider = navEntryProvider,
                         )
                     }
@@ -418,6 +461,28 @@ fun MainScreen(
             }
         }
     }
+}
+
+/**
+ * 与 InstallerX Revived 的 `InstallerNavEntry` 同构：当「预测性返回手势」开关关闭时，
+ * 在 entry 内部注册一个启用状态的 [NavigationBackHandler]，把预测性返回手势拦在本层，
+ * NavDisplay 的手势状态机不再收到进度，页面因此不跟随手指位移，松手后按普通返回过渡播完
+ * （即上游 NoPredictiveBackTransition 的「无」档行为）。
+ */
+@Composable
+private fun PredictiveBackEntry(
+    interceptPredictiveBack: State<Boolean>,
+    onBack: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val intercept by interceptPredictiveBack
+    val navigationEventState = rememberNavigationEventState(NavigationEventInfo.None)
+    NavigationBackHandler(
+        state = navigationEventState,
+        isBackEnabled = intercept,
+        onBackCompleted = onBack,
+    )
+    content()
 }
 
 @Composable

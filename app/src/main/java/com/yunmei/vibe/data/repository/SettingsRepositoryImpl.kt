@@ -6,6 +6,8 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.ui.UiMode
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
 
 class SettingsRepositoryImpl : SettingsRepository {
 
@@ -48,6 +50,18 @@ class SettingsRepositoryImpl : SettingsRepository {
     override var enablePredictiveBack: Boolean
         get() = prefs.getBoolean("enable_predictive_back", false)
         set(value) = prefs.edit { putBoolean("enable_predictive_back", value) }
+
+    /** 返回动画档位；取值与 InstallerX Revived 一致（aosp / miuix / scale / ksu_classic），默认 aosp。 */
+    override var predictiveBackAnimation: String
+        get() = prefs.getString("predictive_back_animation", PredictiveBackAnimation.DEFAULT.value)
+            ?: PredictiveBackAnimation.DEFAULT.value
+        set(value) = prefs.edit { putString("predictive_back_animation", value) }
+
+    /** 返回方向；取值与 InstallerX Revived 一致（follow_gesture / always_right / always_left）。 */
+    override var predictiveBackExitDirection: String
+        get() = prefs.getString("predictive_back_exit_direction", PredictiveBackExitDirection.DEFAULT.value)
+            ?: PredictiveBackExitDirection.DEFAULT.value
+        set(value) = prefs.edit { putString("predictive_back_exit_direction", value) }
 
     override var enableBlur: Boolean
         get() = prefs.getBoolean("enable_blur", true)

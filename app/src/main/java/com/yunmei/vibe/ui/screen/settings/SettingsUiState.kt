@@ -6,6 +6,8 @@ import com.materialkolor.dynamiccolor.ColorSpec
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.preferences.AppSettings
 import com.yunmei.vibe.ui.UiMode
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
+import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
 
 @Immutable
 data class SettingsUiState(
@@ -18,6 +20,8 @@ data class SettingsUiState(
     val colorStyle: String = PaletteStyle.TonalSpot.name,
     val colorSpec: String = ColorSpec.SpecVersion.Default.name,
     val enablePredictiveBack: Boolean = false,
+    val predictiveBackAnimation: String = PredictiveBackAnimation.DEFAULT.value,
+    val predictiveBackExitDirection: String = PredictiveBackExitDirection.DEFAULT.value,
     val enableBlur: Boolean = true,
     val enableFloatingBottomBar: Boolean = true,
     val enableFloatingBottomBarBlur: Boolean = true,

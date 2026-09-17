@@ -3,6 +3,7 @@ package com.yunmei.vibe.ui.screen.themesettings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -15,6 +16,15 @@ import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.navigation3.LocalNavigator
 import com.yunmei.vibe.ui.theme.ColorMode
 import com.yunmei.vibe.ui.viewmodel.SettingsViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/**
+ * 开关动画播完后再应用 `setEnableOnBackInvokedCallback`：
+ * 该隐藏 API 需要新的 Activity 窗口才生效，但同步 `recreate()` 会把模板 Switch 的切换动画直接打断，
+ * 观感上就是「开关没有动画」。这里延后到动画结束再重建（时长对齐 M3 / Miuix Switch 的标准过渡）。
+ */
+private const val PREDICTIVE_BACK_APPLY_DELAY_MS = 320L
 
 @Composable
 fun ThemeSettingsScreen() {
@@ -22,6 +32,7 @@ fun ThemeSettingsScreen() {
     val activity = LocalActivity.current
     val viewModel = viewModel<SettingsViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
     LifecycleResumeEffect(Unit) {
         viewModel.refresh()
@@ -60,9 +71,14 @@ fun ThemeSettingsScreen() {
         onSetEnableFloatingBottomBarBlur = viewModel::setEnableFloatingBottomBarBlur,
         onSetEnablePredictiveBack = { enabled ->
             viewModel.setEnablePredictiveBack(enabled)
-            YunMeiApp.app.enableOnBackInvokedCallback(enabled)
-            activity?.recreate()
+            scope.launch {
+                delay(PREDICTIVE_BACK_APPLY_DELAY_MS)
+                YunMeiApp.app.enableOnBackInvokedCallback(enabled)
+                activity?.recreate()
+            }
         },
+        onSetPredictiveBackAnimation = viewModel::setPredictiveBackAnimation,
+        onSetPredictiveBackExitDirection = viewModel::setPredictiveBackExitDirection,
         onSetPageScale = viewModel::setPageScale,
     )
 

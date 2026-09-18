@@ -67,8 +67,8 @@ fun SettingPagerMaterial(
     var showBottomSheet by remember { mutableStateOf(false) }
     val signLocationItems = listOf(
         stringResource(R.string.settings_sign_location_ask),
-        stringResource(R.string.settings_sign_location_rel),
-        stringResource(R.string.settings_sign_location_lst),
+        stringResource(R.string.settings_sign_location_relocate),
+        stringResource(R.string.settings_sign_location_last),
     )
 
     Scaffold(
@@ -131,7 +131,6 @@ fun SettingPagerMaterial(
                         SegmentedDropdownItem(
                             icon = Icons.Rounded.Dashboard,
                             title = stringResource(id = R.string.settings_ui_mode),
-                            summary = stringResource(id = R.string.settings_ui_mode_summary),
                             items = listOf("Miuix", "Material"),
                             selectedIndex = if (state.uiMode == "material") 1 else 0,
                             onItemSelected = actions.onSetUiModeIndex
@@ -141,7 +140,6 @@ fun SettingPagerMaterial(
                         SegmentedListItem(
                             onClick = actions.onOpenTheme,
                             headlineContent = { Text(stringResource(id = R.string.settings_theme)) },
-                            supportingContent = { Text(stringResource(id = R.string.settings_theme_summary)) },
                             leadingContent = { Icon(Icons.Filled.Palette, stringResource(id = R.string.settings_theme)) },
                             trailingContent = {
                                 Icon(
@@ -163,7 +161,6 @@ fun SettingPagerMaterial(
                         SegmentedSwitchItem(
                             icon = Icons.Filled.SupervisorAccount,
                             title = stringResource(R.string.settings_always_code),
-                            summary = stringResource(R.string.settings_always_code_summary),
                             checked = state.settings.alwaysCode,
                             onCheckedChange = actions.onSetAlwaysCode,
                         )

@@ -73,7 +73,7 @@
     <string name="unlock_sign_success">打卡成功</string>
     <string name="unlock_sign_failed">打卡失败</string>
     <string name="unlock_sign_ask_title">打卡位置询问</string>
-    <string name="unlock_sign_ask_msg">即将进行打卡，您上次的打卡位置为：%1$s。请选择本次打卡的定位方式：</string>
+    <string name="unlock_sign_ask_msg">上次打卡位置：%1$s。请选择本次打卡的定位方式：</string>
     <string name="unlock_sign_use_last">使用上次位置</string>
     <string name="unlock_sign_relocate">重新定位并保存</string>
     <string name="unlock_sign_locate">定位</string>
@@ -106,7 +106,7 @@
     <string name="about_view_source_code">查看源代码</string>
     <string name="about_view_source_code_summary">在 GitHub 上查看源代码</string>
     <string name="about_open_source_license">开放源代码许可</string>
-    <string name="about_open_source_license_summary">查看本应用所使用的第三方开源库及其许可证信息</string>
+    <string name="about_open_source_license_summary">第三方开源库与许可证信息</string>
 
     <!-- 开放源代码许可页（AboutLibraries，对齐 InstallerX Revived） -->
     <string name="license">许可证：%1$s</string>
@@ -127,20 +127,17 @@
     <string name="settings_group_display">界面显示</string>
     <string name="settings_group_other">其他</string>
     <string name="settings_check_update">检查更新</string>
-    <string name="settings_check_update_summary">在应用启动后自动检查是否有最新版</string>
+    <string name="settings_check_update_summary">启动后自动检查新版本</string>
     <string name="settings_theme">主题设置</string>
-    <string name="settings_theme_summary">自定义更多主题选项</string>
     <string name="settings_amoled">AMOLED 纯黑背景</string>
     <string name="settings_amoled_summary">深色模式下使用纯黑背景</string>
     <string name="settings_enable_predictive_back">预测性返回手势</string>
-    <string name="settings_enable_predictive_back_summary">启用对预测性返回手势的支持</string>
     <string name="settings_predictive_back_animation">返回动画样式</string>
     <string name="settings_predictive_back_animation_aosp">AOSP</string>
     <string name="settings_predictive_back_animation_miuix">Miuix</string>
     <string name="settings_predictive_back_animation_scale">缩放</string>
     <string name="settings_predictive_back_animation_classic">经典</string>
     <string name="settings_predictive_back_direction">返回方向</string>
-    <string name="settings_predictive_back_direction_summary">仅「缩放」样式生效</string>
     <string name="settings_predictive_back_direction_follow_gesture">跟随手势</string>
     <string name="settings_predictive_back_direction_always_right">始终向右</string>
     <string name="settings_predictive_back_direction_always_left">始终向左</string>
@@ -148,7 +145,6 @@
     <string name="settings_color_spec">色彩标准</string>
     <string name="settings_key_color">强调色</string>
     <string name="settings_key_color_default">默认</string>
-    <string name="settings_page_scale_summary">调整全局显示比例</string>
     <string name="settings_enable_blur">模糊</string>
     <string name="settings_enable_blur_summary">启用顶栏和底栏的模糊效果</string>
     <string name="settings_floating_bottom_bar">悬浮底栏</string>
@@ -175,7 +171,6 @@
     <string name="settings_saved_accounts">已保存账号</string>
     <string name="settings_remove_account">移除</string>
     <string name="settings_ui_mode">界面风格</string>
-    <string name="settings_ui_mode_summary">选择界面组件风格</string>
     <string name="settings_theme_mode_system">跟随系统</string>
     <string name="settings_theme_mode_light">浅色</string>
     <string name="settings_theme_mode_dark">深色</string>
@@ -183,17 +178,15 @@
     <string name="settings_auto_connect">自动开门</string>
     <string name="settings_auto_connect_summary">启动应用后自动打开默认门锁</string>
     <string name="settings_auto_exit">开门后自动退出</string>
-    <string name="settings_auto_exit_summary">开门成功后退出应用</string>
     <string name="settings_auto_code">自动获取密码</string>
     <string name="settings_auto_code_summary">进入首页自动获取开门密码</string>
-    <string name="settings_always_code">无绑定账号时用首个账号</string>
-    <string name="settings_always_code_summary">获取密码时若该门锁账号未保存，使用第一个已保存账号</string>
+    <string name="settings_always_code">未保存账号时使用首个账号</string>
     <string name="settings_hide_sign">隐藏打卡按钮</string>
     <string name="settings_hide_code">隐藏密码按钮</string>
     <string name="settings_sign_location_mode">打卡定位方式</string>
     <string name="settings_sign_location_ask">每次询问</string>
-    <string name="settings_sign_location_rel">重新定位并保存</string>
-    <string name="settings_sign_location_lst">使用上次位置</string>
+    <string name="settings_sign_location_relocate">重新定位并保存</string>
+    <string name="settings_sign_location_last">使用上次位置</string>
     <string name="settings_danger_title">危险操作提醒</string>
     <string name="settings_danger_msg">警告！同时打开「自动开门」和「开门后自动退出」会导致应用一启动就开门并退出，之后无法再进行其他操作。您只应该在确定风险后执行此操作。确定要执行该操作吗？</string>
     <string name="settings_danger_confirm">确定</string>

@@ -382,7 +382,6 @@ private fun DoorOptionsCard(
         )
         SwitchPreference(
             title = stringResource(R.string.settings_auto_exit),
-            summary = stringResource(R.string.settings_auto_exit_summary),
             startAction = {
                 Icon(
                     Icons.AutoMirrored.Rounded.ExitToApp,
@@ -489,8 +488,7 @@ private fun SignCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         BasicComponent(
             title = stringResource(R.string.unlock_sign),
-            summary = state.signMessage
-                ?: stringResource(R.string.unlock_sign_ask_title) + " · " + state.settings.signLocationMode,
+            summary = state.signMessage ?: signLocationLabel(state.settings.signLocationMode),
             startAction = {
                 Icon(
                     Icons.Rounded.WhereToVote,

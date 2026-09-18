@@ -78,8 +78,8 @@ fun SettingPagerMiuix(
     val showSendLogDialog = rememberSaveable { mutableStateOf(false) }
     val signLocationItems = listOf(
         stringResource(R.string.settings_sign_location_ask),
-        stringResource(R.string.settings_sign_location_rel),
-        stringResource(R.string.settings_sign_location_lst),
+        stringResource(R.string.settings_sign_location_relocate),
+        stringResource(R.string.settings_sign_location_last),
     )
 
     Scaffold(
@@ -162,7 +162,6 @@ fun SettingPagerMiuix(
                     ) {
                         OverlayDropdownPreference(
                             title = stringResource(id = R.string.settings_ui_mode),
-                            summary = stringResource(id = R.string.settings_ui_mode_summary),
                             items = listOf("Miuix", "Material"),
                             startAction = {
                                 Icon(
@@ -177,7 +176,6 @@ fun SettingPagerMiuix(
                         )
                         ArrowPreference(
                             title = stringResource(id = R.string.settings_theme),
-                            summary = stringResource(id = R.string.settings_theme_summary),
                             startAction = {
                                 Icon(
                                     Icons.Rounded.Palette,
@@ -199,7 +197,6 @@ fun SettingPagerMiuix(
                     ) {
                         SwitchPreference(
                             title = stringResource(R.string.settings_always_code),
-                            summary = stringResource(R.string.settings_always_code_summary),
                             startAction = {
                                 Icon(
                                     Icons.Rounded.SupervisorAccount,

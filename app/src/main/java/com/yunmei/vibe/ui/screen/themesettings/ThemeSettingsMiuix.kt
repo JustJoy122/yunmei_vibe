@@ -373,7 +373,6 @@ fun ThemeSettingsMiuix(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                             SwitchPreference(
                                 title = stringResource(id = R.string.settings_enable_predictive_back),
-                                summary = stringResource(id = R.string.settings_enable_predictive_back_summary),
                                 startAction = {
                                     Icon(
                                         Icons.AutoMirrored.Rounded.MenuOpen,
@@ -412,7 +411,6 @@ fun ThemeSettingsMiuix(
                                     AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
                                         OverlayDropdownPreference(
                                             title = stringResource(R.string.settings_predictive_back_direction),
-                                            summary = stringResource(R.string.settings_predictive_back_direction_summary),
                                             items = directionItems,
                                             startAction = {
                                                 Icon(
@@ -435,7 +433,6 @@ fun ThemeSettingsMiuix(
                         var sliderValue by remember(uiState.pageScale) { mutableFloatStateOf(uiState.pageScale) }
                         ArrowPreference(
                             title = stringResource(id = R.string.settings_page_scale),
-                            summary = stringResource(id = R.string.settings_page_scale_summary),
                             startAction = {
                                 Icon(
                                     Icons.Rounded.AspectRatio,

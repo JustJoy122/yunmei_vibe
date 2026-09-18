@@ -291,7 +291,6 @@ private fun DoorOptionsCard(
                 SegmentedSwitchItem(
                     icon = Icons.AutoMirrored.Filled.ExitToApp,
                     title = stringResource(R.string.settings_auto_exit),
-                    summary = stringResource(R.string.settings_auto_exit_summary),
                     checked = state.settings.autoExit,
                     onCheckedChange = actions.onSetAutoExit,
                 )
@@ -406,8 +405,7 @@ private fun SignCard(
                 headlineContent = { Text(stringResource(R.string.unlock_sign)) },
                 supportingContent = {
                     Text(
-                        text = state.signMessage
-                            ?: stringResource(R.string.unlock_sign_ask_title) + " · " + state.settings.signLocationMode,
+                        text = state.signMessage ?: signLocationLabel(state.settings.signLocationMode),
                         color = MaterialTheme.colorScheme.outline,
                     )
                 },

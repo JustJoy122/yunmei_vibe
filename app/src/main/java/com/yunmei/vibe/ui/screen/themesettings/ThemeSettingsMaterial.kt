@@ -336,7 +336,6 @@ fun ThemeSettingsMaterial(
                                 SegmentedSwitchItem(
                                     icon = Icons.AutoMirrored.Rounded.MenuOpen,
                                     title = stringResource(id = R.string.settings_enable_predictive_back),
-                                    summary = stringResource(id = R.string.settings_enable_predictive_back_summary),
                                     checked = uiState.enablePredictiveBack,
                                     onCheckedChange = actions.onSetEnablePredictiveBack
                                 )
@@ -369,7 +368,6 @@ fun ThemeSettingsMaterial(
                                         SegmentedDropdownItem(
                                             icon = Icons.Rounded.SwapHoriz,
                                             title = stringResource(R.string.settings_predictive_back_direction),
-                                            summary = stringResource(R.string.settings_predictive_back_direction_summary),
                                             items = directionItems,
                                             selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
                                             onItemSelected = { index ->
@@ -410,11 +408,6 @@ fun ThemeSettingsMaterial(
                                     text = stringResource(R.string.settings_page_scale),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = stringResource(id = R.string.settings_page_scale_summary),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.outline
                                 )
                             }
                             Text(

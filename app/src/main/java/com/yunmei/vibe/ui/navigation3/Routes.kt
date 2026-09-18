@@ -6,9 +6,15 @@ import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
 /**
- * Type-safe navigation keys for Navigation3.
+ * Type-safe navigation keys for miuix-nav。
  * 每个目的地都是 NavKey（data object / data class），可随 back stack 保存恢复。
+ *
+ * 注意：接口本身必须标注 @Serializable（与上游 InstallerX 的 Route 一致）——
+ * miuix-nav 的返回栈 saver 用 kotlinx 多态序列化持久化整个返回栈，基类缺少 @Serializable 时
+ * 子类不会被自动注册进多态作用域，应用启动即抛
+ * "Serializer for subclass 'X' is not found in the polymorphic scope of 'Route'"。
  */
+@Serializable
 sealed interface Route : NavKey, Parcelable {
 
     /** 主界面（含 首页/门锁/开门/设置 四个 tab 的 Pager）。 */

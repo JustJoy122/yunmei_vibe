@@ -194,7 +194,10 @@ class SettingsViewModel(
     }
 
     // ---- 功能设置（原项目 storage 偏好，行为与其一致） ----
-    // 快速连接/自动开门/自动退出/自动获取密码已迁至首页（HomeViewModel 直接写入）。
+    // 自动开门/自动退出/自动获取密码在首页开门卡片内（HomeViewModel 直接写入）；
+    // 快速连接已从首页迁到设置页「通用」分组，仍写同一个 quick_connect 偏好。
+
+    fun setQuickConnect(value: Boolean) = setSetting { container.appPreferences.setQuickConnect(value) }
 
     fun setAlwaysCode(value: Boolean) = setSetting { container.appPreferences.setAlwaysCode(value) }
 

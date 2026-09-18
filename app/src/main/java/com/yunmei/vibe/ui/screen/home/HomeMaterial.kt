@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.WhereToVote
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -77,13 +76,13 @@ fun HomePagerMaterial(
         ) {
             LockStatusCard(state, actions)
             UnlockActionCard(state, actions)
-            if (state.showCodeButton) {
-                CodeCard(state, actions)
-            }
+            // 打卡放在「开门」按钮与「获取密码」之间（原顺序为 获取密码 → 打卡）。
             if (state.showSignButton) {
                 SignCard(state, actions)
             }
-            QuickConnectCard(state, actions)
+            if (state.showCodeButton) {
+                CodeCard(state, actions)
+            }
             DoorOptionsCard(state, actions)
             state.signAsk?.let { ask ->
                 SignAskCard(ask, actions)
@@ -247,28 +246,6 @@ private fun UnlockActionCard(
             }
         }
     }
-}
-
-@Composable
-private fun QuickConnectCard(
-    state: HomeUiState,
-    actions: HomeActions,
-) {
-    // 与同页 DoorOptionsCard 同款结构（KernelSU-Style-UI-Kit 的 SegmentedColumn + SegmentedSwitchItem），
-    // 图标沿用 Miuix 侧的 Icons.Rounded.Bluetooth，保证两套主题下图标一致、不出现空白。
-    SegmentedColumn(
-        content = listOf(
-            {
-                SegmentedSwitchItem(
-                    icon = Icons.Rounded.Bluetooth,
-                    title = stringResource(R.string.unlock_quick_connect),
-                    summary = stringResource(R.string.unlock_quick_connect_summary),
-                    checked = state.quickConnect,
-                    onCheckedChange = actions.onSetQuickConnect,
-                )
-            },
-        )
-    )
 }
 
 @Composable

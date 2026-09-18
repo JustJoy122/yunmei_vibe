@@ -66,6 +66,7 @@ fun SettingPager(
             }
         },
         onOpenAbout = { navigator.push(Route.About) },
+        onSetQuickConnect = viewModel::setQuickConnect,
         onSetAlwaysCode = viewModel::setAlwaysCode,
         onSetHideSign = viewModel::setHideSign,
         onSetHideCode = viewModel::setHideCode,

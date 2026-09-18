@@ -144,7 +144,6 @@ fun HomePager(
                 bleRequester()
             }
         },
-        onSetQuickConnect = viewModel::setQuickConnect,
         onSetAutoConnect = ::onSetAutoConnect,
         onSetAutoExit = ::onSetAutoExit,
         onSetAutoCode = viewModel::setAutoCode,

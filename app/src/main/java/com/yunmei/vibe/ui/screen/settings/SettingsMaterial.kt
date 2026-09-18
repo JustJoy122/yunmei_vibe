@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SupervisorAccount
 import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -152,11 +153,21 @@ fun SettingPagerMaterial(
                 }
             )
 
-            // 开门行为（取码与打卡；快速连接/自动开门/自动退出/自动获取密码已迁至首页）
+            // 开门行为（快速连接 / 取码 / 打卡；自动开门/自动退出/自动获取密码在首页开门卡片内）
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
                 title = stringResource(R.string.settings_group_door),
                 content = buildList {
+                    add {
+                        // 快速连接：从首页开门卡片迁到设置页，仍写同一个 quick_connect 偏好。
+                        SegmentedSwitchItem(
+                            icon = Icons.Rounded.Bluetooth,
+                            title = stringResource(id = R.string.unlock_quick_connect),
+                            summary = stringResource(id = R.string.unlock_quick_connect_summary),
+                            checked = state.settings.quickConnect,
+                            onCheckedChange = actions.onSetQuickConnect
+                        )
+                    }
                     add {
                         SegmentedSwitchItem(
                             icon = Icons.Filled.SupervisorAccount,

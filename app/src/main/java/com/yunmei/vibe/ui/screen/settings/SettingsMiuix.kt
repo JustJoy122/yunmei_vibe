@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
+import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.ContactPage
 import androidx.compose.material.icons.rounded.Dashboard
@@ -188,13 +189,28 @@ fun SettingPagerMiuix(
                         )
                     }
 
-                    // 开门行为（取码与打卡；快速连接/自动开门/自动退出/自动获取密码已迁至首页）
+                    // 开门行为（快速连接 / 取码 / 打卡；自动开门/自动退出/自动获取密码在首页开门卡片内）
                     SectionTitle(stringResource(R.string.settings_group_door))
                     Card(
                         modifier = Modifier
                             .padding(bottom = 12.dp)
                             .fillMaxWidth(),
                     ) {
+                        // 快速连接：从首页开门卡片迁到设置页，仍写同一个 quick_connect 偏好。
+                        SwitchPreference(
+                            title = stringResource(id = R.string.unlock_quick_connect),
+                            summary = stringResource(id = R.string.unlock_quick_connect_summary),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.Bluetooth,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.unlock_quick_connect),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            checked = state.settings.quickConnect,
+                            onCheckedChange = actions.onSetQuickConnect
+                        )
                         SwitchPreference(
                             title = stringResource(R.string.settings_always_code),
                             startAction = {

@@ -49,7 +49,8 @@ data class SettingsScreenActions(
     val onRemoveAccount: (StoredUser) -> Unit,
     val onOpenAbout: () -> Unit,
     // 业务功能（原项目 storage 偏好）：
-    // 快速连接/自动开门/自动退出/自动获取密码已迁至首页开门卡片内。
+    // 自动开门/自动退出/自动获取密码在首页开门卡片内；快速连接在「通用」分组。
+    val onSetQuickConnect: (Boolean) -> Unit,
     val onSetAlwaysCode: (Boolean) -> Unit,
     val onSetHideSign: (Boolean) -> Unit,
     val onSetHideCode: (Boolean) -> Unit,

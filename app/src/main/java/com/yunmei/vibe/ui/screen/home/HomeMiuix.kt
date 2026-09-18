@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.AutoMode
-import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Key
@@ -107,13 +106,13 @@ fun HomePagerMiuix(
                         // 状态 Banner + 高频操作（开门/取码/打卡），旧版门锁信息卡已并入 Banner。
                         LockStatusCardMiuix(state, actions)
                         UnlockActionCard(state, actions)
-                        if (state.showCodeButton) {
-                            CodeCard(state, actions)
-                        }
+                        // 打卡放在「开门」按钮与「获取密码」之间（原顺序为 获取密码 → 打卡）。
                         if (state.showSignButton) {
                             SignCard(state, actions)
                         }
-                        QuickConnectCard(state, actions)
+                        if (state.showCodeButton) {
+                            CodeCard(state, actions)
+                        }
                         DoorOptionsCard(state, actions)
                         state.signAsk?.let { ask ->
                             SignAskCard(ask, actions)
@@ -334,29 +333,6 @@ private fun UnlockActionCard(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun QuickConnectCard(
-    state: HomeUiState,
-    actions: HomeActions,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        SwitchPreference(
-            title = stringResource(R.string.unlock_quick_connect),
-            summary = stringResource(R.string.unlock_quick_connect_summary),
-            startAction = {
-                Icon(
-                    Icons.Rounded.Bluetooth,
-                    modifier = Modifier.padding(end = 6.dp),
-                    contentDescription = stringResource(R.string.unlock_quick_connect),
-                    tint = colorScheme.onBackground,
-                )
-            },
-            checked = state.quickConnect,
-            onCheckedChange = actions.onSetQuickConnect,
-        )
     }
 }
 

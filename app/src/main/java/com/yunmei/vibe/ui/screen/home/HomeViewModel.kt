@@ -157,13 +157,6 @@ class HomeViewModel : ViewModel() {
         _uiState.update { it.copy(isOpening = false, statusText = str(R.string.unlock_permission_denied)) }
     }
 
-    fun setQuickConnect(value: Boolean) {
-        _uiState.update { it.copy(quickConnect = value) }
-        viewModelScope.launch {
-            container.appPreferences.setQuickConnect(value)
-        }
-    }
-
     fun setAutoConnect(value: Boolean) = setSetting { container.appPreferences.setAutoConnect(value) }
 
     fun setAutoExit(value: Boolean) = setSetting { container.appPreferences.setAutoExit(value) }

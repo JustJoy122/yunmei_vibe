@@ -1,36 +1,16 @@
 package com.yunmei.vibe.ui.util
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.withFrameNanos
-import androidx.navigation3.ui.LocalNavAnimatedContentScope
 
 /**
- * Returns true only after the navigation transition animation has completed
- * and an additional buffer frame has passed.
+ * 导航切换后，页面重内容是否已经可以组合。
  *
- * Timeline:
- * - During animation: returns false → page shows lightweight placeholder (smooth animation)
- * - Animation ends + 1 frame: returns true → heavy content composes
- *   (stutter is invisible because the page is already static)
+ * 迁移前这里依赖 navigation3 的 `LocalNavAnimatedContentScope`：动画未结束时先渲染轻量占位，
+ * 动画结束再组合重内容，用来掩盖进入动画期间的卡顿。
  *
- * The value is sticky — once true it never reverts to false,
- * so content stays visible during exit transitions.
+ * 导航层现已整体切换到 miuix-nav（与 InstallerX Revived 一致），miuix-nav 的过渡是声明式
+ * `NavTransition`，不再暴露等价的「动画进行中」作用域；上游页面同样不做这种延迟组合
+ * （内容由 ViewModel 驱动）。因此这里直接放行，行为与上游对齐，不再自研过渡状态判断。
  */
 @Composable
-fun rememberContentReady(): Boolean {
-    val scope = LocalNavAnimatedContentScope.current
-    val transitionRunning = scope.transition.isRunning
-    val ready = remember { mutableStateOf(false) }
-
-    LaunchedEffect(transitionRunning) {
-        if (!transitionRunning && !ready.value) {
-            withFrameNanos { }
-            ready.value = true
-        }
-    }
-
-    return ready.value
-}
+fun rememberContentReady(): Boolean = true

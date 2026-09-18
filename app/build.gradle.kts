@@ -142,11 +142,16 @@ dependencies {
     implementation(libs.miuix.blur)
     // 官方 Miuix 设置项组件（SwitchPreference / OverlayDropdownPreference / ArrowPreference）。
     implementation(libs.miuix.preference)
+    // miuix-nav：自带返回栈 + 预测性返回过渡运行时（InstallerX Revived 的返回动画依赖它）。
+    implementation(libs.miuix.navigation)
 
-    // Navigation3 返回栈 + 手势返回。
-    implementation(libs.androidx.navigation3.runtime)
-    implementation(libs.androidx.navigation3.ui)
+    // 手势返回（navigationevent）：miuix-nav 的预测性返回与 entry 包装依赖它。
     implementation(libs.androidx.navigationevent.compose)
+
+    // 导航层已整体切到 miuix-nav，androidx navigation3 的 runtime / ui 不再被任何代码引用；
+    // 与上游 InstallerX Revived 的 build 文件保持同形态：保留版本目录条目，仅注释掉引用。
+    // implementation(libs.androidx.navigation3.runtime)
+    // implementation(libs.androidx.navigation3.ui)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)

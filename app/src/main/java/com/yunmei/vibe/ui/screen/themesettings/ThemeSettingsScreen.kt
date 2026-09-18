@@ -1,12 +1,13 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
@@ -32,7 +33,6 @@ fun ThemeSettingsScreen() {
     val activity = LocalActivity.current
     val viewModel = viewModel<SettingsViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
 
     LifecycleResumeEffect(Unit) {
         viewModel.refresh()
@@ -71,10 +71,20 @@ fun ThemeSettingsScreen() {
         onSetEnableFloatingBottomBarBlur = viewModel::setEnableFloatingBottomBarBlur,
         onSetEnablePredictiveBack = { enabled ->
             viewModel.setEnablePredictiveBack(enabled)
-            scope.launch {
-                delay(PREDICTIVE_BACK_APPLY_DELAY_MS)
+            // lifecycleScope 挂在 LifecycleOwner 上，这里显式收窄到 ComponentActivity。
+            val host = activity as? ComponentActivity
+            if (host == null) {
                 YunMeiApp.app.enableOnBackInvokedCallback(enabled)
-                activity?.recreate()
+            } else {
+                // 延迟重建挂在 Activity 的 lifecycleScope 上：不随本页离开组合而被取消，
+                // 避免出现「设置已写入但没有重建窗口」的半状态。
+                host.lifecycleScope.launch {
+                    delay(PREDICTIVE_BACK_APPLY_DELAY_MS)
+                    YunMeiApp.app.enableOnBackInvokedCallback(enabled)
+                    if (!host.isFinishing && !host.isDestroyed) {
+                        host.recreate()
+                    }
+                }
             }
         },
         onSetPredictiveBackAnimation = viewModel::setPredictiveBackAnimation,

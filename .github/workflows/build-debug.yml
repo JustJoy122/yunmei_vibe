@@ -12,9 +12,10 @@ on:
       - "docs/**"
   workflow_dispatch:
 
-# 创建 Debug 渠道 Pre-release 需要写权限
+# 创建 Debug 渠道 Pre-release 需要写权限；拉取 GitHub Packages 上的 miuix 依赖需要读包权限
 permissions:
   contents: write
+  packages: read
 
 # 同一分支的旧构建直接取消，避免排队浪费额度
 concurrency:
@@ -26,6 +27,8 @@ env:
   ANDROID_BUILD_TOOLS: "build-tools;36.0.0"
   # CI 构建号：注入 BuildConfig.BUILD_STAMP，供 App 内 Debug 更新检查做「远端 run_number > 本地」比较
   BUILD_STAMP: ${{ github.run_number }}
+  # GitHub Packages 仓库凭据（GITHUB_ACTOR 由 Actions 自动注入，这里只需补 token）
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   debug:

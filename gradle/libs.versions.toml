@@ -19,7 +19,7 @@ securityCrypto = "1.1.0"
 zxingCore = "3.5.3"
 materialKolor = "5.0.0"
 haze = "1.7.0"
-miuix = "0.9.3"
+miuix = "0.9.4-103b737b-SNAPSHOT"
 aboutLibraries = "15.2.0"
 
 [libraries]
@@ -57,6 +57,7 @@ miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui-android", version.ref = "m
 miuix-icons = { module = "top.yukonga.miuix.kmp:miuix-icons-android", version.ref = "miuix" }
 miuix-blur = { module = "top.yukonga.miuix.kmp:miuix-blur-android", version.ref = "miuix" }
 miuix-preference = { module = "top.yukonga.miuix.kmp:miuix-preference-android", version.ref = "miuix" }
+miuix-navigation = { module = "top.yukonga.miuix.kmp:miuix-nav-android", version.ref = "miuix" }
 # 开放源代码许可页（InstallerX Revived 同款 AboutLibraries 实现）。
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" }

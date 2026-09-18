@@ -1,7 +1,7 @@
 package com.yunmei.vibe.ui.navigation3
 
 import android.os.Parcelable
-import androidx.navigation3.runtime.NavKey
+import top.yukonga.miuix.kmp.nav.core.NavKey
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 

@@ -37,6 +37,12 @@ import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.twotone.ContentCopy
+import androidx.compose.material.icons.twotone.Delete
+import androidx.compose.material.icons.twotone.QrCode2
+import androidx.compose.material.icons.twotone.Share
+import androidx.compose.material.icons.twotone.Star
+import androidx.compose.material.icons.twotone.StarBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -265,7 +271,7 @@ private fun LockDetailScreenMaterial(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 content = listOf {
                     SegmentedSwitchItem(
-                        icon = if (isDefault) Icons.Filled.Star else Icons.Filled.StarBorder,
+                        icon = if (isDefault) Icons.TwoTone.Star else Icons.TwoTone.StarBorder,
                         title = stringResource(R.string.locks_set_default),
                         checked = isDefault,
                         onCheckedChange = actions.onSetDefault,
@@ -280,7 +286,7 @@ private fun LockDetailScreenMaterial(
                     SegmentedListItem(
                         onClick = onToggleQr,
                         headlineContent = { Text(stringResource(R.string.lock_detail_share_qr)) },
-                        leadingContent = { Icon(Icons.Filled.QrCode2, null) },
+                        leadingContent = { Icon(Icons.TwoTone.QrCode2, null) },
                     )
                 }
             )
@@ -335,14 +341,14 @@ private fun LockDetailScreenMaterial(
                         SegmentedListItem(
                             onClick = actions.onShare,
                             headlineContent = { Text(stringResource(R.string.lock_detail_share)) },
-                            leadingContent = { Icon(Icons.Filled.Share, null) },
+                            leadingContent = { Icon(Icons.TwoTone.Share, null) },
                         )
                     },
                     {
                         SegmentedListItem(
                             onClick = actions.onCopyLink,
                             headlineContent = { Text(stringResource(R.string.lock_detail_copy_link)) },
-                            leadingContent = { Icon(Icons.Filled.ContentCopy, null) },
+                            leadingContent = { Icon(Icons.TwoTone.ContentCopy, null) },
                         )
                     },
                     {
@@ -351,7 +357,7 @@ private fun LockDetailScreenMaterial(
                             headlineContent = { Text(stringResource(R.string.locks_delete)) },
                             leadingContent = {
                                 Icon(
-                                    Icons.Filled.Delete,
+                                    Icons.TwoTone.Delete,
                                     null,
                                     tint = MaterialTheme.colorScheme.error,
                                 )

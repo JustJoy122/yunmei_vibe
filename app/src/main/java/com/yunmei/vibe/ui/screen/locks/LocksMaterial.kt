@@ -15,12 +15,12 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.automirrored.twotone.KeyboardArrowRight
+import androidx.compose.material.icons.twotone.Delete
+import androidx.compose.material.icons.twotone.PersonAdd
+import androidx.compose.material.icons.twotone.QrCodeScanner
+import androidx.compose.material.icons.twotone.Star
+import androidx.compose.material.icons.twotone.StarBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
@@ -112,14 +112,14 @@ fun LocksPagerMaterial(
                             onClick = actions.onAddScan,
                             headlineContent = { Text(stringResource(R.string.locks_add_scan)) },
                             supportingContent = { Text(stringResource(R.string.locks_add_scan_hint)) },
-                            leadingContent = { Icon(Icons.Filled.QrCodeScanner, null) },
+                            leadingContent = { Icon(Icons.TwoTone.QrCodeScanner, null) },
                         )
                     },
                     {
                         SegmentedListItem(
                             onClick = actions.onAddLogin,
                             headlineContent = { Text(stringResource(R.string.locks_add_login)) },
-                            leadingContent = { Icon(Icons.Filled.PersonAdd, null) },
+                            leadingContent = { Icon(Icons.TwoTone.PersonAdd, null) },
                         )
                     },
                 )
@@ -162,7 +162,7 @@ private fun LockRow(
         },
         leadingContent = {
             Icon(
-                if (isDefault) Icons.Filled.Star else Icons.Filled.StarBorder,
+                if (isDefault) Icons.TwoTone.Star else Icons.TwoTone.StarBorder,
                 contentDescription = stringResource(R.string.locks_set_default),
                 tint = if (isDefault) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                 modifier = Modifier
@@ -173,7 +173,7 @@ private fun LockRow(
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Filled.Delete,
+                    imageVector = Icons.TwoTone.Delete,
                     contentDescription = stringResource(R.string.locks_delete),
                     tint = MaterialTheme.colorScheme.outline,
                     modifier = Modifier
@@ -181,7 +181,7 @@ private fun LockRow(
                         .padding(8.dp),
                 )
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    imageVector = Icons.AutoMirrored.TwoTone.KeyboardArrowRight,
                     contentDescription = null,
                 )
             }

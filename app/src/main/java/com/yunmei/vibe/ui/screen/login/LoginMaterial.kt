@@ -16,8 +16,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.twotone.Login
+import androidx.compose.material.icons.twotone.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -235,7 +235,7 @@ fun LoginScreenMaterial(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 content = listOf {
                     SegmentedSwitchItem(
-                        icon = Icons.Filled.Person,
+                        icon = Icons.TwoTone.Person,
                         title = stringResource(R.string.login_save_current),
                         checked = state.saveCurrent,
                         onCheckedChange = actions.onSaveCurrentChange,
@@ -258,7 +258,7 @@ fun LoginScreenMaterial(
                                 }
                             )
                         },
-                        leadingContent = { Icon(Icons.AutoMirrored.Filled.Login, null) },
+                        leadingContent = { Icon(Icons.AutoMirrored.TwoTone.Login, null) },
                     )
                 }
             )
@@ -272,7 +272,7 @@ fun LoginScreenMaterial(
                                 onClick = { actions.onPickSavedUser(user) },
                                 headlineContent = { Text(user.username) },
                                 supportingContent = { Text(stringResource(R.string.login_use_saved)) },
-                                leadingContent = { Icon(Icons.Filled.Person, null) },
+                                leadingContent = { Icon(Icons.TwoTone.Person, null) },
                             )
                         }
                     }

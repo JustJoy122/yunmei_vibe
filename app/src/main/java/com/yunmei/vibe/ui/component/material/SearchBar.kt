@@ -21,7 +21,7 @@ import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.twotone.Search
 import androidx.compose.material3.ExpandedFullScreenContainedSearchBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -157,7 +157,7 @@ fun SearchAppBar(
                             content = { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
                         )
                     } else {
-                        Icon(Icons.Filled.Search, null)
+                        Icon(Icons.TwoTone.Search, null)
                     }
                 },
                 trailingIcon = {

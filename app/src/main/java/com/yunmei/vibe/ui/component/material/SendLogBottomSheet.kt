@@ -8,8 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.twotone.Save
+import androidx.compose.material.icons.twotone.Share
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -80,10 +80,10 @@ fun SendLogBottomSheet(
     }
 
     val items = listOf(
-        ActionMenuItem(Icons.Filled.Save, saveLog) {
+        ActionMenuItem(Icons.TwoTone.Save, saveLog) {
             exportBugreportLauncher.launch(bugreportFileName())
         },
-        ActionMenuItem(Icons.Filled.Share, sendLog) {
+        ActionMenuItem(Icons.TwoTone.Share, sendLog) {
             scope.launch {
                 val bugreport = loadingDialog.withLoading {
                     withContext(Dispatchers.IO) {

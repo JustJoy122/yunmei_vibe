@@ -16,13 +16,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.AutoMode
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Password
-import androidx.compose.material.icons.filled.WhereToVote
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.automirrored.twotone.ExitToApp
+import androidx.compose.material.icons.twotone.AutoMode
+import androidx.compose.material.icons.twotone.Key
+import androidx.compose.material.icons.twotone.Password
+import androidx.compose.material.icons.twotone.TaskAlt
+import androidx.compose.material.icons.twotone.Warning
+import androidx.compose.material.icons.twotone.WhereToVote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -125,7 +125,7 @@ private fun LockStatusCard(
         }
         val contentColor = MaterialTheme.colorScheme.contentColorFor(containerColor)
 
-        val statusIcon = if (ready) Icons.Outlined.CheckCircle else Icons.Outlined.Warning
+        val statusIcon = if (ready) Icons.TwoTone.TaskAlt else Icons.TwoTone.Warning
         val statusTitle =
             if (ready) {
                 stringResource(R.string.home_status_ready_title)
@@ -257,7 +257,7 @@ private fun DoorOptionsCard(
         content = listOf(
             {
                 SegmentedSwitchItem(
-                    icon = Icons.Filled.AutoMode,
+                    icon = Icons.TwoTone.AutoMode,
                     title = stringResource(R.string.settings_auto_connect),
                     summary = stringResource(R.string.settings_auto_connect_summary),
                     checked = state.settings.autoConnect,
@@ -266,7 +266,7 @@ private fun DoorOptionsCard(
             },
             {
                 SegmentedSwitchItem(
-                    icon = Icons.AutoMirrored.Filled.ExitToApp,
+                    icon = Icons.AutoMirrored.TwoTone.ExitToApp,
                     title = stringResource(R.string.settings_auto_exit),
                     checked = state.settings.autoExit,
                     onCheckedChange = actions.onSetAutoExit,
@@ -341,7 +341,7 @@ private fun CodeCard(
         content = listOf(
             {
                 SegmentedSwitchItem(
-                    icon = Icons.Filled.Password,
+                    icon = Icons.TwoTone.Password,
                     title = stringResource(R.string.settings_auto_code),
                     summary = stringResource(R.string.settings_auto_code_summary),
                     checked = state.settings.autoCode,
@@ -363,7 +363,7 @@ private fun CodeCard(
                             },
                         )
                     },
-                    leadingContent = { Icon(Icons.Filled.Key, null) },
+                    leadingContent = { Icon(Icons.TwoTone.Key, null) },
                 )
             },
         )
@@ -386,7 +386,7 @@ private fun SignCard(
                         color = MaterialTheme.colorScheme.outline,
                     )
                 },
-                leadingContent = { Icon(Icons.Filled.WhereToVote, null) },
+                leadingContent = { Icon(Icons.TwoTone.WhereToVote, null) },
             )
         }
     )

@@ -41,24 +41,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.MenuOpen
-import androidx.compose.material.icons.filled.Brightness1
-import androidx.compose.material.icons.filled.Brightness3
-import androidx.compose.material.icons.filled.Brightness4
-import androidx.compose.material.icons.filled.Brightness7
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.rounded.Animation
-import androidx.compose.material.icons.rounded.AspectRatio
-import androidx.compose.material.icons.rounded.BlurOn
-import androidx.compose.material.icons.rounded.CallToAction
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.DesignServices
-import androidx.compose.material.icons.rounded.Style
-import androidx.compose.material.icons.rounded.SwapHoriz
-import androidx.compose.material.icons.rounded.Wallpaper
-import androidx.compose.material.icons.rounded.WaterDrop
+import androidx.compose.material.icons.automirrored.twotone.MenuOpen
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.twotone.Animation
+import androidx.compose.material.icons.twotone.AspectRatio
+import androidx.compose.material.icons.twotone.Brightness1
+import androidx.compose.material.icons.twotone.Brightness3
+import androidx.compose.material.icons.twotone.Brightness4
+import androidx.compose.material.icons.twotone.Brightness7
+import androidx.compose.material.icons.twotone.DesignServices
+import androidx.compose.material.icons.twotone.Home
+import androidx.compose.material.icons.twotone.Lock
+import androidx.compose.material.icons.twotone.Settings
+import androidx.compose.material.icons.twotone.Style
+import androidx.compose.material.icons.twotone.SwapHoriz
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
@@ -254,10 +250,10 @@ fun ThemeSettingsMaterial(
                         ) {
                             Icon(
                                 imageVector = when (mode) {
-                                    ColorMode.SYSTEM -> Icons.Filled.Brightness4
-                                    ColorMode.LIGHT -> Icons.Filled.Brightness7
-                                    ColorMode.DARK -> Icons.Filled.Brightness3
-                                    else -> Icons.Filled.Brightness4
+                                    ColorMode.SYSTEM -> Icons.TwoTone.Brightness4
+                                    ColorMode.LIGHT -> Icons.TwoTone.Brightness7
+                                    ColorMode.DARK -> Icons.TwoTone.Brightness3
+                                    else -> Icons.TwoTone.Brightness4
                                 },
                                 contentDescription = label
                             )
@@ -270,7 +266,7 @@ fun ThemeSettingsMaterial(
                     content = listOf(
                         {
                             SegmentedSwitchItem(
-                                icon = Icons.Filled.Brightness1,
+                                icon = Icons.TwoTone.Brightness1,
                                 title = stringResource(R.string.settings_amoled),
                                 summary = stringResource(R.string.settings_amoled_summary),
                                 checked = uiState.amoled,
@@ -286,7 +282,7 @@ fun ThemeSettingsMaterial(
                         {
                             val styles = PaletteStyle.entries
                             SegmentedDropdownItem(
-                                icon = Icons.Rounded.Style,
+                                icon = Icons.TwoTone.Style,
                                 title = stringResource(R.string.settings_color_style),
                                 items = styles.map { it.name },
                                 selectedIndex = styles.indexOf(colorStyle),
@@ -298,7 +294,7 @@ fun ThemeSettingsMaterial(
                         {
                             val specs = ColorSpec.SpecVersion.entries
                             SegmentedDropdownItem(
-                                icon = Icons.Rounded.DesignServices,
+                                icon = Icons.TwoTone.DesignServices,
                                 title = stringResource(R.string.settings_color_spec),
                                 items = specs.map { it.name },
                                 selectedIndex = specs.indexOf(colorSpec).coerceAtLeast(0),
@@ -334,7 +330,7 @@ fun ThemeSettingsMaterial(
                         content = listOf(
                             {
                                 SegmentedSwitchItem(
-                                    icon = Icons.AutoMirrored.Rounded.MenuOpen,
+                                    icon = Icons.AutoMirrored.TwoTone.MenuOpen,
                                     title = stringResource(id = R.string.settings_enable_predictive_back),
                                     checked = uiState.enablePredictiveBack,
                                     onCheckedChange = actions.onSetEnablePredictiveBack
@@ -353,7 +349,7 @@ fun ThemeSettingsMaterial(
                             content = listOf(
                                 {
                                     SegmentedDropdownItem(
-                                        icon = Icons.Rounded.Animation,
+                                        icon = Icons.TwoTone.Animation,
                                         title = stringResource(R.string.settings_predictive_back_animation),
                                         items = animationItems,
                                         selectedIndex = animations.indexOf(currentAnimation).coerceAtLeast(0),
@@ -366,7 +362,7 @@ fun ThemeSettingsMaterial(
                                     // 返回方向仅对「缩放」档生效，与上游 InstallerX 的显示逻辑一致。
                                     AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
                                         SegmentedDropdownItem(
-                                            icon = Icons.Rounded.SwapHoriz,
+                                            icon = Icons.TwoTone.SwapHoriz,
                                             title = stringResource(R.string.settings_predictive_back_direction),
                                             items = directionItems,
                                             selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
@@ -396,7 +392,7 @@ fun ThemeSettingsMaterial(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                Icons.Rounded.AspectRatio,
+                                Icons.TwoTone.AspectRatio,
                                 contentDescription = stringResource(id = R.string.settings_page_scale),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -566,19 +562,19 @@ private fun ThemePreviewCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Home,
+                                imageVector = Icons.TwoTone.Home,
                                 contentDescription = null,
                                 tint = colorScheme.primary,
                                 modifier = Modifier.size(13.dp),
                             )
                             Icon(
-                                imageVector = Icons.Filled.Lock,
+                                imageVector = Icons.TwoTone.Lock,
                                 contentDescription = null,
                                 tint = colorScheme.onSurface,
                                 modifier = Modifier.size(13.dp),
                             )
                             Icon(
-                                imageVector = Icons.Filled.Settings,
+                                imageVector = Icons.TwoTone.Settings,
                                 contentDescription = null,
                                 tint = colorScheme.onSurface,
                                 modifier = Modifier.size(13.dp),
@@ -598,9 +594,9 @@ private fun ThemePreviewCard(
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Filled.Home, null, tint = colorScheme.primary, modifier = Modifier.size(15.dp))
-                            Icon(Icons.Filled.Lock, null, tint = colorScheme.onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.size(15.dp))
-                            Icon(Icons.Filled.Settings, null, tint = colorScheme.onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.size(15.dp))
+                            Icon(Icons.TwoTone.Home, null, tint = colorScheme.primary, modifier = Modifier.size(15.dp))
+                            Icon(Icons.TwoTone.Lock, null, tint = colorScheme.onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.size(15.dp))
+                            Icon(Icons.TwoTone.Settings, null, tint = colorScheme.onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.size(15.dp))
                         }
                     }
                 }
@@ -735,7 +731,7 @@ private fun ColorButtonMaterial(
                                 .background(accentColor, CircleShape)
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Check,
+                                imageVector = Icons.Filled.Check,
                                 contentDescription = null,
                                 tint = onAccentColor,
                                 modifier = Modifier

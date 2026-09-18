@@ -12,20 +12,20 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.ContactPage
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.KeyOff
-import androidx.compose.material.icons.filled.LocationOff
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.SupervisorAccount
-import androidx.compose.material.icons.filled.Update
-import androidx.compose.material.icons.rounded.Bluetooth
-import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.twotone.Login
+import androidx.compose.material.icons.twotone.Bluetooth
+import androidx.compose.material.icons.twotone.BugReport
+import androidx.compose.material.icons.twotone.ContactPage
+import androidx.compose.material.icons.twotone.Dashboard
+import androidx.compose.material.icons.twotone.Delete
+import androidx.compose.material.icons.twotone.KeyOff
+import androidx.compose.material.icons.twotone.LocationOff
+import androidx.compose.material.icons.twotone.LocationOn
+import androidx.compose.material.icons.twotone.Palette
+import androidx.compose.material.icons.twotone.Person
+import androidx.compose.material.icons.twotone.SupervisorAccount
+import androidx.compose.material.icons.twotone.Update
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
@@ -93,7 +93,7 @@ fun SettingPagerMaterial(
                 title = stringResource(R.string.settings_group_general),
                 content = listOf {
                     SegmentedSwitchItem(
-                        icon = Icons.Filled.Update,
+                        icon = Icons.TwoTone.Update,
                         title = stringResource(id = R.string.settings_check_update),
                         summary = stringResource(id = R.string.settings_check_update_summary),
                         checked = state.checkUpdate,
@@ -112,7 +112,7 @@ fun SettingPagerMaterial(
                             onClick = actions.onLogin,
                             headlineContent = { Text(stringResource(R.string.settings_account_login)) },
                             supportingContent = { Text(stringResource(R.string.settings_account_hint)) },
-                            leadingContent = { Icon(Icons.AutoMirrored.Filled.Login, null) },
+                            leadingContent = { Icon(Icons.AutoMirrored.TwoTone.Login, null) },
                         )
                     }
                     state.accounts.forEach { user ->
@@ -130,7 +130,7 @@ fun SettingPagerMaterial(
                 content = buildList {
                     add {
                         SegmentedDropdownItem(
-                            icon = Icons.Rounded.Dashboard,
+                            icon = Icons.TwoTone.Dashboard,
                             title = stringResource(id = R.string.settings_ui_mode),
                             items = listOf("Miuix", "Material"),
                             selectedIndex = if (state.uiMode == "material") 1 else 0,
@@ -141,10 +141,10 @@ fun SettingPagerMaterial(
                         SegmentedListItem(
                             onClick = actions.onOpenTheme,
                             headlineContent = { Text(stringResource(id = R.string.settings_theme)) },
-                            leadingContent = { Icon(Icons.Filled.Palette, stringResource(id = R.string.settings_theme)) },
+                            leadingContent = { Icon(Icons.TwoTone.Palette, stringResource(id = R.string.settings_theme)) },
                             trailingContent = {
                                 Icon(
-                                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                                     null
                                 )
                             }
@@ -161,7 +161,7 @@ fun SettingPagerMaterial(
                     add {
                         // 快速连接：从首页开门卡片迁到设置页，仍写同一个 quick_connect 偏好。
                         SegmentedSwitchItem(
-                            icon = Icons.Rounded.Bluetooth,
+                            icon = Icons.TwoTone.Bluetooth,
                             title = stringResource(id = R.string.unlock_quick_connect),
                             summary = stringResource(id = R.string.unlock_quick_connect_summary),
                             checked = state.settings.quickConnect,
@@ -170,7 +170,7 @@ fun SettingPagerMaterial(
                     }
                     add {
                         SegmentedSwitchItem(
-                            icon = Icons.Filled.SupervisorAccount,
+                            icon = Icons.TwoTone.SupervisorAccount,
                             title = stringResource(R.string.settings_always_code),
                             checked = state.settings.alwaysCode,
                             onCheckedChange = actions.onSetAlwaysCode,
@@ -178,7 +178,7 @@ fun SettingPagerMaterial(
                     }
                     add {
                         SegmentedDropdownItem(
-                            icon = Icons.Filled.LocationOn,
+                            icon = Icons.TwoTone.LocationOn,
                             title = stringResource(R.string.settings_sign_location_mode),
                             items = signLocationItems,
                             selectedIndex = when (state.settings.signLocationMode) {
@@ -199,7 +199,7 @@ fun SettingPagerMaterial(
                 content = listOf(
                     {
                         SegmentedSwitchItem(
-                            icon = Icons.Filled.LocationOff,
+                            icon = Icons.TwoTone.LocationOff,
                             title = stringResource(R.string.settings_hide_sign),
                             checked = state.settings.hideSign,
                             onCheckedChange = actions.onSetHideSign,
@@ -207,7 +207,7 @@ fun SettingPagerMaterial(
                     },
                     {
                         SegmentedSwitchItem(
-                            icon = Icons.Filled.KeyOff,
+                            icon = Icons.TwoTone.KeyOff,
                             title = stringResource(R.string.settings_hide_code),
                             checked = state.settings.hideCode,
                             onCheckedChange = actions.onSetHideCode,
@@ -227,7 +227,7 @@ fun SettingPagerMaterial(
                             headlineContent = { Text(stringResource(id = R.string.send_log)) },
                             leadingContent = {
                                 Icon(
-                                    Icons.Filled.BugReport,
+                                    Icons.TwoTone.BugReport,
                                     stringResource(id = R.string.send_log)
                                 )
                             },
@@ -239,7 +239,7 @@ fun SettingPagerMaterial(
                             headlineContent = { Text(stringResource(id = R.string.settings_about)) },
                             leadingContent = {
                                 Icon(
-                                    Icons.Filled.ContactPage,
+                                    Icons.TwoTone.ContactPage,
                                     stringResource(id = R.string.settings_about)
                                 )
                             },
@@ -283,10 +283,10 @@ private fun AccountRow(
     SegmentedListItem(
         headlineContent = { Text(user.username) },
         supportingContent = { Text(stringResource(R.string.settings_saved_accounts)) },
-        leadingContent = { Icon(Icons.Filled.Person, null) },
+        leadingContent = { Icon(Icons.TwoTone.Person, null) },
         trailingContent = {
             Icon(
-                imageVector = Icons.Filled.Delete,
+                imageVector = Icons.TwoTone.Delete,
                 contentDescription = stringResource(R.string.settings_remove_account),
                 tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier

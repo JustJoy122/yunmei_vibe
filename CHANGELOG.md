@@ -11,7 +11,39 @@
 ---
 ## [Unreleased]
 
-**Full changelog**: [v0.4.3...HEAD](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.3...HEAD)
+**Full changelog**: [v0.4.4...HEAD](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.4...HEAD)
+
+## [0.4.4] - 2026-09-18
+
+**Full changelog**: [v0.4.3...v0.4.4](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.3...v0.4.4)
+
+### 添加
+- 预测性返回手势设置：主题设置新增总开关，以及「返回动画样式」（AOSP / Miuix / 缩放 / 经典）与「返回方向」（跟随手势 / 始终向右 / 始终向左）两项下拉设置；开关关闭即等价上游「无」档，并由返回手势拦截保证页面不跟随手指位移
+- 导航层引入 miuix-nav（`top.yukonga.miuix.kmp:miuix-nav-android` 快照 `0.9.4-103b737b`），返回栈与页面过渡改由 miuix-nav 承载，不再依赖 androidx navigation3
+- 原样引入 InstallerX Revived 的预测性返回过渡源码共 7 个文件（AOSP、经典、缩放、无档、档位分发、缓动、几何工具），仅调整包名与枚举绑定
+- `settings.gradle.kts` 新增 GitHub Packages 仓库，CI 两个工作流补齐读包权限（`packages: read` 并注入 `GITHUB_TOKEN`），用于解析 miuix 快照依赖
+
+### 更改
+- 「快速连接」开关由首页移至设置页「开门与打卡」分组（原「取码与打卡」组随之更名），绑定仍是同一个 `quick_connect` 偏好，功能不变
+- 首页卡片顺序调整为：状态卡 → 开门 → 打卡 → 获取密码 → 开门选项
+- Material 主题图标统一为 InstallerX 风格（TwoTone 系列）；返回箭头与勾选/关闭标记保持 Filled、列表尾部指示箭头保持圆角样式，与上游组件写法一致
+- Miuix 关于页删除列表项图标，与上游 `MiuixNavigationItemWidget`（本身不带图标参数）保持一致；其余 Miuix 页面图标不变
+- 文案精简：删除与主标题含义重复的副标题 7 条（如「仅「缩放」样式生效」「自定义更多主题选项」「调整全局显示比例」「开门成功后退出应用」等），并精简打卡询问等冗长描述
+- 打卡卡片不再显示 `ask` / `rel` / `lst` 内部模式值，改为显示对应中文文案
+
+### 修复
+- 启动即崩溃：`Route` 缺少 `@Serializable`，miuix-nav 保存返回栈时抛出 `Serializer for subclass 'Main' is not found in the polymorphic scope of 'Route'`
+- 进入主题设置卡顿（Material 尤为明显）：每个色板格原本在主线程同步执行 material-kolor 全量色板推导，改为进程级缓存 + `produceState` 后台计算 + 种子色占位（做法对齐上游 `ColorPalatteCard`）
+- 「缩放」档下「返回方向」菜单遮挡「返回动画样式」菜单：下拉菜单锚点由行尾取值文本改为整行，两个下拉并入同一张卡片并用 `visibleLen` 修正圆角分组
+- Material 主题下「快速连接」列表项图标缺失：改为复用 `SegmentedColumn` + `SegmentedSwitchItem` 并补 `Icons.Rounded.Bluetooth`
+- 预测性返回开关的延迟 `recreate()` 挂在组合作用域上，离开页面即被取消会出现「设置已保存但窗口未重建」：改挂 Activity 的 `lifecycleScope`
+- miuix 过渡动画 spec 类型不匹配（`SpringSpec<Float>` 误用于 `IntOffset`）导致编译失败
+- 锁详情页二维码相关问题
+
+### 移除
+- 自研返回动画层 `ui/animation/predictiveback/YunmeiNavTransitions.kt`
+- 无任何引用的 `ui/component/material/SettingsItem.kt`
+- 不再使用的 `androidx.navigation3` runtime / ui 依赖（与上游 build 文件同形态：仅注释掉引用、保留版本目录条目）
 
 ## [0.4.3] - 2026-09-12
 
@@ -425,7 +457,8 @@
 版本对比链接定义（Keep a Changelog 惯例）。
 注意：标签需与标题中的 [x.y.z] 完全一致，Markdown 渲染时版本号才可点击。
 -->
-[Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.0...v0.4.1

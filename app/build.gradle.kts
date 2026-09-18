@@ -40,8 +40,8 @@ android {
         applicationId = "com.yunmei.vibe"
         minSdk = 26
         targetSdk = 37
-        versionCode = 26
-        versionName = "0.4.3"
+        versionCode = 27
+        versionName = "0.4.4"
 
         // CI 构建号：GitHub Actions 在 Debug 工作流里通过 -PbuildStamp=<run_number> 注入，
         // App 内 Debug 更新检查据此与远端 ci-* 标签的 run_number 精确比较；

@@ -60,6 +60,7 @@ import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -77,6 +78,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -84,6 +86,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
@@ -95,6 +98,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.materialkolor.rememberDynamicColorScheme
 import com.yunmei.vibe.R
@@ -106,6 +110,16 @@ import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
 import com.yunmei.vibe.ui.component.material.TonalCard
 import com.yunmei.vibe.ui.theme.ColorMode
 import com.yunmei.vibe.ui.theme.keyColorOptions
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+/**
+ * 固定色色板的进程级缓存（与上游 InstallerX `ColorPalatteCard.kt` 的 colorSchemeCache 同款做法）：
+ * material-kolor 生成一套色板要跑完整的 HCT 推导，比较重。缓存后重新进入页面、或横向滚动让
+ * 已算过的色板重新可见时都能立刻出结果，不必再算一遍。
+ */
+private val colorSchemeCache = ConcurrentHashMap<String, ColorScheme>()
 
 @Composable
 fun ThemeSettingsMaterial(
@@ -183,7 +197,7 @@ fun ThemeSettingsMaterial(
                     )
                 }
 
-                items(keyColorOptions) { color ->
+                items(keyColorOptions, key = { it }) { color ->
                     ColorButtonMaterial(
                         color = Color(color),
                         isSelected = currentKeyColor == color,
@@ -331,10 +345,12 @@ fun ThemeSettingsMaterial(
                     )
 
                     AnimatedVisibility(visible = uiState.enablePredictiveBack) {
-                        // 动画样式（复用 InstallerX Revived 的四档，不含「无」）；样式为 KernelSU-Style-UI-Kit
-                        // 的 SegmentedDropdownItem，与上方「色彩风格 / 色彩标准」同款。
+                        // 动画样式 + 返回方向放进同一张 SegmentedColumn（与上方「色彩风格 / 色彩标准」完全同款结构）：
+                        // 两者是同一张卡里的相邻两行，各自把弹出菜单锚定在自己的行上，不会互相压盖；
+                        // 方向行隐藏时用 visibleLen 修正圆角分组，保证只剩一行时卡片圆角仍然正确。
                         SegmentedColumn(
                             modifier = Modifier.padding(top = 4.dp),
+                            visibleLen = if (currentAnimation == PredictiveBackAnimation.SCALE) 2 else 1,
                             content = listOf(
                                 {
                                     SegmentedDropdownItem(
@@ -346,16 +362,10 @@ fun ThemeSettingsMaterial(
                                             actions.onSetPredictiveBackAnimation(animations[index].value)
                                         }
                                     )
-                                }
-                            )
-                        )
-
-                        // 返回方向仅对「缩放」档生效，与上游 InstallerX 的显示逻辑一致。
-                        AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
-                            SegmentedColumn(
-                                modifier = Modifier.padding(top = 4.dp),
-                                content = listOf(
-                                    {
+                                },
+                                {
+                                    // 返回方向仅对「缩放」档生效，与上游 InstallerX 的显示逻辑一致。
+                                    AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
                                         SegmentedDropdownItem(
                                             icon = Icons.Rounded.SwapHoriz,
                                             title = stringResource(R.string.settings_predictive_back_direction),
@@ -367,9 +377,9 @@ fun ThemeSettingsMaterial(
                                             }
                                         )
                                     }
-                                )
+                                },
                             )
-                        }
+                        )
                     }
                 }
 
@@ -629,7 +639,9 @@ private fun ColorButtonMaterial(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    val colorScheme = if (color == Color.Unspecified) {
+
+    // 「跟随系统（Monet）」档：platform 取色 + material-kolor 组合，整页只有这一格，同步算可接受。
+    val colorScheme: ColorScheme? = if (color == Color.Unspecified) {
         val baseScheme = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         rememberDynamicColorScheme(
             seedColor = Color.Unspecified,
@@ -644,13 +656,40 @@ private fun ColorButtonMaterial(
             error = baseScheme.error
         )
     } else {
-        rememberDynamicColorScheme(
-            seedColor = color,
-            isDark = isDark,
-            style = paletteStyle,
-            specVersion = colorSpec,
-        )
+        // 固定色档：色板推导挪到 Default 线程 + 进程级缓存（与上游 ColorPalatteCard 的 ColorSwatchPreview 同款），
+        // 计算期间先用种子色画轻量占位。这样进入页面时主线程不再串行算十几套色板。
+        val cacheKey = remember(color, paletteStyle, colorSpec, isDark) {
+            "${color.toArgb()}_${paletteStyle.name}_${colorSpec.name}_$isDark"
+        }
+        val swatchScheme by produceState<ColorScheme?>(
+            initialValue = colorSchemeCache[cacheKey],
+            key1 = cacheKey,
+        ) {
+            val cached = colorSchemeCache[cacheKey]
+            if (cached != null) {
+                value = cached
+            } else {
+                val computed = withContext(Dispatchers.Default) {
+                    dynamicColorScheme(
+                        seedColor = color,
+                        isDark = isDark,
+                        style = paletteStyle,
+                        specVersion = colorSpec,
+                    )
+                }
+                colorSchemeCache[cacheKey] = computed
+                value = computed
+            }
+        }
+        swatchScheme
     }
+
+    // 色板还没算完时用种子色兜底，避免出现空白格。
+    val containerColor = colorScheme?.surfaceContainer ?: MaterialTheme.colorScheme.surfaceContainer
+    val arcPrimary = colorScheme?.primaryContainer ?: color
+    val arcTertiary = colorScheme?.tertiaryContainer ?: color.copy(alpha = 0.6f)
+    val accentColor = colorScheme?.primary ?: color
+    val onAccentColor = colorScheme?.onPrimary ?: MaterialTheme.colorScheme.onPrimary
 
     Surface(
         onClick = {
@@ -658,19 +697,19 @@ private fun ColorButtonMaterial(
             onClick()
         },
         shape = RoundedCornerShape(20.dp),
-        color = colorScheme.surfaceContainer,
+        color = containerColor,
         modifier = Modifier.size(72.dp)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Canvas(modifier = Modifier.size(48.dp)) {
                 drawArc(
-                    color = colorScheme.primaryContainer,
+                    color = arcPrimary,
                     startAngle = 180f,
                     sweepAngle = 180f,
                     useCenter = true
                 )
                 drawArc(
-                    color = colorScheme.tertiaryContainer,
+                    color = arcTertiary,
                     startAngle = 0f,
                     sweepAngle = 180f,
                     useCenter = true
@@ -693,19 +732,19 @@ private fun ColorButtonMaterial(
                     Box(
                         modifier = Modifier
                             .size(56.dp)
-                            .border(2.dp, colorScheme.primary, CircleShape),
+                            .border(2.dp, accentColor, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(colorScheme.primary, CircleShape)
+                                .background(accentColor, CircleShape)
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Check,
                                 contentDescription = null,
-                                tint = colorScheme.onPrimary,
+                                tint = onAccentColor,
                                 modifier = Modifier
                                     .align(Alignment.Center)
                                     .size(16.dp)
@@ -721,7 +760,7 @@ private fun ColorButtonMaterial(
                     Box(
                         modifier = Modifier
                             .size(20.dp)
-                            .background(colorScheme.primary, CircleShape)
+                            .background(accentColor, CircleShape)
                     )
                 }
             }

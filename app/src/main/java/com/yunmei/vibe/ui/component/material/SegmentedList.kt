@@ -276,60 +276,64 @@ fun SegmentedDropdownItem(
         -1
     }
 
-    SegmentedListItem(
-        onClick = if (enabled) {
-            {
-                onClick?.invoke()
-                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                expanded = true
-            }
-        } else null,
-        enabled = enabled,
-        colors = colors,
-        leadingContent = icon?.let { { Icon(it, title) } },
-        headlineContent = { Text(text = title) },
-        supportingContent = summary?.let { { Text(it) } },
-        trailingContent = {
-            Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
+    // 与上游 InstallerX 的 DropDownMenuWidget / GroupedDropdownMenuPopup 一致：菜单挂在整行的
+    // Box（等价上游 foreContent + Alignment.CenterStart）上，而不是行尾那小块取值文本上。
+    // 挂在行尾时菜单会贴着右边缘，被系统重新定位后容易压到上下相邻条目（同卡片内尤其明显）。
+    Box(modifier = Modifier.fillMaxWidth()) {
+        SegmentedListItem(
+            onClick = if (enabled) {
+                {
+                    onClick?.invoke()
+                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                    expanded = true
+                }
+            } else null,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            colors = colors,
+            leadingContent = icon?.let { { Icon(it, title) } },
+            headlineContent = { Text(text = title) },
+            supportingContent = summary?.let { { Text(it) } },
+            trailingContent = {
                 Text(
                     text = if (hasItems && safeIndex >= 0) items[safeIndex] else "",
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth(0.3f),
                     color = if (enabled) colorScheme.primary else colorScheme.onSurfaceVariant
                 )
-                DropdownMenuPopup(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuGroup(shapes = MenuDefaults.groupShapes()) {
-                        items.forEachIndexed { index, text ->
-                            DropdownMenuItem(
-                                text = { Text(text) },
-                                selected = index == safeIndex,
-                                onClick = {
-                                    if (index in items.indices) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                        onItemSelected(index)
-                                    }
-                                    expanded = false
-                                },
-                                shapes = MenuDefaults.itemShape(index = index, count = items.size),
-                                leadingIcon = {
-                                    if (index == safeIndex) {
-                                        Icon(
-                                            Icons.Filled.Check,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(MenuDefaults.LeadingIconSize),
-                                        )
-                                    }
-                                },
-                            )
-                        }
-                    }
+            }
+        )
+        DropdownMenuPopup(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuGroup(shapes = MenuDefaults.groupShapes()) {
+                items.forEachIndexed { index, text ->
+                    DropdownMenuItem(
+                        text = { Text(text) },
+                        selected = index == safeIndex,
+                        onClick = {
+                            if (index in items.indices) {
+                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                onItemSelected(index)
+                            }
+                            expanded = false
+                        },
+                        shapes = MenuDefaults.itemShape(index = index, count = items.size),
+                        leadingIcon = {
+                            if (index == safeIndex) {
+                                Icon(
+                                    Icons.Filled.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(MenuDefaults.LeadingIconSize),
+                                )
+                            }
+                        },
+                    )
                 }
             }
         }
-    )
+    }
 }
 
 @Composable

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.WhereToVote
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -253,31 +254,21 @@ private fun QuickConnectCard(
     state: HomeUiState,
     actions: HomeActions,
 ) {
-    TonalCard {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.unlock_quick_connect),
-                    style = MaterialTheme.typography.bodyLarge,
+    // 与同页 DoorOptionsCard 同款结构（KernelSU-Style-UI-Kit 的 SegmentedColumn + SegmentedSwitchItem），
+    // 图标沿用 Miuix 侧的 Icons.Rounded.Bluetooth，保证两套主题下图标一致、不出现空白。
+    SegmentedColumn(
+        content = listOf(
+            {
+                SegmentedSwitchItem(
+                    icon = Icons.Rounded.Bluetooth,
+                    title = stringResource(R.string.unlock_quick_connect),
+                    summary = stringResource(R.string.unlock_quick_connect_summary),
+                    checked = state.quickConnect,
+                    onCheckedChange = actions.onSetQuickConnect,
                 )
-                Text(
-                    text = stringResource(R.string.unlock_quick_connect_summary),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            }
-            ExpressiveSwitch(
-                checked = state.quickConnect,
-                onCheckedChange = actions.onSetQuickConnect,
-            )
-        }
-    }
+            },
+        )
+    )
 }
 
 @Composable

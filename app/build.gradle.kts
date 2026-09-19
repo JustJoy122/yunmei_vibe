@@ -67,7 +67,8 @@ android {
             if (releaseStoreFile?.exists() == true) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            isMinifyEnabled = false
+            // P1-2 第一步：仅开启代码压缩（R8），资源压缩（isShrinkResources）待本步真机回归通过后再开。
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -55,6 +55,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -79,7 +80,9 @@ import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
 import com.yunmei.vibe.ui.component.material.TonalCard
 import com.yunmei.vibe.ui.navigation3.LocalNavigator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
@@ -254,7 +257,7 @@ private fun LockDetailScreenMaterial(
                                             ""
                                         } else {
                                             " · " + stringResource(
-                                                if (YunMeiApp.app.container.accountStore.getByUsernameMd5(lock.usernameMd5) != null) {
+                                                if (rememberAccountSaved(lock.usernameMd5)) {
                                                     R.string.lock_detail_account_saved
                                                 } else {
                                                     R.string.lock_detail_account_unsaved
@@ -444,7 +447,7 @@ private fun LockDetailScreenMiuix(
                                 ""
                             } else {
                                 " · " + stringResource(
-                                    if (YunMeiApp.app.container.accountStore.getByUsernameMd5(lock.usernameMd5) != null) {
+                                    if (rememberAccountSaved(lock.usernameMd5)) {
                                         R.string.lock_detail_account_saved
                                     } else {
                                         R.string.lock_detail_account_unsaved
@@ -580,4 +583,21 @@ private fun LockDetailScreenMiuix(
             }
         }
     }
+}
+
+/**
+ * 该门锁账号是否已保存。
+ *
+ * 账号存放在加密存储（EncryptedSharedPreferences + JSON 解码）里，属于 IO 操作，
+ * 不能在组合期直接读取（原先在组合中同步读取会阻塞主线程、且每次重组都执行一次）。
+ * 这里用 produceState 放到 IO 线程计算，并按 usernameMd5 缓存结果。
+ */
+@Composable
+private fun rememberAccountSaved(usernameMd5: String): Boolean {
+    val saved by produceState(initialValue = false, key1 = usernameMd5) {
+        value = withContext(Dispatchers.IO) {
+            YunMeiApp.app.container.accountStore.getByUsernameMd5(usernameMd5) != null
+        }
+    }
+    return saved
 }

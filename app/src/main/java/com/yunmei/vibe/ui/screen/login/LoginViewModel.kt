@@ -12,6 +12,7 @@ import com.yunmei.vibe.data.security.Md5
 import com.yunmei.vibe.ui.component.UiMessage
 import com.yunmei.vibe.ui.component.UiMessageBus
 import com.yunmei.vibe.ui.component.UiMessageTone
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class LoginViewModel : ViewModel() {
 
@@ -40,7 +42,11 @@ class LoginViewModel : ViewModel() {
     private var passwordMd5: String? = null
 
     fun refresh() {
-        _uiState.update { it.copy(savedUsers = container.accountStore.getAll()) }
+        // 已保存账号来自加密存储（EncryptedSharedPreferences + JSON 解码），切到 IO 线程读取。
+        viewModelScope.launch {
+            val users = withContext(Dispatchers.IO) { container.accountStore.getAll() }
+            _uiState.update { it.copy(savedUsers = users) }
+        }
     }
 
     fun onUsernameChange(value: String) = _uiState.update { it.copy(username = value) }

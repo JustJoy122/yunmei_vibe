@@ -188,11 +188,12 @@ class HomeViewModel : ViewModel() {
     /** 打卡入口：按 signLocationMode 分派（与原项目 sigLoc 的 ask/lst/rel 一致）。 */
     fun sign() {
         val lock = currentLock ?: return
-        if (findUser(lock) == null) {
-            _uiState.update { it.copy(signMessage = str(R.string.unlock_no_account)) }
-            return
-        }
         viewModelScope.launch {
+            // findUser 会读加密存储，必须放在协程里（内部已切到 IO）。
+            if (findUser(lock) == null) {
+                _uiState.update { it.copy(signMessage = str(R.string.unlock_no_account)) }
+                return@launch
+            }
             val mode = _uiState.value.settings.signLocationMode
             when (mode) {
                 "lst" -> useLastLocation()
@@ -222,8 +223,9 @@ class HomeViewModel : ViewModel() {
         _uiState.update { it.copy(signAsk = null) }
     }
 
-    private fun findUser(lock: Lock): StoredUser? {
-        return container.accountStore.getByUsernameMd5(lock.usernameMd5)
+    /** 读取加密存储（EncryptedSharedPreferences + JSON 解码），统一切到 IO 线程。 */
+    private suspend fun findUser(lock: Lock): StoredUser? = withContext(Dispatchers.IO) {
+        container.accountStore.getByUsernameMd5(lock.usernameMd5)
             ?: if (_uiState.value.settings.alwaysCode) {
                 container.accountStore.getAll().firstOrNull()
             } else {

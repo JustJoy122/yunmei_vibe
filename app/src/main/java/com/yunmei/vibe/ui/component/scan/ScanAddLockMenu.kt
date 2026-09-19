@@ -12,6 +12,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PhotoLibrary
+import androidx.compose.material.icons.twotone.PhotoCamera
+import androidx.compose.material.icons.twotone.PhotoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -115,12 +117,22 @@ fun ScanAddLockMenu(
         onDenied = { onError(permissionDeniedText) },
     )
 
+    // 图标按主题分派（与项目其他双主题组件同一做法）：
+    // Material 走 InstallerX 的 AppIcons 体系（TwoTone），Miuix 保持原有的 Rounded 图标。
+    val useTwoToneIcons = LocalUiMode.current == UiMode.Material
+
     val items = listOf(
-        ActionMenuItem(Icons.Rounded.PhotoCamera, cameraLabel) {
+        ActionMenuItem(
+            if (useTwoToneIcons) Icons.TwoTone.PhotoCamera else Icons.Rounded.PhotoCamera,
+            cameraLabel,
+        ) {
             onDismissRequest()
             requestCameraPermission()
         },
-        ActionMenuItem(Icons.Rounded.PhotoLibrary, galleryLabel) {
+        ActionMenuItem(
+            if (useTwoToneIcons) Icons.TwoTone.PhotoLibrary else Icons.Rounded.PhotoLibrary,
+            galleryLabel,
+        ) {
             onDismissRequest()
             pickMedia.launch(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)

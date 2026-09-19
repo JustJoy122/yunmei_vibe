@@ -82,6 +82,7 @@ import com.yunmei.vibe.ui.theme.TemplateTheme
 import com.yunmei.vibe.ui.theme.ThemeController
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
 import com.yunmei.vibe.ui.util.rememberContentReady
+import com.yunmei.vibe.ui.util.rememberDeviceCornerRadius
 import com.yunmei.vibe.ui.viewmodel.MainActivityViewModel
 import com.yunmei.vibe.ui.viewmodel.MainPagerConfig
 import top.yukonga.miuix.kmp.basic.Scaffold
@@ -241,11 +242,13 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     // 圆角裁剪与上游一致：AOSP / 缩放 / 经典整屏圆角，「无」/ Miuix 仅起始边圆角。
-                    // 本项目没有上游的 rememberDeviceCornerRadius，半径取 0.dp，走上游同一处 32.dp 兜底。
+                    // 半径直接取上游的 rememberDeviceCornerRadius（API 31+ 读 RoundedCorner，
+                    // 低版本回退系统 rounded_corner_radius_bottom / rounded_corner_radius 资源）；
+                    // 设备读不到圆角时用上游兜底值 32.dp，保证「无」/ Miuix 档也不会丢失起始边裁剪。
                     val roundAllCorners = predictiveBackAnimation == PredictiveBackAnimation.AOSP ||
                         predictiveBackAnimation == PredictiveBackAnimation.SCALE ||
                         predictiveBackAnimation == PredictiveBackAnimation.CLASSIC
-                    val navCornerRadius = 0.dp
+                    val navCornerRadius = rememberDeviceCornerRadius(defaultRadius = 32.dp)
                     // 底色跟随当前 UI 体系的动态配色（不写死 RGB）：Material 走 Monet 的 surfaceContainer，
                     // Miuix 走 MiuixTheme 的 surface。
                     val navBackdropColor = when (uiMode) {
@@ -255,7 +258,7 @@ class MainActivity : ComponentActivity() {
                     val navEffects = remember(navCornerRadius, roundAllCorners, navBackdropColor) {
                         NavDisplayEffects(
                             enableCornerClip = true,
-                            cornerClipRadius = if (roundAllCorners && navCornerRadius <= 0.dp) 32.dp else navCornerRadius,
+                            cornerClipRadius = navCornerRadius,
                             cornerClipMode = if (roundAllCorners) NavCornerClipMode.All else NavCornerClipMode.Leading,
                             dimAmount = 0.5f,
                             backdropColor = navBackdropColor,

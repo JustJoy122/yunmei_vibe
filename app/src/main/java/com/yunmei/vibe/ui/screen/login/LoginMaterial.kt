@@ -15,7 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.twotone.Login
 import androidx.compose.material.icons.twotone.Person
 import androidx.compose.material3.Icon
@@ -69,7 +69,7 @@ fun LoginScreenMaterial(
                 navigationIcon = {
                     IconButton(onClick = backToMain) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(R.string.lock_detail_back),
                         )
                     }

@@ -40,7 +40,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.twotone.MenuOpen
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.twotone.Animation
@@ -140,7 +140,7 @@ fun ThemeSettingsMaterial(
                 navigationIcon = {
                     IconButton(
                         onClick = actions.onBack
-                    ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
+                    ) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null) }
                 },
                 title = { Text(stringResource(R.string.settings_theme)) },
                 colors = TopAppBarDefaults.topAppBarColors(

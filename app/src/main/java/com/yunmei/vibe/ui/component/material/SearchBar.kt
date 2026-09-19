@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.twotone.Close
 import androidx.compose.material.icons.twotone.Search
 import androidx.compose.material3.ExpandedFullScreenContainedSearchBar
 import androidx.compose.material3.Icon
@@ -154,7 +154,7 @@ fun SearchAppBar(
                     if (isSearchExpanded) {
                         IconButton(
                             onClick = { collapseAndClear() },
-                            content = { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
+                            content = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, null) }
                         )
                     } else {
                         Icon(Icons.TwoTone.Search, null)
@@ -164,7 +164,7 @@ fun SearchAppBar(
                     if (isSearchExpanded && currentQuery.isNotEmpty()) {
                         IconButton(
                             onClick = { clearSearchText() },
-                            content = { Icon(Icons.Filled.Close, null) }
+                            content = { Icon(Icons.TwoTone.Close, null) }
                         )
                     }
                 },

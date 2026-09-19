@@ -23,8 +23,9 @@ fun NavigationRailMaterial(
 ) {
     val mainPagerState = LocalMainPagerState.current
 
-    val items = BottomBarDestination.entries.map { destination ->
-        Triple(destination.label, destination.selectedIcon, destination.unselectedIcon)
+    // Material 使用自己的图标集（TwoTone，对齐 InstallerX），不再复用 Miuix 的三态图标。
+    val items = BottomBarDestinationMaterial.entries.map { destination ->
+        Triple(destination.label, destination.icon, destination.icon)
     }
 
     NavigationRail(

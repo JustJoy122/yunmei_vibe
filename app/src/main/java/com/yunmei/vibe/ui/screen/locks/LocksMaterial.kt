@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.twotone.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.twotone.Delete
 import androidx.compose.material.icons.twotone.PersonAdd
 import androidx.compose.material.icons.twotone.QrCodeScanner
@@ -181,7 +181,7 @@ private fun LockRow(
                         .padding(8.dp),
                 )
                 Icon(
-                    imageVector = Icons.AutoMirrored.TwoTone.KeyboardArrowRight,
+                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                     contentDescription = null,
                 )
             }

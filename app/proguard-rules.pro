@@ -61,3 +61,12 @@
 # ---- Compose / Miuix ----
 # 两者对 R8 友好，无需额外 keep 规则；保留此注释避免后续误加过宽规则。
 -dontwarn top.yukonga.miuix.**
+
+# ---- 编译期注解依赖（R8 missing classes 修复）----
+# androidx.security:security-crypto 传递引入 com.google.crypto.tink，其类上引用了 errorprone 的
+# 编译期注解（不进运行时）。下面 4 条即 R8 生成的 missing_rules.txt 内容，按最小化原则照录，
+# 不使用 -dontobfuscate / -dontshrink 之类的一刀切手段。
+-dontwarn com.google.errorprone.annotations.CanIgnoreReturnValue
+-dontwarn com.google.errorprone.annotations.CheckReturnValue
+-dontwarn com.google.errorprone.annotations.Immutable
+-dontwarn com.google.errorprone.annotations.RestrictedApi

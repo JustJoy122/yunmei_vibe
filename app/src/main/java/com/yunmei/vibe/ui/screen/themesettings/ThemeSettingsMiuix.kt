@@ -49,10 +49,12 @@ import androidx.compose.material.icons.rounded.Wallpaper
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -70,7 +72,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
-import com.materialkolor.rememberDynamicColorScheme
+import com.materialkolor.dynamicColorScheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.component.miuix.ScaleDialog
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
@@ -509,23 +513,36 @@ private fun ThemePreviewCardMiuix(
     val seedColor = if (keyColor == 0) colorScheme.primary else Color(keyColor)
     val effectiveStyle = if (keyColor == 0) PaletteStyle.TonalSpot else paletteStyle
     val effectiveSpec = if (keyColor == 0) ColorSpec.SpecVersion.Default else colorSpec
-    val dynamicCs = rememberDynamicColorScheme(
-        seedColor = seedColor,
-        isDark = isDark,
-        style = effectiveStyle,
-        specVersion = effectiveSpec,
-    )
+    // 预览色板放到 Default 线程推导（原先在组合期同步跑 material-kolor，是进入主题设置掉帧的主因之一）；
+    // 未就绪时先用当前 Miuix 配色占位，避免预览卡空白。
+    val dynamicCsValue by produceState<ColorScheme?>(
+        initialValue = null,
+        key1 = listOf(seedColor, isDark, effectiveStyle, effectiveSpec),
+    ) {
+        value = withContext(Dispatchers.Default) {
+            dynamicColorScheme(
+                seedColor = seedColor,
+                isDark = isDark,
+                style = effectiveStyle,
+                specVersion = effectiveSpec,
+            )
+        }
+    }
+    val dynamicCs = dynamicCsValue
 
-    val bgColor = if (miuixMonet) dynamicCs.background else colorScheme.surface
-    val textColor = if (miuixMonet) dynamicCs.onSurface else colorScheme.onBackground
+    // dynamicCs 是 material-kolor 的推导结果（异步，未就绪时为 null）；
+    // Miuix 自有的 ColorScheme 与 material-kolor 的 ColorScheme 不是同一类型，
+    // 因此不整体兜底，而是逐项给出「未就绪 → 当前 Miuix 配色」的回退。
+    val bgColor = if (miuixMonet) dynamicCs?.background ?: colorScheme.surface else colorScheme.surface
+    val textColor = if (miuixMonet) dynamicCs?.onSurface ?: colorScheme.onBackground else colorScheme.onBackground
     val accentCardColor = when {
-        miuixMonet -> dynamicCs.secondaryContainer
+        miuixMonet -> dynamicCs?.secondaryContainer ?: colorScheme.surfaceVariant
         isDark -> Color(0xFF1A3825)
         else -> Color(0xFFDFFAE4)
     }
-    val cardColor = if (miuixMonet) dynamicCs.surfaceContainerHighest else colorScheme.surfaceVariant
-    val navBarColor = if (miuixMonet) dynamicCs.surfaceContainer else colorScheme.surface
-    val iconColor = if (miuixMonet) dynamicCs.primary else colorScheme.primary
+    val cardColor = if (miuixMonet) dynamicCs?.surfaceContainerHighest ?: colorScheme.surfaceVariant else colorScheme.surfaceVariant
+    val navBarColor = if (miuixMonet) dynamicCs?.surfaceContainer ?: colorScheme.surface else colorScheme.surface
+    val iconColor = if (miuixMonet) dynamicCs?.primary ?: colorScheme.primary else colorScheme.primary
     val navSelectedColor = colorScheme.onSurfaceContainer
     val navUnselectedColor = colorScheme.onSurfaceContainer.copy(alpha = 0.5f)
 

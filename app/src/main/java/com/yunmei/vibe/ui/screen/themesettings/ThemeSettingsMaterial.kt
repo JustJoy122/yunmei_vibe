@@ -446,29 +446,49 @@ private fun ThemePreviewCard(
     val screenRatio = screenWidth / screenHeight
     val dynamicColor = keyColor == 0
 
-    val colorScheme = if (dynamicColor) {
-        val baseScheme = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        rememberDynamicColorScheme(
-            seedColor = Color.Unspecified,
-            isDark = isDark,
-            style = paletteStyle,
-            specVersion = colorSpec,
-            primary = baseScheme.primary,
-            secondary = baseScheme.secondary,
-            tertiary = baseScheme.tertiary,
-            neutral = baseScheme.surface,
-            neutralVariant = baseScheme.surfaceVariant,
-            error = baseScheme.error
-        )
-    } else {
-        rememberDynamicColorScheme(
-            seedColor = Color(keyColor),
-            isDark = isDark,
-            style = paletteStyle,
-            specVersion = colorSpec,
-        )
-
+    // 预览色板与色板格共用同一套进程级缓存，并放到 Default 线程计算：
+    // 进入主题设置的首帧不再同步跑 material-kolor 全量推导（此前是进入卡顿的主因）。
+    // 计算完成前用当前应用主题配色占位，避免预览卡出现空白/闪烁。
+    val previewKey = remember(keyColor, isDark, paletteStyle, colorSpec) {
+        "${keyColor}_${paletteStyle.name}_${colorSpec.name}_$isDark"
     }
+    val previewScheme by produceState<ColorScheme?>(
+        initialValue = colorSchemeCache[previewKey],
+        key1 = previewKey,
+    ) {
+        val cached = colorSchemeCache[previewKey]
+        if (cached != null) {
+            value = cached
+        } else {
+            val computed = withContext(Dispatchers.Default) {
+                if (dynamicColor) {
+                    val base = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                    dynamicColorScheme(
+                        seedColor = Color.Unspecified,
+                        isDark = isDark,
+                        style = paletteStyle,
+                        specVersion = colorSpec,
+                        primary = base.primary,
+                        secondary = base.secondary,
+                        tertiary = base.tertiary,
+                        neutral = base.surface,
+                        neutralVariant = base.surfaceVariant,
+                        error = base.error,
+                    )
+                } else {
+                    dynamicColorScheme(
+                        seedColor = Color(keyColor),
+                        isDark = isDark,
+                        style = paletteStyle,
+                        specVersion = colorSpec,
+                    )
+                }
+            }
+            colorSchemeCache[previewKey] = computed
+            value = computed
+        }
+    }
+    val colorScheme = previewScheme ?: MaterialTheme.colorScheme
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         Surface(

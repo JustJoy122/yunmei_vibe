@@ -67,8 +67,11 @@ android {
             if (releaseStoreFile?.exists() == true) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            // P1-2 第一步：仅开启代码压缩（R8），资源压缩（isShrinkResources）待本步真机回归通过后再开。
+            // P1-2 第一步（已完成）：开启代码压缩（R8），keep 规则见 proguard-rules.pro。
+            // P1-2 第二步：开启资源压缩。若后续发现动态引用资源被误删，用 keep.xml 的
+            // tools:keep / tools:discard 精确补回，不关闭整个压缩。
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

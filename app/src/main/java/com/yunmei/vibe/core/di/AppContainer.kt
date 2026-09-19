@@ -38,7 +38,7 @@ class AppContainer(context: Context) {
     }
 
     val repository: YunMeiRepository by lazy {
-        YunMeiRepository(apiClient)
+        YunMeiRepository(appContext, apiClient)
     }
 
     val unlockManager: UnlockManager by lazy {

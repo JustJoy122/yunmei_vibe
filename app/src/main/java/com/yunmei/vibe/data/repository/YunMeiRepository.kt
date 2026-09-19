@@ -1,5 +1,7 @@
 package com.yunmei.vibe.data.repository
 
+import android.content.Context
+import com.yunmei.vibe.R
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.data.model.LoginUser
@@ -29,7 +31,10 @@ class YunMeiAuthException(message: String) : YunMeiException(message)
  * 云莓智能业务仓库。
  * 网络调用与 token 切换用 [Mutex] 串行化，避免并发时 header 串号。
  */
-class YunMeiRepository(private val client: YunMeiApiClient) {
+class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
+
+    /** 应用 Context，仅用于读取界面文案资源（数据层不再硬编码中文）。 */
+    private val appContext = context.applicationContext
 
     private val mutex = Mutex()
 
@@ -41,12 +46,12 @@ class YunMeiRepository(private val client: YunMeiApiClient) {
         val user = response.o
         // 服务端 success=false：账号/密码不被接受，属业务性鉴权失败。
         if (!response.success) {
-            throw YunMeiAuthException(response.msg ?: "登录失败")
+            throw YunMeiAuthException(response.msg ?: appContext.getString(R.string.login_error_generic))
         }
         // 以下属异常响应体（服务端 bug 或接口变更），归为预期外错误。
-        val safeUser = user ?: throw YunMeiException("登录响应缺少用户信息")
+        val safeUser = user ?: throw YunMeiException(appContext.getString(R.string.login_error_response_no_user))
         if (safeUser.token.isNullOrBlank() || safeUser.userId.isNullOrBlank()) {
-            throw YunMeiException("登录响应缺少凭证")
+            throw YunMeiException(appContext.getString(R.string.login_error_response_no_token))
         }
         this.username = username
         this.usernameMd5 = Md5.hex(username)
@@ -69,7 +74,7 @@ class YunMeiRepository(private val client: YunMeiApiClient) {
     suspend fun fetchLocks(school: SchoolEntry): List<Lock> = mutex.withLock {
         val userId = requireUserId()
         val serverUrl = school.school?.serverUrl?.takeIf { it.isNotBlank() }
-            ?: throw YunMeiException("学校服务器地址缺失")
+            ?: throw YunMeiException(appContext.getString(R.string.school_server_missing))
         applySchoolAuth(school, userId)
         android.util.Log.d(
             "YunMei",
@@ -105,7 +110,8 @@ class YunMeiRepository(private val client: YunMeiApiClient) {
         val writeUuid = str("lockCharacterUuid", "characteristicUuid") ?: return null
         val serviceUuid = str("lockServiceUuid", "serviceUuid") ?: return null
         return Lock(
-            label = (str("buildName") ?: "未知") + "-" + (str("dormNo") ?: "未知"),
+            label = (str("buildName") ?: appContext.getString(R.string.lock_label_unknown)) +
+                "-" + (str("dormNo") ?: appContext.getString(R.string.lock_label_unknown)),
             // 原项目在未知真实 MAC 时用 lockNo 顶替，快速连接失败后回退扫描。
             mac = lockNo,
             writeUuid = writeUuid,
@@ -123,8 +129,8 @@ class YunMeiRepository(private val client: YunMeiApiClient) {
         applySchoolAuth(school, userId)
         val response = client.api(serverUrl)
             .sign(school.schoolNo.orEmpty(), lock.lockNo, location)
-        if (!response.success) throw YunMeiException(response.msg ?: "打卡失败")
-        response.msg ?: "打卡成功"
+        if (!response.success) throw YunMeiException(response.msg ?: appContext.getString(R.string.unlock_sign_failed))
+        response.msg ?: appContext.getString(R.string.unlock_sign_success)
     }
 
     suspend fun getLockPassword(school: SchoolEntry, lock: Lock): String = mutex.withLock {
@@ -132,7 +138,7 @@ class YunMeiRepository(private val client: YunMeiApiClient) {
         val serverUrl = requireServerUrl(school)
         applySchoolAuth(school, userId)
         val response = client.api(serverUrl).getLockPassword(lock.lockNo)
-        response.lockPwd ?: throw YunMeiException(response.msg ?: "获取开锁密码失败")
+        response.lockPwd ?: throw YunMeiException(response.msg ?: appContext.getString(R.string.unlock_code_failed))
     }
 
     /** 用已保存账号重新登录后获取开锁密码（供主界面长期使用）。 */
@@ -154,15 +160,15 @@ class YunMeiRepository(private val client: YunMeiApiClient) {
 
     private suspend fun findSchool(schoolNo: String): SchoolEntry {
         return fetchSchools().firstOrNull { it.schoolNo == schoolNo }
-            ?: throw YunMeiException("学校信息不存在")
+            ?: throw YunMeiException(appContext.getString(R.string.school_info_missing))
     }
 
     private fun requireUserId(): String =
-        client.userId ?: throw YunMeiException("尚未登录")
+        client.userId ?: throw YunMeiException(appContext.getString(R.string.login_error_not_logged_in))
 
     private fun requireServerUrl(school: SchoolEntry): String =
         school.school?.serverUrl?.takeIf { it.isNotBlank() }
-            ?: throw YunMeiException("学校服务器地址缺失")
+            ?: throw YunMeiException(appContext.getString(R.string.school_server_missing))
 
     private fun applySchoolAuth(school: SchoolEntry, userId: String) {
         client.token = school.token

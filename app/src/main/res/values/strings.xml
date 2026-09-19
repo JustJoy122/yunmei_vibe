@@ -60,14 +60,12 @@
     <!-- 开门 -->
     <string name="unlock_ready">等待开始</string>
     <string name="unlock_open">开门</string>
-    <string name="unlock_opening">开门中…</string>
     <string name="unlock_success">开门成功</string>
     <string name="unlock_failed">开门失败</string>
     <string name="unlock_battery">电量</string>
     <string name="unlock_quick_connect">快速连接</string>
     <string name="unlock_quick_connect_summary">已知门锁号时跳过扫描，直接连接</string>
     <string name="unlock_get_code">获取开门密码</string>
-    <string name="unlock_code">开门密码</string>
     <string name="unlock_code_hint">点击获取，用于门锁键盘开锁</string>
     <string name="unlock_sign">打卡</string>
     <string name="unlock_sign_success">打卡成功</string>
@@ -81,7 +79,6 @@
     <string name="unlock_sign_location_unavailable">定位服务不可用</string>
     <string name="unlock_sign_location_timeout">定位超时</string>
     <string name="unlock_no_account">当前门锁的账号未保存</string>
-    <string name="unlock_scanning">正在扫描</string>
     <string name="unlock_connecting">正在连接</string>
     <string name="unlock_connected">连接成功</string>
     <string name="unlock_sending">正在发送数据</string>
@@ -96,6 +93,18 @@
     <string name="unlock_permission_denied">您拒绝了权限请求</string>
     <string name="unlock_sign_last_missing">上次定位信息不存在，请重新定位</string>
     <string name="unlock_sign_location_failed">定位失败</string>
+    <!-- 开门流程运行时文案（原先硬编码在 UnlockManager 中，按代码原措辞资源化，未改文案） -->
+    <string name="unlock_lock_unusable_need_login">当前门锁不可用，请先登录或选择其他门锁</string>
+    <string name="unlock_bluetooth_disabled">蓝牙未开启</string>
+    <string name="unlock_progress_quick_connect">开始快速连接</string>
+    <string name="unlock_progress_scan_start">开始扫描</string>
+    <string name="unlock_progress_quick_connect_fallback">快速连接失败，使用常规模式尝试</string>
+    <string name="unlock_error_service_uuid">门锁服务 UUID 无效</string>
+    <string name="unlock_error_scan_start">扫描启动失败</string>
+    <string name="unlock_progress_device_found">设备已找到</string>
+    <string name="unlock_error_connect">连接失败</string>
+    <string name="unlock_error_subscribe">订阅通知失败</string>
+    <string name="unlock_progress_done">开门完成</string>
 
     <!-- 关于 -->
     <string name="about">关于</string>
@@ -214,6 +223,14 @@
     <string name="login_error_empty_input">请输入账号与密码</string>
     <string name="login_error_credentials">账号或密码错误，请重试</string>
     <string name="login_error_failed">登录失败：%1$s</string>
+    <!-- 业务层（YunMeiRepository）文案：原先硬编码，按代码原措辞资源化（未改文案） -->
+    <string name="login_error_generic">登录失败</string>
+    <string name="login_error_response_no_user">登录响应缺少用户信息</string>
+    <string name="login_error_response_no_token">登录响应缺少凭证</string>
+    <string name="login_error_not_logged_in">尚未登录</string>
+    <string name="school_server_missing">学校服务器地址缺失</string>
+    <string name="school_info_missing">学校信息不存在</string>
+    <string name="lock_label_unknown">未知</string>
     <string name="login_error_no_school">账号不属于任何一所学校，请检查后重新添加</string>
     <!-- 登录成功：跨页面提示（返回主界面后由全局提示宿主弹出） -->
     <string name="login_result_no_lock">登录成功，但该账号下暂无门锁，请前往门锁页添加</string>

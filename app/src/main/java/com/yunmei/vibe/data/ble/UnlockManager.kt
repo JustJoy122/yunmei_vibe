@@ -11,6 +11,7 @@ import com.clj.fastble.callback.BleWriteCallback
 import com.clj.fastble.data.BleDevice
 import com.clj.fastble.exception.BleException
 import com.clj.fastble.scan.BleScanRuleConfig
+import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.Lock
 import java.io.ByteArrayOutputStream
 import java.util.UUID
@@ -22,6 +23,9 @@ import kotlin.random.Random
  * 快速连接（有 MAC）→ 扫描（服务 UUID）→ 连接 → 订阅通知 → 写入开门帧。
  */
 class UnlockManager(context: Context) {
+
+    /** 应用 Context，仅用于读取界面文案资源（数据层不再硬编码中文）。 */
+    private val appContext = context.applicationContext
 
     interface Listener {
         fun onProgress(percent: Int, message: String)
@@ -39,25 +43,25 @@ class UnlockManager(context: Context) {
 
     fun openDoor(lock: Lock, quickConnect: Boolean, listener: Listener) {
         if (!lock.isUsable) {
-            listener.onFailure("当前门锁不可用，请先登录或选择其他门锁")
+            listener.onFailure(appContext.getString(R.string.unlock_lock_unusable_need_login))
             return
         }
         val adapter = BluetoothAdapter.getDefaultAdapter()
         if (adapter == null) {
-            listener.onFailure("设备不支持蓝牙")
+            listener.onFailure(appContext.getString(R.string.unlock_bt_unsupported))
             return
         }
         if (!adapter.isEnabled) {
-            listener.onProgress(0, "请先开启蓝牙")
-            listener.onFailure("蓝牙未开启")
+            listener.onProgress(0, appContext.getString(R.string.unlock_bluetooth_off))
+            listener.onFailure(appContext.getString(R.string.unlock_bluetooth_disabled))
             return
         }
 
         if (lock.mac.isNotBlank() && quickConnect) {
-            listener.onProgress(20, "开始快速连接")
+            listener.onProgress(20, appContext.getString(R.string.unlock_progress_quick_connect))
             connect(lock, lock.mac, listener)
         } else {
-            listener.onProgress(20, "开始扫描")
+            listener.onProgress(20, appContext.getString(R.string.unlock_progress_scan_start))
             scanAndConnect(lock, listener)
         }
     }
@@ -67,13 +71,13 @@ class UnlockManager(context: Context) {
             override fun onStartConnect() = Unit
 
             override fun onConnectFail(bleDevice: BleDevice, exception: BleException) {
-                listener.onProgress(0, "快速连接失败，使用常规模式尝试")
+                listener.onProgress(0, appContext.getString(R.string.unlock_progress_quick_connect_fallback))
                 scanAndConnect(lock, listener)
             }
 
             override fun onConnectSuccess(bleDevice: BleDevice, gatt: BluetoothGatt, status: Int) {
                 connectedDevice = bleDevice
-                listener.onProgress(40, "连接成功")
+                listener.onProgress(40, appContext.getString(R.string.unlock_connected))
                 notifyAndSend(lock, bleDevice, listener)
             }
 
@@ -90,7 +94,7 @@ class UnlockManager(context: Context) {
         scanMode = true
         val serviceUuid = runCatching { UUID.fromString(lock.serviceUuid) }.getOrNull()
         if (serviceUuid == null) {
-            listener.onFailure("门锁服务 UUID 无效")
+            listener.onFailure(appContext.getString(R.string.unlock_error_service_uuid))
             return
         }
         bleManager.initScanRule(
@@ -100,30 +104,30 @@ class UnlockManager(context: Context) {
         )
         bleManager.scanAndConnect(object : BleScanAndConnectCallback() {
             override fun onScanStarted(success: Boolean) {
-                if (!success) listener.onFailure("扫描启动失败")
+                if (!success) listener.onFailure(appContext.getString(R.string.unlock_error_scan_start))
             }
 
             override fun onScanning(bleDevice: BleDevice) = Unit
 
             override fun onScanFinished(scanResult: BleDevice?) {
                 if (scanResult == null) {
-                    listener.onFailure("设备未找到")
+                    listener.onFailure(appContext.getString(R.string.unlock_device_not_found))
                 } else {
-                    listener.onProgress(30, "设备已找到")
+                    listener.onProgress(30, appContext.getString(R.string.unlock_progress_device_found))
                 }
             }
 
             override fun onStartConnect() {
-                listener.onProgress(43, "正在连接")
+                listener.onProgress(43, appContext.getString(R.string.unlock_connecting))
             }
 
             override fun onConnectFail(bleDevice: BleDevice, exception: BleException) {
-                listener.onFailure("连接失败")
+                listener.onFailure(appContext.getString(R.string.unlock_error_connect))
             }
 
             override fun onConnectSuccess(bleDevice: BleDevice, gatt: BluetoothGatt, status: Int) {
                 connectedDevice = bleDevice
-                listener.onProgress(40, "连接成功")
+                listener.onProgress(40, appContext.getString(R.string.unlock_connected))
                 notifyAndSend(lock, bleDevice, listener)
             }
 
@@ -140,12 +144,12 @@ class UnlockManager(context: Context) {
         val notifyUuid = lock.writeUuid.replace("6E400002", "6E400003")
         bleManager.notify(device, lock.serviceUuid, notifyUuid, object : BleNotifyCallback() {
             override fun onNotifySuccess() {
-                listener.onProgress(50, "连接成功")
+                listener.onProgress(50, appContext.getString(R.string.unlock_connected))
                 sendMessage(lock, device, listener)
             }
 
             override fun onNotifyFailure(exception: BleException) {
-                listener.onFailure("订阅通知失败")
+                listener.onFailure(appContext.getString(R.string.unlock_error_subscribe))
             }
 
             override fun onCharacteristicChanged(data: ByteArray) {
@@ -164,15 +168,15 @@ class UnlockManager(context: Context) {
                             onMacDiscovered?.invoke(lock, device.mac)
                         }
                     }
-                    listener.onProgress(100, "开门完成")
+                    listener.onProgress(100, appContext.getString(R.string.unlock_progress_done))
                     listener.onSuccess()
                 } else {
-                    listener.onProgress(75, "正在发送数据")
+                    listener.onProgress(75, appContext.getString(R.string.unlock_sending))
                 }
             }
 
             override fun onWriteFailure(exception: BleException) {
-                listener.onFailure("开门失败")
+                listener.onFailure(appContext.getString(R.string.unlock_failed))
             }
         })
     }

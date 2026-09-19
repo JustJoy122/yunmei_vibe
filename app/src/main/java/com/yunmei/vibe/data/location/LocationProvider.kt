@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.core.content.ContextCompat
+import com.yunmei.vibe.R
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -24,13 +25,13 @@ class LocationProvider(private val context: Context) {
         val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
         if (!fineGranted && !coarseGranted) {
-            throw IllegalStateException("未授予定位权限")
+            throw IllegalStateException(context.getString(R.string.unlock_sign_location_denied))
         }
 
         val networkEnabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
         val gpsEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
         if (!networkEnabled && !gpsEnabled) {
-            throw IllegalStateException("定位服务不可用")
+            throw IllegalStateException(context.getString(R.string.unlock_sign_location_unavailable))
         }
 
         return suspendCancellableCoroutine { continuation ->
@@ -63,7 +64,7 @@ class LocationProvider(private val context: Context) {
                 if (last != null) {
                     continuation.resume("${last.longitude},${last.latitude}")
                 } else {
-                    continuation.resumeWithException(IllegalStateException("定位超时"))
+                    continuation.resumeWithException(IllegalStateException(context.getString(R.string.unlock_sign_location_timeout)))
                 }
             }
 

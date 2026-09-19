@@ -10,6 +10,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.LocalUiMode
+import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.component.dialog.ConfirmResult
 import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
@@ -71,12 +72,9 @@ fun SettingPager(
         onSetHideSign = viewModel::setHideSign,
         onSetHideCode = viewModel::setHideCode,
         onSetSignLocationMode = { index ->
+            // 下拉列表顺序由 SignLocationMode.entries 决定，避免 index 与取值各自维护而错位。
             viewModel.setSignLocationMode(
-                when (index) {
-                    0 -> "ask"
-                    1 -> "rel"
-                    else -> "lst"
-                }
+                SignLocationMode.entries.getOrElse(index) { SignLocationMode.DEFAULT }.value
             )
         },
     )

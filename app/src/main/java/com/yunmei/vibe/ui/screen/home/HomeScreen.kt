@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.LocalMainPagerState
 import com.yunmei.vibe.ui.LocalUiMode
+import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.component.dialog.ConfirmResult
 import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
@@ -150,7 +151,7 @@ fun HomePager(
         onGetCode = viewModel::getCode,
         onSign = {
             // 使用上次位置不需要定位权限；其他模式需要。
-            if (uiState.settings.signLocationMode == "lst") {
+            if (SignLocationMode.fromValue(uiState.settings.signLocationMode) == SignLocationMode.LAST) {
                 viewModel.sign()
             } else if (hasAllPermissions(LOCATION_PERMISSIONS)) {
                 viewModel.sign()
@@ -178,12 +179,9 @@ fun HomePager(
 }
 
 /**
- * 打卡卡片的默认副标题：把内部定位模式（ask / rel / lst）映射成中文文案。
+ * 打卡卡片的默认副标题：把内部定位模式映射成中文文案（取值、顺序、文案统一见 [SignLocationMode]）。
  * 此前直接把模式原始值拼在标题后面，界面上会出现「打卡位置询问 · lst」这类无意义文本。
  */
 @Composable
-internal fun signLocationLabel(mode: String): String = when (mode) {
-    "rel" -> stringResource(R.string.settings_sign_location_relocate)
-    "lst" -> stringResource(R.string.settings_sign_location_last)
-    else -> stringResource(R.string.settings_sign_location_ask)
-}
+internal fun signLocationLabel(mode: String): String =
+    stringResource(SignLocationMode.fromValue(mode).labelRes)

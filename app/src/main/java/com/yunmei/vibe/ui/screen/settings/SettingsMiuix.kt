@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
+import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.ui.component.dialog.rememberLoadingDialog
 import com.yunmei.vibe.ui.component.miuix.SendLogDialog
@@ -77,11 +78,9 @@ fun SettingPagerMiuix(
     val barColor = if (blurActive) Color.Transparent else colorScheme.surface
     val loadingDialog = rememberLoadingDialog()
     val showSendLogDialog = rememberSaveable { mutableStateOf(false) }
-    val signLocationItems = listOf(
-        stringResource(R.string.settings_sign_location_ask),
-        stringResource(R.string.settings_sign_location_relocate),
-        stringResource(R.string.settings_sign_location_last),
-    )
+    // 下拉顺序与文案统一取 SignLocationMode.entries（原先首页/设置动作/两个页面各自维护，易错位）。
+    val signLocationModes = SignLocationMode.entries
+    val signLocationItems = signLocationModes.map { stringResource(it.labelRes) }
 
     Scaffold(
         topBar = {
@@ -235,11 +234,9 @@ fun SettingPagerMiuix(
                                     tint = colorScheme.onBackground,
                                 )
                             },
-                            selectedIndex = when (state.settings.signLocationMode) {
-                                "rel" -> 1
-                                "lst" -> 2
-                                else -> 0
-                            },
+                            selectedIndex = SignLocationMode
+                                .fromValue(state.settings.signLocationMode)
+                                .ordinal,
                             onSelectedIndexChange = actions.onSetSignLocationMode,
                         )
                     }

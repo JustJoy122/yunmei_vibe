@@ -74,6 +74,7 @@ import com.yunmei.vibe.ui.screen.login.LoginScreen
 import com.yunmei.vibe.ui.screen.lockdetail.LockDetailScreen
 import com.yunmei.vibe.ui.screen.settings.SettingPager
 import com.yunmei.vibe.ui.screen.themesettings.ThemeSettingsScreen
+import com.yunmei.vibe.ui.screen.themesettings.prewarmThemePaletteCache
 import com.yunmei.vibe.ui.theme.LocalColorMode
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBar
@@ -133,6 +134,20 @@ class MainActivity : ComponentActivity() {
             val appSettings = uiState.appSettings
             val uiMode = uiState.uiMode
             val darkMode = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && isSystemInDarkTheme())
+
+            // 首帧渲染完成之后再预热主题设置的色板缓存（后台线程）：
+            // 否则等到进入该二级页时才开始算，重计算会与页面进入动画抢 CPU 造成卡顿，
+            // 并让色板出现"先占位、后换色"的观感。预热后进入页面直接命中缓存。
+            LaunchedEffect(Unit) {
+                androidx.compose.runtime.withFrameNanos { }
+                androidx.compose.runtime.withFrameNanos { }
+                prewarmThemePaletteCache(
+                    context = this@MainActivity,
+                    isDark = darkMode,
+                    paletteStyle = appSettings.paletteStyle,
+                    colorSpec = appSettings.colorSpec,
+                )
+            }
 
             DisposableEffect(darkMode) {
                 enableEdgeToEdge(

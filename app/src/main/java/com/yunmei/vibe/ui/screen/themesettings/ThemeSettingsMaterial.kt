@@ -1,6 +1,7 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -115,6 +116,59 @@ import kotlinx.coroutines.withContext
  * 已算过的色板重新可见时都能立刻出结果，不必再算一遍。
  */
 private val colorSchemeCache = ConcurrentHashMap<String, ColorScheme>()
+
+/** 预热时预先计算的色板档数：覆盖首屏可见的预览 + 前若干格，其余在滚动可见时按需计算。 */
+private const val PREWARM_COLOR_COUNT = 6
+
+/**
+ * 预热主题设置的色板缓存（后台线程，应用启动首帧之后调用）。
+ *
+ * 为什么需要：主题设置页的预览卡与 16 格色板都是异步推导，若等**进入页面时**才开始算，
+ * 这批 CPU 重活会与页面进入动画的合成抢资源（`Dispatchers.Default` 多核并发，冷缓存时
+ * 首屏多格同时开算），表现为"进入主题设置卡顿"；也会让色板出现"先占位、后换色"的观感。
+ * 提前在启动后空闲时算好写入进程级缓存，进入页面时 `produceState` 的 initialValue 直接命中，
+ * 后台不再有任何计算。
+ *
+ * 预览卡与色板格共用同一缓存键（`<argb>_<style>_<spec>_<isDark>`；「跟随系统」档的
+ * `Color.Unspecified.toArgb()` 与偏好里的 keyColor=0 都是 "0"，故两边一致），因此预热结果两边都能命中。
+ */
+internal suspend fun prewarmThemePaletteCache(
+    context: Context,
+    isDark: Boolean,
+    paletteStyle: PaletteStyle,
+    colorSpec: ColorSpec.SpecVersion,
+) = withContext(Dispatchers.Default) {
+    val targets = buildList {
+        add(Color.Unspecified)
+        keyColorOptions.take(PREWARM_COLOR_COUNT).forEach { add(Color(it)) }
+    }
+    targets.forEach { target ->
+        val cacheKey = "${target.toArgb()}_${paletteStyle.name}_${colorSpec.name}_$isDark"
+        if (colorSchemeCache.containsKey(cacheKey)) return@forEach
+        colorSchemeCache[cacheKey] = if (target == Color.Unspecified) {
+            val base = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            dynamicColorScheme(
+                seedColor = Color.Unspecified,
+                isDark = isDark,
+                style = paletteStyle,
+                specVersion = colorSpec,
+                primary = base.primary,
+                secondary = base.secondary,
+                tertiary = base.tertiary,
+                neutral = base.surface,
+                neutralVariant = base.surfaceVariant,
+                error = base.error,
+            )
+        } else {
+            dynamicColorScheme(
+                seedColor = target,
+                isDark = isDark,
+                style = paletteStyle,
+                specVersion = colorSpec,
+            )
+        }
+    }
+}
 
 @Composable
 fun ThemeSettingsMaterial(

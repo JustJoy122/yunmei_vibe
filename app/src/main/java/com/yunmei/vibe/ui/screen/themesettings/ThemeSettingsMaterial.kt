@@ -96,7 +96,6 @@ import androidx.compose.ui.unit.dp
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
-import com.materialkolor.rememberDynamicColorScheme
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
@@ -649,36 +648,36 @@ private fun ColorButtonMaterial(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    // 「跟随系统（Monet）」档：platform 取色 + material-kolor 组合，整页只有这一格，同步算可接受。
-    val colorScheme: ColorScheme? = if (color == Color.Unspecified) {
-        val baseScheme = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        rememberDynamicColorScheme(
-            seedColor = Color.Unspecified,
-            isDark = isDark,
-            style = paletteStyle,
-            specVersion = colorSpec,
-            primary = baseScheme.primary,
-            secondary = baseScheme.secondary,
-            tertiary = baseScheme.tertiary,
-            neutral = baseScheme.surface,
-            neutralVariant = baseScheme.surfaceVariant,
-            error = baseScheme.error
-        )
-    } else {
-        // 固定色档：色板推导挪到 Default 线程 + 进程级缓存（与上游 ColorPalatteCard 的 ColorSwatchPreview 同款），
-        // 计算期间先用种子色画轻量占位。这样进入页面时主线程不再串行算十几套色板。
-        val cacheKey = remember(color, paletteStyle, colorSpec, isDark) {
-            "${color.toArgb()}_${paletteStyle.name}_${colorSpec.name}_$isDark"
-        }
-        val swatchScheme by produceState<ColorScheme?>(
-            initialValue = colorSchemeCache[cacheKey],
-            key1 = cacheKey,
-        ) {
-            val cached = colorSchemeCache[cacheKey]
-            if (cached != null) {
-                value = cached
-            } else {
-                val computed = withContext(Dispatchers.Default) {
+    // 色板格统一异步：平台取色（「跟随系统」档）与 material-kolor 推导都放到 Default 线程 + 进程级缓存，
+    // 进入页面时主线程不再跑任何色板推导（与上游 ColorPalatteCard 的 ColorSwatchPreview 同一思路）。
+    val isDynamicSwatch = color == Color.Unspecified
+    val cacheKey = remember(color, paletteStyle, colorSpec, isDark) {
+        "${color.toArgb()}_${paletteStyle.name}_${colorSpec.name}_$isDark"
+    }
+    val swatchScheme by produceState<ColorScheme?>(
+        initialValue = colorSchemeCache[cacheKey],
+        key1 = cacheKey,
+    ) {
+        val cached = colorSchemeCache[cacheKey]
+        if (cached != null) {
+            value = cached
+        } else {
+            val computed = withContext(Dispatchers.Default) {
+                if (isDynamicSwatch) {
+                    val base = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                    dynamicColorScheme(
+                        seedColor = Color.Unspecified,
+                        isDark = isDark,
+                        style = paletteStyle,
+                        specVersion = colorSpec,
+                        primary = base.primary,
+                        secondary = base.secondary,
+                        tertiary = base.tertiary,
+                        neutral = base.surface,
+                        neutralVariant = base.surfaceVariant,
+                        error = base.error,
+                    )
+                } else {
                     dynamicColorScheme(
                         seedColor = color,
                         isDark = isDark,
@@ -686,18 +685,22 @@ private fun ColorButtonMaterial(
                         specVersion = colorSpec,
                     )
                 }
-                colorSchemeCache[cacheKey] = computed
-                value = computed
             }
+            colorSchemeCache[cacheKey] = computed
+            value = computed
         }
-        swatchScheme
     }
+    val colorScheme: ColorScheme? = swatchScheme
 
-    // 色板还没算完时用种子色兜底，避免出现空白格。
+    // 色板还没算完时的兜底：「跟随系统」档不能用 Color.Unspecified 兜底（会画成透明），
+    // 改用当前应用主题色；固定色档仍用种子色兜底，避免出现空白格。
     val containerColor = colorScheme?.surfaceContainer ?: MaterialTheme.colorScheme.surfaceContainer
-    val arcPrimary = colorScheme?.primaryContainer ?: color
-    val arcTertiary = colorScheme?.tertiaryContainer ?: color.copy(alpha = 0.6f)
-    val accentColor = colorScheme?.primary ?: color
+    val arcPrimary = colorScheme?.primaryContainer
+        ?: if (isDynamicSwatch) MaterialTheme.colorScheme.primaryContainer else color
+    val arcTertiary = colorScheme?.tertiaryContainer
+        ?: if (isDynamicSwatch) MaterialTheme.colorScheme.tertiaryContainer else color.copy(alpha = 0.6f)
+    val accentColor = colorScheme?.primary
+        ?: if (isDynamicSwatch) MaterialTheme.colorScheme.primary else color
     val onAccentColor = colorScheme?.onPrimary ?: MaterialTheme.colorScheme.onPrimary
 
     Surface(

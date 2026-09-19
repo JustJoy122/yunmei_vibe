@@ -7,6 +7,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -61,6 +62,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -325,24 +327,27 @@ private fun LockDetailScreenMaterial(
                             style = MaterialTheme.typography.titleMedium,
                         )
                         // 二维码异步生成：外层固定 220dp 容器预留高度，展开动画期间不会二次跳变；
-                        // 图片就绪后淡入（未就绪时容器为空但高度不变）。
+                        // 图片就绪后淡入。
+                        // 注意：此处隐式接收者是 BoxScope，不能直接用 ColumnScope 版 AnimatedVisibility
+                        // （会报「cannot be called in this context with an implicit receiver」），
+                        // 故用 animateFloatAsState + Modifier.alpha 实现淡入。
                         val qrImage = rememberShareQrImage(lock)
+                        val qrAlpha by animateFloatAsState(
+                            targetValue = if (qrImage != null) 1f else 0f,
+                            label = "qrFade",
+                        )
                         Box(
                             modifier = Modifier.size(220.dp),
                             contentAlignment = Alignment.Center,
                         ) {
-                            AnimatedVisibility(
-                                visible = qrImage != null,
-                                enter = fadeIn(),
-                                exit = fadeOut(),
-                            ) {
-                                qrImage?.let { image ->
-                                    Image(
-                                        bitmap = image,
-                                        contentDescription = stringResource(R.string.lock_detail_share_qr),
-                                        modifier = Modifier.size(220.dp),
-                                    )
-                                }
+                            qrImage?.let { image ->
+                                Image(
+                                    bitmap = image,
+                                    contentDescription = stringResource(R.string.lock_detail_share_qr),
+                                    modifier = Modifier
+                                        .size(220.dp)
+                                        .alpha(qrAlpha),
+                                )
                             }
                         }
                         Text(
@@ -543,24 +548,27 @@ private fun LockDetailScreenMiuix(
                                 color = colorScheme.onSurface,
                             )
                             // 二维码异步生成：外层固定 220dp 容器预留高度，展开动画期间不会二次跳变；
-                            // 图片就绪后淡入（未就绪时容器为空但高度不变）。
+                            // 图片就绪后淡入。
+                            // 注意：此处隐式接收者是 BoxScope，不能直接用 ColumnScope 版 AnimatedVisibility
+                            // （会报「cannot be called in this context with an implicit receiver」），
+                            // 故用 animateFloatAsState + Modifier.alpha 实现淡入。
                             val qrImage = rememberShareQrImage(lock)
+                            val qrAlpha by animateFloatAsState(
+                                targetValue = if (qrImage != null) 1f else 0f,
+                                label = "qrFade",
+                            )
                             Box(
                                 modifier = Modifier.size(220.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                AnimatedVisibility(
-                                    visible = qrImage != null,
-                                    enter = fadeIn(),
-                                    exit = fadeOut(),
-                                ) {
-                                    qrImage?.let { image ->
-                                        Image(
-                                            bitmap = image,
-                                            contentDescription = stringResource(R.string.lock_detail_share_qr),
-                                            modifier = Modifier.size(220.dp),
-                                        )
-                                    }
+                                qrImage?.let { image ->
+                                    Image(
+                                        bitmap = image,
+                                        contentDescription = stringResource(R.string.lock_detail_share_qr),
+                                        modifier = Modifier
+                                            .size(220.dp)
+                                            .alpha(qrAlpha),
+                                    )
                                 }
                             }
                             MiuixText(

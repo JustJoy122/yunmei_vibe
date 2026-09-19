@@ -61,6 +61,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -323,12 +324,27 @@ private fun LockDetailScreenMaterial(
                             text = stringResource(R.string.lock_detail_share_qr),
                             style = MaterialTheme.typography.titleMedium,
                         )
-                        val bitmap = remember(lock) { QrCode.bitmap(lock.toShareUrl()) }
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = stringResource(R.string.lock_detail_share_qr),
+                        // 二维码异步生成：外层固定 220dp 容器预留高度，展开动画期间不会二次跳变；
+                        // 图片就绪后淡入（未就绪时容器为空但高度不变）。
+                        val qrImage = rememberShareQrImage(lock)
+                        Box(
                             modifier = Modifier.size(220.dp),
-                        )
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            AnimatedVisibility(
+                                visible = qrImage != null,
+                                enter = fadeIn(),
+                                exit = fadeOut(),
+                            ) {
+                                qrImage?.let { image ->
+                                    Image(
+                                        bitmap = image,
+                                        contentDescription = stringResource(R.string.lock_detail_share_qr),
+                                        modifier = Modifier.size(220.dp),
+                                    )
+                                }
+                            }
+                        }
                         Text(
                             text = stringResource(R.string.lock_detail_share_qr_hint),
                             style = MaterialTheme.typography.bodySmall,
@@ -526,12 +542,27 @@ private fun LockDetailScreenMiuix(
                                 text = stringResource(R.string.lock_detail_share_qr),
                                 color = colorScheme.onSurface,
                             )
-                            val bitmap = remember(lock) { QrCode.bitmap(lock.toShareUrl()) }
-                            Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = stringResource(R.string.lock_detail_share_qr),
+                            // 二维码异步生成：外层固定 220dp 容器预留高度，展开动画期间不会二次跳变；
+                            // 图片就绪后淡入（未就绪时容器为空但高度不变）。
+                            val qrImage = rememberShareQrImage(lock)
+                            Box(
                                 modifier = Modifier.size(220.dp),
-                            )
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                AnimatedVisibility(
+                                    visible = qrImage != null,
+                                    enter = fadeIn(),
+                                    exit = fadeOut(),
+                                ) {
+                                    qrImage?.let { image ->
+                                        Image(
+                                            bitmap = image,
+                                            contentDescription = stringResource(R.string.lock_detail_share_qr),
+                                            modifier = Modifier.size(220.dp),
+                                        )
+                                    }
+                                }
+                            }
                             MiuixText(
                                 text = stringResource(R.string.lock_detail_share_qr_hint),
                                 color = colorScheme.onSurfaceVariantSummary,
@@ -600,4 +631,21 @@ private fun rememberAccountSaved(usernameMd5: String): Boolean {
         }
     }
     return saved
+}
+
+/**
+ * 分享二维码图片（异步生成）。
+ *
+ * 二维码位图（ZXing 编码 + 像素绘制）不能在组合期同步生成：原先
+ * `remember(lock) { QrCode.bitmap(lock.toShareUrl()) }` 会在首次展开二维码卡片时阻塞主线程。
+ * 这里用 produceState 放到 Default 线程计算，并按 lock 缓存结果。
+ */
+@Composable
+private fun rememberShareQrImage(lock: Lock): ImageBitmap? {
+    val image by produceState<ImageBitmap?>(initialValue = null, key1 = lock) {
+        value = withContext(Dispatchers.Default) {
+            QrCode.bitmap(lock.toShareUrl()).asImageBitmap()
+        }
+    }
+    return image
 }

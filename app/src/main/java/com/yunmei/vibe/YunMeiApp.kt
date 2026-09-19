@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import com.clj.fastble.BleManager
 import com.yunmei.vibe.core.di.AppContainer
+import com.yunmei.vibe.data.preferences.SettingsPrefs
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import java.io.File
 import java.text.SimpleDateFormat
@@ -26,7 +27,8 @@ class YunMeiApp : Application() {
         container = AppContainer(this)
 
         // 预测性返回手势：按保存的偏好初始化（与模板 TemplateApplication 一致）。
-        if (getSharedPreferences("settings", MODE_PRIVATE).getBoolean("enable_predictive_back", false)) {
+        // 键名统一走 SettingsPrefs，避免此处与设置页各自手写字符串。
+        if (SettingsPrefs.of(this).getBoolean(SettingsPrefs.ENABLE_PREDICTIVE_BACK, false)) {
             enableOnBackInvokedCallback(true)
         }
     }

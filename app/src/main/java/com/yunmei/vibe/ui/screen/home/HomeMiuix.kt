@@ -25,8 +25,11 @@ import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.AutoMode
 import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Key
+import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Password
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.WhereToVote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
@@ -41,12 +44,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.UnitCodes
+import com.yunmei.vibe.ui.component.ActionMenuItem
+import com.yunmei.vibe.ui.component.miuix.ActionMenuDialog
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.theme.isInDarkTheme
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
 import top.yukonga.miuix.kmp.basic.BasicComponent
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
@@ -54,19 +58,16 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.preference.SwitchPreference
-import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.isDynamicColor
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import top.yukonga.miuix.kmp.window.WindowDialog
 
 @Composable
 fun HomePagerMiuix(
@@ -387,57 +388,25 @@ private fun SignAskDialog(
     onChoice: (SignAskChoice) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // 复用标准对话框组件：与 ui/component/dialog/DialogMiuix.kt 的 ConfirmDialogMiuix 同为
-    // top.yukonga.miuix.kmp.window.WindowDialog；配色全部来自 MiuixTheme / ButtonDefaults，不写死颜色。
-    // 弹窗是否显示由调用方按 state.signAsk 是否存在决定，这里不再自持可见状态，避免多一份状态源。
-    WindowDialog(
+    // 复用项目自带的通用弹窗菜单 ActionMenuDialog（ui/component/miuix/ActionMenuDialog.kt，
+    // 「发送日志」「扫码添加门锁」用的同一组件）：标题 + 上次位置一行 + 图标操作行 + 底部取消。
+    // 颜色全部取自 MiuixTheme.colorScheme，自动适配莫奈开/关两套色板。
+    ActionMenuDialog(
         show = true,
         title = stringResource(R.string.unlock_sign_ask_title),
+        summary = stringResource(R.string.unlock_sign_ask_msg, ask.lastLocation.ifBlank { "—" }),
+        items = listOf(
+            ActionMenuItem(Icons.Rounded.History, stringResource(R.string.unlock_sign_use_last)) {
+                onChoice(SignAskChoice.USE_LAST)
+            },
+            ActionMenuItem(Icons.Rounded.LocationOn, stringResource(R.string.unlock_sign_locate)) {
+                onChoice(SignAskChoice.LOCATE_ONLY)
+            },
+            ActionMenuItem(Icons.Rounded.Save, stringResource(R.string.unlock_sign_relocate)) {
+                onChoice(SignAskChoice.RELOCATE_SAVE)
+            },
+        ),
         onDismissRequest = onDismiss,
-        content = {
-            // Miuix 约定：内容里的按钮除了执行自己的逻辑，还要通知对话框播关闭动画。
-            val dismissState = LocalDismissState.current
-            Column {
-                Text(
-                    text = stringResource(R.string.unlock_sign_ask_msg, ask.lastLocation.ifBlank { "—" }),
-                    color = MiuixTheme.colorScheme.onSurface,
-                )
-                Spacer(Modifier.height(24.dp))
-                TextButton(
-                    text = stringResource(R.string.unlock_sign_relocate),
-                    onClick = {
-                        onChoice(SignAskChoice.RELOCATE_SAVE)
-                        dismissState?.invoke()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
-                TextButton(
-                    text = stringResource(R.string.unlock_sign_locate),
-                    onClick = {
-                        onChoice(SignAskChoice.LOCATE_ONLY)
-                        dismissState?.invoke()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                TextButton(
-                    text = stringResource(R.string.unlock_sign_use_last),
-                    onClick = {
-                        onChoice(SignAskChoice.USE_LAST)
-                        dismissState?.invoke()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                TextButton(
-                    text = stringResource(R.string.cancel),
-                    onClick = {
-                        onDismiss()
-                        dismissState?.invoke()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        },
     )
 }
 

@@ -29,6 +29,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 fun ActionMenuDialog(
     show: Boolean,
     title: String,
+    summary: String? = null,
     items: List<ActionMenuItem>,
     onDismissRequest: () -> Unit,
 ) {
@@ -40,13 +41,25 @@ fun ActionMenuDialog(
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp, bottom = 12.dp),
+                    .padding(top = 24.dp, bottom = if (summary == null) 12.dp else 4.dp),
                 text = title,
                 fontSize = MiuixTheme.textStyles.title4.fontSize,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
                 color = colorScheme.onSurface
             )
+            // 可选的一行摘要（例如「上次打卡位置：…」），居中显示在标题下方。
+            summary?.let { line ->
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
+                    text = line,
+                    fontSize = MiuixTheme.textStyles.body2.fontSize,
+                    textAlign = TextAlign.Center,
+                    color = colorScheme.onSurfaceVariantSummary,
+                )
+            }
             items.forEach { item ->
                 ArrowPreference(
                     title = item.label,

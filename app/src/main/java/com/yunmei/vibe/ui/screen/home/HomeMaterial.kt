@@ -18,8 +18,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.twotone.ExitToApp
 import androidx.compose.material.icons.twotone.AutoMode
+import androidx.compose.material.icons.twotone.History
 import androidx.compose.material.icons.twotone.Key
+import androidx.compose.material.icons.twotone.LocationOn
 import androidx.compose.material.icons.twotone.Password
+import androidx.compose.material.icons.twotone.Save
 import androidx.compose.material.icons.twotone.TaskAlt
 import androidx.compose.material.icons.twotone.Warning
 import androidx.compose.material.icons.twotone.WhereToVote
@@ -289,33 +292,51 @@ private fun SignAskDialog(
     onChoice: (SignAskChoice) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // 复用标准对话框组件、不自绘浮层：与 ui/component/dialog/DialogMaterial.kt 的 ConfirmDialogMaterial
-    // 同为 androidx.compose.material3.AlertDialog；圆角、容器色、文字与按钮配色全部来自
-    // AlertDialogDefaults / MaterialTheme.colorScheme，不写死任何颜色。
+    // 复用标准对话框 + 列表行组件，不自绘浮层：
+    // 容器是 androidx.compose.material3.AlertDialog（与 ui/component/dialog/DialogMaterial.kt 的
+    // ConfirmDialogMaterial 同一组件），操作行是项目自带的 SegmentedColumn / SegmentedListItem
+    // （ui/component/material/SegmentedList.kt，取自 KernelSU-Style-UI-Kit）。
+    // 圆角、容器色、图标与文字配色全部来自 MaterialTheme.colorScheme，不写死颜色。
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.unlock_sign_ask_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column {
                 Text(
                     text = stringResource(R.string.unlock_sign_ask_msg, ask.lastLocation.ifBlank { "—" }),
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
                 )
-                // 两个次要定位方式放在正文区；主操作「重新定位并保存」与「取消」用对话框标准按钮位。
-                TextButton(onClick = { onChoice(SignAskChoice.LOCATE_ONLY) }) {
-                    Text(stringResource(R.string.unlock_sign_locate))
-                }
-                TextButton(onClick = { onChoice(SignAskChoice.USE_LAST) }) {
-                    Text(stringResource(R.string.unlock_sign_use_last))
-                }
+                Spacer(Modifier.height(12.dp))
+                SegmentedColumn(
+                    content = listOf(
+                        {
+                            SegmentedListItem(
+                                onClick = { onChoice(SignAskChoice.USE_LAST) },
+                                headlineContent = { Text(stringResource(R.string.unlock_sign_use_last)) },
+                                leadingContent = { Icon(Icons.TwoTone.History, null) },
+                            )
+                        },
+                        {
+                            SegmentedListItem(
+                                onClick = { onChoice(SignAskChoice.LOCATE_ONLY) },
+                                headlineContent = { Text(stringResource(R.string.unlock_sign_locate)) },
+                                leadingContent = { Icon(Icons.TwoTone.LocationOn, null) },
+                            )
+                        },
+                        {
+                            SegmentedListItem(
+                                onClick = { onChoice(SignAskChoice.RELOCATE_SAVE) },
+                                headlineContent = { Text(stringResource(R.string.unlock_sign_relocate)) },
+                                leadingContent = { Icon(Icons.TwoTone.Save, null) },
+                            )
+                        },
+                    )
+                )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onChoice(SignAskChoice.RELOCATE_SAVE) }) {
-                Text(stringResource(R.string.unlock_sign_relocate))
-            }
-        },
-        dismissButton = {
+            // 三个操作都在上面的列表里，这里只留唯一的「取消」按钮。
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.cancel))
             }

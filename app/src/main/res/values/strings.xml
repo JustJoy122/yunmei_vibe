@@ -71,10 +71,10 @@
     <string name="unlock_sign_success">打卡成功</string>
     <string name="unlock_sign_failed">打卡失败</string>
     <string name="unlock_sign_ask_title">打卡位置询问</string>
-    <string name="unlock_sign_ask_msg">上次打卡位置：%1$s。请选择本次打卡的定位方式：</string>
+    <string name="unlock_sign_ask_msg">上次打卡位置：%1$s</string>
     <string name="unlock_sign_use_last">使用上次位置</string>
-    <string name="unlock_sign_relocate">重新定位并保存</string>
-    <string name="unlock_sign_locate">定位</string>
+    <string name="unlock_sign_relocate">定位并保存为默认位置</string>
+    <string name="unlock_sign_locate">仅本次定位</string>
     <string name="unlock_sign_location_denied">未授予定位权限</string>
     <string name="unlock_sign_location_unavailable">定位服务不可用</string>
     <string name="unlock_sign_location_timeout">定位超时</string>

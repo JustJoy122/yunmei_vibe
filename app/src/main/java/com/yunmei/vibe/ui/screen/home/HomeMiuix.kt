@@ -46,6 +46,7 @@ import com.yunmei.vibe.ui.theme.isInDarkTheme
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
 import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
@@ -53,16 +54,19 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.preference.SwitchPreference
+import top.yukonga.miuix.kmp.theme.LocalDismissState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.isDynamicColor
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import top.yukonga.miuix.kmp.window.WindowDialog
 
 @Composable
 fun HomePagerMiuix(
@@ -114,14 +118,19 @@ fun HomePagerMiuix(
                             CodeCard(state, actions)
                         }
                         DoorOptionsCard(state, actions)
-                        state.signAsk?.let { ask ->
-                            SignAskCard(ask, actions)
-                        }
                     }
                     Spacer(Modifier.height(bottomInnerPadding))
                 }
             }
         }
+    }
+
+    state.signAsk?.let { ask ->
+        SignAskDialog(
+            ask = ask,
+            onChoice = actions.onResolveSignAsk,
+            onDismiss = actions.onDismissSignAsk,
+        )
     }
 }
 
@@ -373,46 +382,63 @@ private fun DoorOptionsCard(
 }
 
 @Composable
-private fun SignAskCard(
+private fun SignAskDialog(
     ask: SignAskState,
-    actions: HomeActions,
+    onChoice: (SignAskChoice) -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column {
-            Column(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.unlock_sign_ask_title),
-                    fontSize = MiuixTheme.textStyles.headline2.fontSize,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface,
-                )
+    // 复用标准对话框组件：与 ui/component/dialog/DialogMiuix.kt 的 ConfirmDialogMiuix 同为
+    // top.yukonga.miuix.kmp.window.WindowDialog；配色全部来自 MiuixTheme / ButtonDefaults，不写死颜色。
+    // 弹窗是否显示由调用方按 state.signAsk 是否存在决定，这里不再自持可见状态，避免多一份状态源。
+    WindowDialog(
+        show = true,
+        title = stringResource(R.string.unlock_sign_ask_title),
+        onDismissRequest = onDismiss,
+        content = {
+            // Miuix 约定：内容里的按钮除了执行自己的逻辑，还要通知对话框播关闭动画。
+            val dismissState = LocalDismissState.current
+            Column {
                 Text(
                     text = stringResource(R.string.unlock_sign_ask_msg, ask.lastLocation.ifBlank { "—" }),
-                    fontSize = MiuixTheme.textStyles.body2.fontSize,
-                    color = colorScheme.onSurfaceVariantSummary,
+                    color = MiuixTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(24.dp))
+                TextButton(
+                    text = stringResource(R.string.unlock_sign_relocate),
+                    onClick = {
+                        onChoice(SignAskChoice.RELOCATE_SAVE)
+                        dismissState?.invoke()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
+                TextButton(
+                    text = stringResource(R.string.unlock_sign_locate),
+                    onClick = {
+                        onChoice(SignAskChoice.LOCATE_ONLY)
+                        dismissState?.invoke()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                TextButton(
+                    text = stringResource(R.string.unlock_sign_use_last),
+                    onClick = {
+                        onChoice(SignAskChoice.USE_LAST)
+                        dismissState?.invoke()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                TextButton(
+                    text = stringResource(R.string.cancel),
+                    onClick = {
+                        onDismiss()
+                        dismissState?.invoke()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-            BasicComponent(
-                title = stringResource(R.string.unlock_sign_relocate),
-                onClick = { actions.onResolveSignAsk(SignAskChoice.RELOCATE_SAVE) },
-            )
-            BasicComponent(
-                title = stringResource(R.string.unlock_sign_locate),
-                onClick = { actions.onResolveSignAsk(SignAskChoice.LOCATE_ONLY) },
-            )
-            BasicComponent(
-                title = stringResource(R.string.unlock_sign_use_last),
-                onClick = { actions.onResolveSignAsk(SignAskChoice.USE_LAST) },
-            )
-            BasicComponent(
-                title = stringResource(R.string.cancel),
-                onClick = actions.onDismissSignAsk,
-            )
-        }
-    }
+        },
+    )
 }
 
 @Composable

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.twotone.Password
 import androidx.compose.material.icons.twotone.TaskAlt
 import androidx.compose.material.icons.twotone.Warning
 import androidx.compose.material.icons.twotone.WhereToVote
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -32,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.contentColorFor
@@ -84,11 +86,16 @@ fun HomePagerMaterial(
                 CodeCard(state, actions)
             }
             DoorOptionsCard(state, actions)
-            state.signAsk?.let { ask ->
-                SignAskCard(ask, actions)
-            }
             Spacer(Modifier.height(bottomInnerPadding))
         }
+    }
+
+    state.signAsk?.let { ask ->
+        SignAskDialog(
+            ask = ask,
+            onChoice = actions.onResolveSignAsk,
+            onDismiss = actions.onDismissSignAsk,
+        )
     }
 }
 
@@ -277,59 +284,43 @@ private fun DoorOptionsCard(
 }
 
 @Composable
-private fun SignAskCard(
+private fun SignAskDialog(
     ask: SignAskState,
-    actions: HomeActions,
+    onChoice: (SignAskChoice) -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    TonalCard {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.unlock_sign_ask_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-            Text(
-                text = stringResource(R.string.unlock_sign_ask_msg, ask.lastLocation.ifBlank { "—" }),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-            SegmentedColumn(
-                content = listOf(
-                    {
-                        SegmentedListItem(
-                            onClick = { actions.onResolveSignAsk(SignAskChoice.RELOCATE_SAVE) },
-                            headlineContent = { Text(stringResource(R.string.unlock_sign_relocate)) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            onClick = { actions.onResolveSignAsk(SignAskChoice.LOCATE_ONLY) },
-                            headlineContent = { Text(stringResource(R.string.unlock_sign_locate)) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            onClick = { actions.onResolveSignAsk(SignAskChoice.USE_LAST) },
-                            headlineContent = { Text(stringResource(R.string.unlock_sign_use_last)) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            onClick = actions.onDismissSignAsk,
-                            headlineContent = { Text(stringResource(R.string.cancel)) },
-                        )
-                    },
+    // 复用标准对话框组件、不自绘浮层：与 ui/component/dialog/DialogMaterial.kt 的 ConfirmDialogMaterial
+    // 同为 androidx.compose.material3.AlertDialog；圆角、容器色、文字与按钮配色全部来自
+    // AlertDialogDefaults / MaterialTheme.colorScheme，不写死任何颜色。
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.unlock_sign_ask_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(R.string.unlock_sign_ask_msg, ask.lastLocation.ifBlank { "—" }),
+                    style = MaterialTheme.typography.bodyMedium,
                 )
-            )
-        }
-    }
+                // 两个次要定位方式放在正文区；主操作「重新定位并保存」与「取消」用对话框标准按钮位。
+                TextButton(onClick = { onChoice(SignAskChoice.LOCATE_ONLY) }) {
+                    Text(stringResource(R.string.unlock_sign_locate))
+                }
+                TextButton(onClick = { onChoice(SignAskChoice.USE_LAST) }) {
+                    Text(stringResource(R.string.unlock_sign_use_last))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onChoice(SignAskChoice.RELOCATE_SAVE) }) {
+                Text(stringResource(R.string.unlock_sign_relocate))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable

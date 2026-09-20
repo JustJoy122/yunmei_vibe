@@ -39,7 +39,7 @@ fun MaterialTemplateTheme(
             isDark = darkTheme,
             isAmoled = amoledMode,
             style = colorStyle,
-            specVersion = colorSpec,
+            specVersion = colorSpec.effectiveFor(colorStyle),
             primary = baseScheme.primary,
             secondary = baseScheme.secondary,
             tertiary = baseScheme.tertiary,
@@ -53,7 +53,7 @@ fun MaterialTemplateTheme(
             isDark = darkTheme,
             isAmoled = amoledMode,
             style = colorStyle,
-            specVersion = colorSpec,
+            specVersion = colorSpec.effectiveFor(colorStyle),
         )
     }
 

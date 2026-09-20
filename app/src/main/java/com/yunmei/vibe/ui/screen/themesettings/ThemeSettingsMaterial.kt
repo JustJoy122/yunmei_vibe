@@ -94,12 +94,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
+import com.yunmei.vibe.ui.component.bottombar.BottomBarDestinationMaterial
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedDropdownItem
 import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
@@ -222,8 +224,6 @@ fun ThemeSettingsMaterial(
                 isDark = isDark,
                 paletteStyle = colorStyle,
                 colorSpec = colorSpec,
-                enableFloatingBottomBar = uiState.enableFloatingBottomBar,
-                enableFloatingBottomBarBlur = uiState.enableFloatingBottomBarBlur,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -489,8 +489,6 @@ private fun ThemePreviewCard(
     isDark: Boolean,
     paletteStyle: PaletteStyle = PaletteStyle.TonalSpot,
     colorSpec: ColorSpec.SpecVersion = ColorSpec.SpecVersion.SPEC_2021,
-    enableFloatingBottomBar: Boolean = true,
-    enableFloatingBottomBarBlur: Boolean = true,
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -607,69 +605,42 @@ private fun ThemePreviewCard(
 
                 // bottom bar：四个标签（首页/门锁/开门/设置）；开启悬浮底栏时渲染
                 // 圆角悬浮玻璃底栏（液态玻璃 = 半透明毛玻璃 + 细边框），与 Miuix 模板预览一致。
-                if (enableFloatingBottomBar) {
-                    Box(
+                // bottom bar：与真实 Material 底栏保持一致。BottomBarMaterial 用的是贴底的
+                // FlexibleBottomAppBar（图标 + 文案），Material 不提供悬浮底栏（悬浮/模糊为 Miuix 独占），
+                // 所以预览图不再画悬浮胶囊，直接复用 BottomBarDestinationMaterial 的图标与文案。
+                Surface(
+                    color = colorScheme.surfaceContainer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
                         modifier = Modifier
+                            .height(40.dp)
                             .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        contentAlignment = Alignment.Center,
+                            .padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .height(28.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(
-                                    if (enableFloatingBottomBarBlur) {
-                                        colorScheme.surfaceContainer.copy(alpha = 0.5f)
-                                    } else {
-                                        colorScheme.surfaceContainer
-                                    }
+                        BottomBarDestinationMaterial.entries.forEachIndexed { index, destination ->
+                            val selected = index == 0
+                            val itemColor = if (selected) {
+                                colorScheme.primary
+                            } else {
+                                colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+                            }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = destination.icon,
+                                    contentDescription = null,
+                                    tint = itemColor,
+                                    modifier = Modifier.size(13.dp)
                                 )
-                                .border(
-                                    0.5.dp,
-                                    colorScheme.onSurface.copy(alpha = 0.1f),
-                                    RoundedCornerShape(14.dp)
+                                Text(
+                                    text = stringResource(destination.label),
+                                    fontSize = 6.sp,
+                                    maxLines = 1,
+                                    color = itemColor
                                 )
-                                .padding(horizontal = 12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.TwoTone.Home,
-                                contentDescription = null,
-                                tint = colorScheme.primary,
-                                modifier = Modifier.size(13.dp),
-                            )
-                            Icon(
-                                imageVector = Icons.TwoTone.Lock,
-                                contentDescription = null,
-                                tint = colorScheme.onSurface,
-                                modifier = Modifier.size(13.dp),
-                            )
-                            Icon(
-                                imageVector = Icons.TwoTone.Settings,
-                                contentDescription = null,
-                                tint = colorScheme.onSurface,
-                                modifier = Modifier.size(13.dp),
-                            )
-                        }
-                    }
-                } else {
-                    Surface(
-                        color = colorScheme.surfaceContainer,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .height(40.dp)
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.TwoTone.Home, null, tint = colorScheme.primary, modifier = Modifier.size(15.dp))
-                            Icon(Icons.TwoTone.Lock, null, tint = colorScheme.onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.size(15.dp))
-                            Icon(Icons.TwoTone.Settings, null, tint = colorScheme.onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.size(15.dp))
+                            }
                         }
                     }
                 }

@@ -54,6 +54,23 @@ data class AppSettings(
     val amoled: Boolean,
 )
 
+/**
+ * KernelSU 本体的色板规则（manager/app/src/main/java/me/weishu/kernelsu/ui/theme/Theme.kt）：
+ * SPEC_2025 只对部分色板风格成立，其余风格仍按 SPEC_2021 推导，避免与上游取色结果不一致。
+ */
+val PaletteStyle.supportsSpec2025: Boolean
+    get() = this == PaletteStyle.TonalSpot ||
+        this == PaletteStyle.Neutral ||
+        this == PaletteStyle.Vibrant ||
+        this == PaletteStyle.Expressive
+
+fun ColorSpec.SpecVersion.effectiveFor(style: PaletteStyle): ColorSpec.SpecVersion =
+    if (this == ColorSpec.SpecVersion.SPEC_2025 && !style.supportsSpec2025) {
+        ColorSpec.SpecVersion.SPEC_2021
+    } else {
+        this
+    }
+
 object ThemeController {
     fun getAppSettings(context: Context): AppSettings {
         val prefs = SettingsPrefs.of(context)

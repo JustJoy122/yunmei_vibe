@@ -8,7 +8,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -27,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
@@ -46,15 +50,18 @@ import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Wallpaper
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.platform.LocalContext
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
 
-import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -72,9 +79,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
-import com.materialkolor.dynamicColorScheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.yunmei.vibe.ui.component.bottombar.BottomBarMiuix
+import com.yunmei.vibe.ui.component.bottombar.rememberMainPagerState
+import com.yunmei.vibe.ui.LocalMainPagerState
+import com.yunmei.vibe.ui.screen.home.HomePagerMiuix
+import com.yunmei.vibe.ui.theme.effectiveFor
+import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBar
+import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBarBlur
+import com.yunmei.vibe.ui.viewmodel.MainPagerConfig
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.component.miuix.ScaleDialog
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
@@ -92,12 +104,18 @@ import top.yukonga.miuix.kmp.basic.TabRow
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
+import top.yukonga.miuix.kmp.theme.ColorSchemeMode
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+import top.yukonga.miuix.kmp.theme.ThemeColorSpec
+import top.yukonga.miuix.kmp.theme.ThemeController
+import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
@@ -510,194 +528,98 @@ private fun ThemePreviewCardMiuix(
     val screenHeight = configuration.screenHeightDp.toFloat()
     val screenRatio = screenWidth / screenHeight
 
-    val seedColor = if (keyColor == 0) colorScheme.primary else Color(keyColor)
-    val effectiveStyle = if (keyColor == 0) PaletteStyle.TonalSpot else paletteStyle
-    val effectiveSpec = if (keyColor == 0) ColorSpec.SpecVersion.Default else colorSpec
-    // 预览色板放到 Default 线程推导（原先在组合期同步跑 material-kolor，是进入主题设置掉帧的主因之一）；
-    // 未就绪时先用当前 Miuix 配色占位，避免预览卡空白。
-    val dynamicCsValue by produceState<ColorScheme?>(
-        initialValue = null,
-        key1 = listOf(seedColor, isDark, effectiveStyle, effectiveSpec),
+    val context = LocalContext.current
+    val previewPagerState = rememberPagerState(pageCount = { MainPagerConfig.PAGE_COUNT })
+    val previewMainPagerState = rememberMainPagerState(previewPagerState)
+    val previewHomeState = rememberPreviewHomeState()
+    val previewHomeActions = rememberPreviewHomeActions()
+
+    // 预览配色改由 Miuix 自己的 ThemeController 推导（与 MiuixTemplateTheme 同一入口），
+    // 这样预览图里那些真实 Miuix 组件读到的就是这一套配色，能直接看到应用后的效果。
+    val previewController = remember(keyColor, isDark, miuixMonet, paletteStyle, colorSpec) {
+        val systemPrimary = if (isDark) {
+            dynamicDarkColorScheme(context).primary
+        } else {
+            dynamicLightColorScheme(context).primary
+        }
+        val previewSpec = if (colorSpec.effectiveFor(paletteStyle) == ColorSpec.SpecVersion.SPEC_2025) {
+            ThemeColorSpec.Spec2025
+        } else {
+            ThemeColorSpec.Spec2021
+        }
+        ThemeController(
+            when {
+                miuixMonet && isDark -> ColorSchemeMode.MonetDark
+                miuixMonet -> ColorSchemeMode.MonetLight
+                isDark -> ColorSchemeMode.Dark
+                else -> ColorSchemeMode.Light
+            },
+            keyColor = if (keyColor == 0) systemPrimary else Color(keyColor),
+            isDark = isDark,
+            paletteStyle = ThemePaletteStyle.valueOf(paletteStyle.name),
+            colorSpec = previewSpec,
+        )
+    }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth(0.4f)
+            .padding(top = 12.dp)
+            .aspectRatio(screenRatio)
+            .clip(RoundedCornerShape(20.dp))
+            .background(MiuixTheme.colorScheme.surface)
+            .border(1.dp, MiuixTheme.colorScheme.outline, RoundedCornerShape(20.dp)),
+        contentAlignment = Alignment.TopStart,
     ) {
-        value = withContext(Dispatchers.Default) {
-            dynamicColorScheme(
-                seedColor = seedColor,
-                isDark = isDark,
-                style = effectiveStyle,
-                specVersion = effectiveSpec,
+        // 预览图直接渲染真实首页（HomePagerMiuix + BottomBarMiuix），
+        // 再用 graphicsLayer 等比缩小到手机模型大小，布局与配色与真机完全一致。
+        val virtualWidth = PREVIEW_SCREEN_WIDTH_DP
+        val virtualHeight = virtualWidth / screenRatio
+        val previewScale = maxWidth.value / virtualWidth
+        Box(
+            modifier = Modifier
+                .requiredSize(virtualWidth.dp, virtualHeight.dp)
+                .graphicsLayer {
+                    scaleX = previewScale
+                    scaleY = previewScale
+                    transformOrigin = TransformOrigin(0f, 0f)
+                }
+        ) {
+            MiuixTheme(
+                controller = previewController,
+                content = {
+                    // 与 MainActivity 相同的方式准备底栏 backdrop；预览里不启用模糊，
+                    // 避免在缩放图层里再套一层实时 backdrop。
+                    val previewSurface = MiuixTheme.colorScheme.surface
+                    val previewBackdrop = rememberLayerBackdrop {
+                        drawRect(previewSurface)
+                        drawContent()
+                    }
+                    CompositionLocalProvider(
+                        LocalMainPagerState provides previewMainPagerState,
+                        LocalEnableBlur provides false,
+                        LocalEnableFloatingBottomBar provides enableFloatingBottomBar,
+                        LocalEnableFloatingBottomBarBlur provides enableFloatingBottomBarBlur,
+                    ) {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                HomePagerMiuix(
+                                    state = previewHomeState,
+                                    actions = previewHomeActions,
+                                    bottomInnerPadding = 0.dp,
+                                )
+                            }
+                            BottomBarMiuix(
+                                blurBackdrop = null,
+                                backdrop = previewBackdrop,
+                                modifier = Modifier,
+                            )
+                        }
+                    }
+                },
             )
         }
     }
-    val dynamicCs = dynamicCsValue
-
-    // dynamicCs 是 material-kolor 的推导结果（异步，未就绪时为 null）；
-    // Miuix 自有的 ColorScheme 与 material-kolor 的 ColorScheme 不是同一类型，
-    // 因此不整体兜底，而是逐项给出「未就绪 → 当前 Miuix 配色」的回退。
-    val bgColor = if (miuixMonet) dynamicCs?.background ?: colorScheme.surface else colorScheme.surface
-    val textColor = if (miuixMonet) dynamicCs?.onSurface ?: colorScheme.onBackground else colorScheme.onBackground
-    val accentCardColor = when {
-        miuixMonet -> dynamicCs?.secondaryContainer ?: colorScheme.surfaceVariant
-        isDark -> Color(0xFF1A3825)
-        else -> Color(0xFFDFFAE4)
-    }
-    val cardColor = if (miuixMonet) dynamicCs?.surfaceContainerHighest ?: colorScheme.surfaceVariant else colorScheme.surfaceVariant
-    val navBarColor = if (miuixMonet) dynamicCs?.surfaceContainer ?: colorScheme.surface else colorScheme.surface
-    val iconColor = if (miuixMonet) dynamicCs?.primary ?: colorScheme.primary else colorScheme.primary
-    val navSelectedColor = colorScheme.onSurfaceContainer
-    val navUnselectedColor = colorScheme.onSurfaceContainer.copy(alpha = 0.5f)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.4f)
-                .aspectRatio(screenRatio)
-                .clip(RoundedCornerShape(20.dp))
-                .background(bgColor)
-                .border(1.dp, colorScheme.outline, RoundedCornerShape(20.dp))
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier
-                        .height(48.dp)
-                        .fillMaxWidth()
-                        .padding(start = 12.dp, top = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.app_name),
-                        fontSize = 12.sp,
-                        color = textColor
-                    )
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    PreviewBlockMiuix(
-                        color = accentCardColor,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(78.dp)
-                    )
-                    PreviewBlockMiuix(
-                        color = cardColor,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(34.dp)
-                    )
-                    PreviewBlockMiuix(
-                        color = cardColor,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(42.dp)
-                    )
-                }
-
-            }
-
-            if (enableFloatingBottomBar) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .height(28.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                if (enableFloatingBottomBarBlur) navBarColor.copy(alpha = 0.5f)
-                                else navBarColor
-                            )
-                            .border(0.5.dp, textColor.copy(alpha = 0.1f), RoundedCornerShape(14.dp))
-                            .padding(horizontal = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // 三个底部标签：首页 / 门锁 / 设置。
-                        Icon(
-                            imageVector = Icons.Rounded.Cottage,
-                            contentDescription = null,
-                            tint = iconColor,
-                            modifier = Modifier.size(13.dp),
-                        )
-                        Icon(
-                            imageVector = Icons.Rounded.Lock,
-                            contentDescription = null,
-                            tint = textColor,
-                            modifier = Modifier.size(13.dp),
-                        )
-                        Icon(
-                            imageVector = Icons.Rounded.Settings,
-                            contentDescription = null,
-                            tint = textColor,
-                            modifier = Modifier.size(13.dp),
-                        )
-                    }
-                }
-            } else {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(0.5.dp)
-                            .background(textColor.copy(alpha = 0.1f))
-                    )
-                    Row(
-                        modifier = Modifier
-                            .height(36.dp)
-                            .fillMaxWidth()
-                            .background(navBarColor)
-                            .padding(top = 2.dp, bottom = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Cottage,
-                            contentDescription = null,
-                            tint = navSelectedColor,
-                            modifier = Modifier.size(15.dp),
-                        )
-                        Icon(
-                            imageVector = Icons.Rounded.Lock,
-                            contentDescription = null,
-                            tint = navUnselectedColor,
-                            modifier = Modifier.size(15.dp),
-                        )
-                        Icon(
-                            imageVector = Icons.Rounded.Settings,
-                            contentDescription = null,
-                            tint = navUnselectedColor,
-                            modifier = Modifier.size(15.dp),
-                        )
-                    }
-                }
-            }
-        }
-    }
 }
 
-@Composable
-private fun PreviewBlockMiuix(
-    color: Color,
-    modifier: Modifier,
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(color)
-    )
-}
 

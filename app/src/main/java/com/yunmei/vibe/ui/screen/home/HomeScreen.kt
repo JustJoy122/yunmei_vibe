@@ -135,7 +135,8 @@ fun HomePager(
         }
     }
 
-    val actions = HomeActions(
+    val actions = remember(viewModel, uiState, navigator, mainPagerState, bleRequester, locationRequester) {
+        HomeActions(
         onOpenDetail = { lock -> navigator.push(Route.LockDetail(lock.label)) },
         onOpenLocks = { mainPagerState.animateToPage(MainPagerConfig.PAGE_LOCKS) },
         onOpenDoor = {
@@ -161,7 +162,8 @@ fun HomePager(
         },
         onResolveSignAsk = viewModel::resolveSignAsk,
         onDismissSignAsk = viewModel::dismissSignAsk,
-    )
+        )
+    }
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> HomePagerMiuix(

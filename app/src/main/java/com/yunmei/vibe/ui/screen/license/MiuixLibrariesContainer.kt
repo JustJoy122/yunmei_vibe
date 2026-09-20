@@ -63,7 +63,7 @@ fun MiuixLibrariesContainer(modifier: Modifier = Modifier, contentPadding: Paddi
         overscrollEffect = null,
     ) {
         item { Spacer(modifier = Modifier.size(16.dp)) }
-        items(libraries?.libraries ?: listOf()) { library ->
+        items(libraries?.libraries ?: listOf(), key = { it.uniqueId }) { library ->
             LibraryCard(
                 library = library,
                 onClick = {
@@ -104,7 +104,7 @@ fun MiuixLibrariesContainer(modifier: Modifier = Modifier, contentPadding: Paddi
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         overscrollEffect = null,
                     ) {
-                        items(library.licenses.toList()) { license ->
+                        items(library.licenses.toList(), key = { it.hashCode() }) { license ->
                             CompositionLocalProvider(LocalSquircleEnabled provides false) {
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),

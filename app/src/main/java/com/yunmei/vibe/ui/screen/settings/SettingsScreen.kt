@@ -2,6 +2,7 @@ package com.yunmei.vibe.ui.screen.settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -46,7 +47,8 @@ fun SettingPager(
     val confirmText = stringResource(R.string.confirm)
     val cancelText = stringResource(R.string.cancel)
 
-    val actions = SettingsScreenActions(
+    val actions = remember(viewModel, navigator, scope, removeAccountTitle, confirmText, cancelText) {
+        SettingsScreenActions(
         onSetCheckUpdate = viewModel::setCheckUpdate,
         onSetUiModeIndex = { index ->
             viewModel.setUiMode(if (index == 0) UiMode.Miuix.value else UiMode.Material.value)
@@ -77,7 +79,8 @@ fun SettingPager(
                 SignLocationMode.entries.getOrElse(index) { SignLocationMode.DEFAULT }.value
             )
         },
-    )
+        )
+    }
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> SettingPagerMiuix(state, actions, bottomInnerPadding)

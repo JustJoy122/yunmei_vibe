@@ -173,7 +173,7 @@ fun OpenSourceLicensePage() {
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        items(library.licenses.toList()) { license ->
+                        items(library.licenses.toList(), key = { it.hashCode() }) { license ->
                             OutlinedCard(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(16.dp),

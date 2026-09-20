@@ -1,5 +1,6 @@
 package com.yunmei.vibe.data.ble
 
+import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothGatt
 import android.content.Context
@@ -48,7 +49,8 @@ class UnlockManager(context: Context) {
     /** 可选回调：扫描模式开门成功后，把学到的真实 MAC 写回门锁（与原项目行为一致）。 */
     var onMacDiscovered: ((Lock, String) -> Unit)? = null
 
-    private val bleManager: BleManager = BleManager.getInstance()
+    // 冷启动不再由 Application init FastBle：改为首次访问 bleManager（开门/扫描）时才初始化。
+    private val bleManager: BleManager by lazy { BleManager.getInstance().apply { init(appContext as Application) } }
     private var connectedDevice: BleDevice? = null
     private var scanMode = false
 

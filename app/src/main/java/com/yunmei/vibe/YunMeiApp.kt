@@ -5,7 +5,6 @@ import android.app.Application
 import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.util.Log
-import com.clj.fastble.BleManager
 import com.yunmei.vibe.core.di.AppContainer
 import com.yunmei.vibe.data.preferences.SettingsPrefs
 import org.lsposed.hiddenapibypass.HiddenApiBypass
@@ -23,7 +22,7 @@ class YunMeiApp : Application() {
         super.onCreate()
         installCrashHandler()
         app = this
-        BleManager.getInstance().init(this)
+        // FastBle 初始化已下沉到 UnlockManager（首次真正用到蓝牙时才 init），避免拖慢冷启动。
         container = AppContainer(this)
 
         // 预测性返回手势：按保存的偏好初始化（与模板 TemplateApplication 一致）。

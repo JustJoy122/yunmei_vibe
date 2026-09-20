@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -57,8 +58,11 @@ fun ThemeSettingsScreen() {
         currentColorSpec = currentColorSpec,
     )
 
-    val actions = ThemeSettingsActions(
-        onBack = dropUnlessResumed { navigator.pop() },
+    // dropUnlessResumed 本身是 @Composable，不能放进 remember 块内：先取出再作为 key 传入。
+    val onBack = dropUnlessResumed { navigator.pop() }
+    val actions = remember(viewModel, navigator, activity, onBack) {
+        ThemeSettingsActions(
+            onBack = onBack,
         onSetThemeMode = viewModel::setThemeMode,
         onSetColorMode = viewModel::setColorMode,
         onSetMiuixMonet = viewModel::setMiuixMonet,
@@ -90,7 +94,8 @@ fun ThemeSettingsScreen() {
         onSetPredictiveBackAnimation = viewModel::setPredictiveBackAnimation,
         onSetPredictiveBackExitDirection = viewModel::setPredictiveBackExitDirection,
         onSetPageScale = viewModel::setPageScale,
-    )
+        )
+    }
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> ThemeSettingsMiuix(state, actions)

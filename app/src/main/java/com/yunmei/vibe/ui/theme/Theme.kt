@@ -1,4 +1,5 @@
 package com.yunmei.vibe.ui.theme
+import com.yunmei.vibe.data.preferences.SettingsPrefs
 
 import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -55,12 +56,12 @@ data class AppSettings(
 
 object ThemeController {
     fun getAppSettings(context: Context): AppSettings {
-        val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-        val uiMode = prefs.getString("ui_mode", UiMode.DEFAULT_VALUE) ?: UiMode.DEFAULT_VALUE
-        var colorModeValue = prefs.getInt("color_mode", ColorMode.SYSTEM.value)
+        val prefs = SettingsPrefs.of(context)
+        val uiMode = prefs.getString(SettingsPrefs.UI_MODE, UiMode.DEFAULT_VALUE) ?: UiMode.DEFAULT_VALUE
+        var colorModeValue = prefs.getInt(SettingsPrefs.COLOR_MODE, ColorMode.SYSTEM.value)
 
         if (uiMode == "miuix") {
-            val miuixMonet = prefs.getBoolean("miuix_monet", false)
+            val miuixMonet = prefs.getBoolean(SettingsPrefs.MIUIX_MONET, false)
             val colorMode = ColorMode.fromValue(colorModeValue)
             colorModeValue = if (!miuixMonet && colorMode.isMonet) {
                 colorMode.toNonMonetMode()
@@ -72,20 +73,20 @@ object ThemeController {
         }
 
         val colorMode = ColorMode.fromValue(colorModeValue)
-        val keyColor = prefs.getInt("key_color", 0)
-        val paletteStyleStr = prefs.getString("color_style", PaletteStyle.TonalSpot.name)
+        val keyColor = prefs.getInt(SettingsPrefs.KEY_COLOR, 0)
+        val paletteStyleStr = prefs.getString(SettingsPrefs.COLOR_STYLE, PaletteStyle.TonalSpot.name)
         val paletteStyle = try {
             PaletteStyle.valueOf(paletteStyleStr!!)
         } catch (_: Exception) {
             PaletteStyle.TonalSpot
         }
-        val colorSpecStr = prefs.getString("color_spec", ColorSpec.SpecVersion.Default.name)
+        val colorSpecStr = prefs.getString(SettingsPrefs.COLOR_SPEC, ColorSpec.SpecVersion.Default.name)
         val colorSpec = try {
             ColorSpec.SpecVersion.valueOf(colorSpecStr!!)
         } catch (_: Exception) {
             ColorSpec.SpecVersion.Default
         }
-        val amoled = prefs.getBoolean("amoled", false)
+        val amoled = prefs.getBoolean(SettingsPrefs.AMOLED, false)
 
         return AppSettings(colorMode, keyColor, paletteStyle, colorSpec, amoled)
     }

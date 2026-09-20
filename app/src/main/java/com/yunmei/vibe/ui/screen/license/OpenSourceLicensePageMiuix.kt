@@ -25,7 +25,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.yunmei.vibe.R
-import com.yunmei.vibe.ui.navigation3.LocalNavigator
+import com.yunmei.vibe.ui.navigation.LocalNavigator
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop

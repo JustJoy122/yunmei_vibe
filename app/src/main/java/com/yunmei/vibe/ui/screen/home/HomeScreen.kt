@@ -24,8 +24,8 @@ import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.component.dialog.ConfirmResult
 import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
-import com.yunmei.vibe.ui.navigation3.Navigator
-import com.yunmei.vibe.ui.navigation3.Route
+import com.yunmei.vibe.ui.navigation.Navigator
+import com.yunmei.vibe.ui.navigation.Route
 import com.yunmei.vibe.ui.util.BLE_PERMISSIONS
 import com.yunmei.vibe.ui.util.LOCATION_PERMISSIONS
 import com.yunmei.vibe.ui.util.rememberPermissionRequester

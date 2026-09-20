@@ -14,7 +14,7 @@ import com.materialkolor.dynamiccolor.ColorSpec
 import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
-import com.yunmei.vibe.ui.navigation3.LocalNavigator
+import com.yunmei.vibe.ui.navigation.LocalNavigator
 import com.yunmei.vibe.ui.theme.ColorMode
 import com.yunmei.vibe.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.delay

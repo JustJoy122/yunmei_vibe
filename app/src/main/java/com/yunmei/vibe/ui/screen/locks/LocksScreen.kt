@@ -19,8 +19,8 @@ import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.component.dialog.ConfirmResult
 import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
-import com.yunmei.vibe.ui.navigation3.Navigator
-import com.yunmei.vibe.ui.navigation3.Route
+import com.yunmei.vibe.ui.navigation.Navigator
+import com.yunmei.vibe.ui.navigation.Route
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.yunmei.vibe.ui.component.scan.ScanAddLockMenu
 import kotlinx.coroutines.launch

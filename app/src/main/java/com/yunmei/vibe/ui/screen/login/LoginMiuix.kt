@@ -31,8 +31,8 @@ import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.component.miuix.EditText
 import com.yunmei.vibe.ui.component.miuix.WarningCard
-import com.yunmei.vibe.ui.navigation3.LocalNavigator
-import com.yunmei.vibe.ui.navigation3.Route
+import com.yunmei.vibe.ui.navigation.LocalNavigator
+import com.yunmei.vibe.ui.navigation.Route
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon

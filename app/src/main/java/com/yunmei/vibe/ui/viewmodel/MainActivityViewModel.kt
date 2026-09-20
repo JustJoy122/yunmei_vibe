@@ -1,4 +1,5 @@
 package com.yunmei.vibe.ui.viewmodel
+import com.yunmei.vibe.data.preferences.SettingsPrefs
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -24,7 +25,7 @@ class MainActivityViewModel(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val prefs = YunMeiApp.app.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = SettingsPrefs.of(YunMeiApp.app)
     private val settingRepo: SettingsRepository = SettingsRepositoryImpl()
     private val mainPageState = MainPageState(savedStateHandle)
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
@@ -111,21 +112,21 @@ class MainActivityViewModel(
 
     private companion object {
         val observedKeys = setOf(
-            "color_mode",
-            "key_color",
-            "color_style",
-            "color_spec",
+            SettingsPrefs.COLOR_MODE,
+            SettingsPrefs.KEY_COLOR,
+            SettingsPrefs.COLOR_STYLE,
+            SettingsPrefs.COLOR_SPEC,
             "miuix_monet",
-            "amoled",
-            "check_update",
-            "enable_blur",
+            SettingsPrefs.AMOLED,
+            SettingsPrefs.CHECK_UPDATE,
+            SettingsPrefs.ENABLE_BLUR,
             "enable_floating_bottom_bar",
             "enable_floating_bottom_bar_blur",
-            "enable_predictive_back",
-            "predictive_back_animation",
-            "predictive_back_exit_direction",
-            "page_scale",
-            "ui_mode",
+            SettingsPrefs.ENABLE_PREDICTIVE_BACK,
+            SettingsPrefs.PREDICTIVE_BACK_ANIMATION,
+            SettingsPrefs.PREDICTIVE_BACK_EXIT_DIRECTION,
+            SettingsPrefs.PAGE_SCALE,
+            SettingsPrefs.UI_MODE,
         )
     }
 }

@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class Lock(
-    val label: String = "未添加门锁",
+    val label: String = "",
     /** 已知 MAC；未知时原项目用 lockNo 顶替，用于快速连接失败后回退扫描。 */
     val mac: String = "",
     /** 写特征 UUID（原 D_CHAR / lockCharacterUuid）。 */

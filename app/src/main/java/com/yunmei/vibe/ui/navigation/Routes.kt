@@ -1,4 +1,4 @@
-package com.yunmei.vibe.ui.navigation3
+package com.yunmei.vibe.ui.navigation
 
 import android.os.Parcelable
 import top.yukonga.miuix.kmp.nav.core.NavKey

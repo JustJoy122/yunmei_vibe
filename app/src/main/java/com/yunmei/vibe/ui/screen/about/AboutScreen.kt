@@ -8,8 +8,8 @@ import com.yunmei.vibe.BuildConfig
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
-import com.yunmei.vibe.ui.navigation3.LocalNavigator
-import com.yunmei.vibe.ui.navigation3.Route
+import com.yunmei.vibe.ui.navigation.LocalNavigator
+import com.yunmei.vibe.ui.navigation.Route
 
 /** 「查看源代码」目标仓库。 */
 private const val SOURCE_CODE_URL = "https://github.com/JustJoy122/yunmei_vibe"

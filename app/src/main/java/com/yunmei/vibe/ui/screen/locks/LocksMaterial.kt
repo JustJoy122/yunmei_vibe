@@ -153,7 +153,7 @@ private fun LockRow(
     val isDefault = lock.label == defaultLabel
     SegmentedListItem(
         onClick = { actions.onOpenDetail(lock) },
-        headlineContent = { Text(lock.label) },
+        headlineContent = { Text(lock.label.ifBlank { stringResource(R.string.home_status_empty_title) }) },
         supportingContent = {
             Text(
                 text = stringResource(R.string.home_mac) + "：" + lock.mac,

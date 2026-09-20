@@ -42,8 +42,8 @@ import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
 import com.yunmei.vibe.ui.component.material.SegmentedTextField
 import com.yunmei.vibe.ui.component.material.TonalCard
-import com.yunmei.vibe.ui.navigation3.LocalNavigator
-import com.yunmei.vibe.ui.navigation3.Route
+import com.yunmei.vibe.ui.navigation.LocalNavigator
+import com.yunmei.vibe.ui.navigation.Route
 
 @Composable
 fun LoginScreenMaterial(
@@ -154,7 +154,7 @@ fun LoginScreenMaterial(
                                     add {
                                         SegmentedListItem(
                                             onClick = { actions.onPickLock(lock) },
-                                            headlineContent = { Text(lock.label) },
+                                            headlineContent = { Text(lock.label.ifBlank { stringResource(R.string.home_status_empty_title) }) },
                                         )
                                     }
                                 }

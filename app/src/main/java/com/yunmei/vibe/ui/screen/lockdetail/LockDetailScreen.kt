@@ -82,7 +82,7 @@ import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
 import com.yunmei.vibe.ui.component.material.TonalCard
-import com.yunmei.vibe.ui.navigation3.LocalNavigator
+import com.yunmei.vibe.ui.navigation.LocalNavigator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -193,7 +193,7 @@ private fun LockDetailScreenMaterial(
     Scaffold(
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(lock.label) },
+                title = { Text(lock.label.ifBlank { stringResource(R.string.home_status_empty_title) }) },
                 navigationIcon = {
                     IconButton(onClick = { navigator.pop() }) {
                         Icon(

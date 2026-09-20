@@ -62,10 +62,10 @@ import com.yunmei.vibe.ui.component.bottombar.SideRail
 import com.yunmei.vibe.ui.component.bottombar.rememberMainPagerState
 import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
 import com.yunmei.vibe.ui.component.message.GlobalMessageHost
-import com.yunmei.vibe.ui.navigation3.LocalNavigator
-import com.yunmei.vibe.ui.navigation3.Navigator
-import com.yunmei.vibe.ui.navigation3.Route
-import com.yunmei.vibe.ui.navigation3.rememberNavigator
+import com.yunmei.vibe.ui.navigation.LocalNavigator
+import com.yunmei.vibe.ui.navigation.Navigator
+import com.yunmei.vibe.ui.navigation.Route
+import com.yunmei.vibe.ui.navigation.rememberNavigator
 import com.yunmei.vibe.ui.screen.about.AboutScreen
 import com.yunmei.vibe.ui.screen.home.HomePager
 import com.yunmei.vibe.ui.screen.license.LicenseScreen
@@ -82,7 +82,6 @@ import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBarBlur
 import com.yunmei.vibe.ui.theme.TemplateTheme
 import com.yunmei.vibe.ui.theme.ThemeController
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
-import com.yunmei.vibe.ui.util.rememberContentReady
 import com.yunmei.vibe.ui.util.rememberDeviceCornerRadius
 import com.yunmei.vibe.ui.viewmodel.MainActivityViewModel
 import com.yunmei.vibe.ui.viewmodel.MainPagerConfig
@@ -413,7 +412,7 @@ fun MainScreen(
     CompositionLocalProvider(
         LocalMainPagerState provides mainPagerState
     ) {
-        val contentReady = rememberContentReady()
+        val contentReady = true
         val pagerContent = @Composable { bottomInnerPadding: Dp ->
             Box(modifier = if (blurBackdrop != null) Modifier.layerBackdrop(blurBackdrop) else Modifier) {
                 HorizontalPager(

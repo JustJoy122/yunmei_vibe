@@ -1,4 +1,4 @@
-package com.yunmei.vibe.ui.navigation3
+package com.yunmei.vibe.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember

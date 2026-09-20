@@ -7,8 +7,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
-import com.yunmei.vibe.ui.navigation3.LocalNavigator
-import com.yunmei.vibe.ui.navigation3.Route
+import com.yunmei.vibe.ui.navigation.LocalNavigator
+import com.yunmei.vibe.ui.navigation.Route
 
 @Composable
 fun LoginScreen() {

@@ -22,6 +22,17 @@ import kotlin.random.Random
  * BLE 开门逻辑，1:1 复刻 zxy19/yunmei_unintelligent 的 UnlockService：
  * 快速连接（有 MAC）→ 扫描（服务 UUID）→ 连接 → 订阅通知 → 写入开门帧。
  */
+/** 开门流程进度（百分比）。集中定义，避免魔法数字散落在各回调里。 */
+private object UnlockProgress {
+    const val RESET = 0
+    const val START = 20
+    const val DEVICE_FOUND = 30
+    const val CONNECTED = 40
+    const val CONNECTING = 43
+    const val SUBSCRIBED = 50
+    const val SENDING = 75
+    const val DONE = 100
+}
 class UnlockManager(context: Context) {
 
     /** 应用 Context，仅用于读取界面文案资源（数据层不再硬编码中文）。 */
@@ -52,16 +63,16 @@ class UnlockManager(context: Context) {
             return
         }
         if (!adapter.isEnabled) {
-            listener.onProgress(0, appContext.getString(R.string.unlock_bluetooth_off))
+            listener.onProgress(UnlockProgress.RESET, appContext.getString(R.string.unlock_bluetooth_off))
             listener.onFailure(appContext.getString(R.string.unlock_bluetooth_disabled))
             return
         }
 
         if (lock.mac.isNotBlank() && quickConnect) {
-            listener.onProgress(20, appContext.getString(R.string.unlock_progress_quick_connect))
+            listener.onProgress(UnlockProgress.START, appContext.getString(R.string.unlock_progress_quick_connect))
             connect(lock, lock.mac, listener)
         } else {
-            listener.onProgress(20, appContext.getString(R.string.unlock_progress_scan_start))
+            listener.onProgress(UnlockProgress.START, appContext.getString(R.string.unlock_progress_scan_start))
             scanAndConnect(lock, listener)
         }
     }
@@ -71,13 +82,13 @@ class UnlockManager(context: Context) {
             override fun onStartConnect() = Unit
 
             override fun onConnectFail(bleDevice: BleDevice, exception: BleException) {
-                listener.onProgress(0, appContext.getString(R.string.unlock_progress_quick_connect_fallback))
+                listener.onProgress(UnlockProgress.RESET, appContext.getString(R.string.unlock_progress_quick_connect_fallback))
                 scanAndConnect(lock, listener)
             }
 
             override fun onConnectSuccess(bleDevice: BleDevice, gatt: BluetoothGatt, status: Int) {
                 connectedDevice = bleDevice
-                listener.onProgress(40, appContext.getString(R.string.unlock_connected))
+                listener.onProgress(UnlockProgress.CONNECTED, appContext.getString(R.string.unlock_connected))
                 notifyAndSend(lock, bleDevice, listener)
             }
 
@@ -113,12 +124,12 @@ class UnlockManager(context: Context) {
                 if (scanResult == null) {
                     listener.onFailure(appContext.getString(R.string.unlock_device_not_found))
                 } else {
-                    listener.onProgress(30, appContext.getString(R.string.unlock_progress_device_found))
+                    listener.onProgress(UnlockProgress.DEVICE_FOUND, appContext.getString(R.string.unlock_progress_device_found))
                 }
             }
 
             override fun onStartConnect() {
-                listener.onProgress(43, appContext.getString(R.string.unlock_connecting))
+                listener.onProgress(UnlockProgress.CONNECTING, appContext.getString(R.string.unlock_connecting))
             }
 
             override fun onConnectFail(bleDevice: BleDevice, exception: BleException) {
@@ -127,7 +138,7 @@ class UnlockManager(context: Context) {
 
             override fun onConnectSuccess(bleDevice: BleDevice, gatt: BluetoothGatt, status: Int) {
                 connectedDevice = bleDevice
-                listener.onProgress(40, appContext.getString(R.string.unlock_connected))
+                listener.onProgress(UnlockProgress.CONNECTED, appContext.getString(R.string.unlock_connected))
                 notifyAndSend(lock, bleDevice, listener)
             }
 
@@ -144,7 +155,7 @@ class UnlockManager(context: Context) {
         val notifyUuid = lock.writeUuid.replace("6E400002", "6E400003")
         bleManager.notify(device, lock.serviceUuid, notifyUuid, object : BleNotifyCallback() {
             override fun onNotifySuccess() {
-                listener.onProgress(50, appContext.getString(R.string.unlock_connected))
+                listener.onProgress(UnlockProgress.SUBSCRIBED, appContext.getString(R.string.unlock_connected))
                 sendMessage(lock, device, listener)
             }
 
@@ -168,10 +179,10 @@ class UnlockManager(context: Context) {
                             onMacDiscovered?.invoke(lock, device.mac)
                         }
                     }
-                    listener.onProgress(100, appContext.getString(R.string.unlock_progress_done))
+                    listener.onProgress(UnlockProgress.DONE, appContext.getString(R.string.unlock_progress_done))
                     listener.onSuccess()
                 } else {
-                    listener.onProgress(75, appContext.getString(R.string.unlock_sending))
+                    listener.onProgress(UnlockProgress.SENDING, appContext.getString(R.string.unlock_sending))
                 }
             }
 

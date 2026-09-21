@@ -47,7 +47,6 @@ import com.yunmei.vibe.data.model.UnitCodes
 import com.yunmei.vibe.ui.component.ActionMenuItem
 import com.yunmei.vibe.ui.component.miuix.ActionMenuDialog
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
-import com.yunmei.vibe.ui.theme.isInDarkTheme
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
 import top.yukonga.miuix.kmp.basic.BasicComponent
@@ -64,7 +63,6 @@ import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
-import top.yukonga.miuix.kmp.theme.MiuixTheme.isDynamicColor
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -172,11 +170,7 @@ private fun LockStatusCardMiuix(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.defaultColors(
-                            color = when {
-                                isDynamicColor -> colorScheme.secondaryContainer
-                                isInDarkTheme() -> Color(0xFF1A3825)
-                                else -> Color(0xFFDFFAE4)
-                            }
+                            color = colorScheme.secondaryContainer
                         ),
                         onClick = {
                             actions.onOpenDetail(default)
@@ -194,11 +188,7 @@ private fun LockStatusCardMiuix(
                                 Icon(
                                     modifier = Modifier.size(110.dp),
                                     imageVector = Icons.Rounded.CheckCircleOutline,
-                                    tint = if (isDynamicColor) {
-                                        colorScheme.primary.copy(alpha = 0.8f)
-                                    } else {
-                                        Color(0xFF36D167)
-                                    },
+                                    tint = colorScheme.primary.copy(alpha = 0.8f),
                                     contentDescription = null
                                 )
                             }

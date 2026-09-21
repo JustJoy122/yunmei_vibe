@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -37,7 +36,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,7 +72,6 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -82,7 +79,6 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -106,17 +102,12 @@ import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
 import com.yunmei.vibe.ui.component.bottombar.BottomBarDestinationMaterial
-import com.yunmei.vibe.ui.component.bottombar.BottomBarMaterial
-import com.yunmei.vibe.ui.component.bottombar.rememberMainPagerState
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedDropdownItem
 import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
 import com.yunmei.vibe.ui.component.material.TonalCard
-import com.yunmei.vibe.ui.LocalMainPagerState
-import com.yunmei.vibe.ui.screen.home.HomePagerMaterial
 import com.yunmei.vibe.ui.theme.ColorMode
 import com.yunmei.vibe.ui.theme.keyColorOptions
-import com.yunmei.vibe.ui.viewmodel.MainPagerConfig
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -503,6 +494,7 @@ private fun ThemePreviewCard(
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.toFloat()
     val screenHeight = configuration.screenHeightDp.toFloat()
+    val screenRatio = screenWidth / screenHeight
     val dynamicColor = keyColor == 0
 
     // 预览色板与色板格共用同一套进程级缓存，并放到 Default 线程计算：
@@ -549,48 +541,106 @@ private fun ThemePreviewCard(
     }
     val colorScheme = previewScheme ?: MaterialTheme.colorScheme
 
-    val previewPagerState = rememberPagerState(pageCount = { MainPagerConfig.PAGE_COUNT })
-    val previewMainPagerState = rememberMainPagerState(previewPagerState)
-    val previewHomeState = rememberPreviewHomeState()
-    val previewHomeActions = rememberPreviewHomeActions()
-
-    // 预览框 = 真机屏幕的固定比例，虚拟屏 = 真机屏幕的 dp 尺寸；两者都是确定值，
-    // 缩放比是常量，内部首页拿到的是完整的屏幕级约束，不会被压扁或只露出一角。
-    val frameWidth = screenWidth * THEME_PREVIEW_SCALE
-    val frameHeight = screenHeight * THEME_PREVIEW_SCALE
-
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Box(
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+        Surface(
             modifier = Modifier
-                .requiredSize(frameWidth.dp, frameHeight.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(colorScheme.background)
-                .border(1.dp, color = MaterialTheme.colorScheme.outlineVariant, shape = RoundedCornerShape(20.dp)),
-            contentAlignment = Alignment.TopStart,
+                .fillMaxWidth(0.4f)
+                .aspectRatio(screenRatio),
+            color = colorScheme.background,
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(1.dp, color = MaterialTheme.colorScheme.outlineVariant)
         ) {
-            Box(
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = THEME_PREVIEW_SCALE
-                        scaleY = THEME_PREVIEW_SCALE
-                        transformOrigin = TransformOrigin(0f, 0f)
+            Column {
+                // top bar
+                Box(
+                    modifier = Modifier
+                        .height(48.dp)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(start = 12.dp, top = 16.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.app_name),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colorScheme.onSurface
+                        )
                     }
-                    .requiredSize(screenWidth.dp, screenHeight.dp)
-            ) {
-                // 预览必须用「正在预览的配色」，而不是当前已生效的配色，才能在应用前看到效果。
-                MaterialTheme(colorScheme = colorScheme) {
-                    CompositionLocalProvider(LocalMainPagerState provides previewMainPagerState) {
-                        // 与 MainActivity 相同的装配方式：底栏交给 Scaffold 承载，
-                        // 首页拿到的底部内边距与真机一致。
-                        Scaffold(bottomBar = { BottomBarMaterial() }) { innerPadding ->
-                            HomePagerMaterial(
-                                state = previewHomeState,
-                                actions = previewHomeActions,
-                                bottomInnerPadding = innerPadding.calculateBottomPadding(),
-                            )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        PreviewBlock(
+                            color = colorScheme.secondaryContainer,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                        )
+                        PreviewBlock(
+                            color = colorScheme.surfaceContainerHighest,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(34.dp)
+                        )
+                        PreviewBlock(
+                            color = colorScheme.surfaceContainerHighest,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                        )
+                    }
+                }
+
+                // bottom bar：四个标签（首页/门锁/开门/设置）；开启悬浮底栏时渲染
+                // 圆角悬浮玻璃底栏（液态玻璃 = 半透明毛玻璃 + 细边框），与 Miuix 模板预览一致。
+                // bottom bar：与真实 Material 底栏保持一致。BottomBarMaterial 用的是贴底的
+                // FlexibleBottomAppBar（图标 + 文案），Material 不提供悬浮底栏（悬浮/模糊为 Miuix 独占），
+                // 所以预览图不再画悬浮胶囊，直接复用 BottomBarDestinationMaterial 的图标与文案。
+                Surface(
+                    color = colorScheme.surfaceContainer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .height(40.dp)
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BottomBarDestinationMaterial.entries.forEachIndexed { index, destination ->
+                            val selected = index == 0
+                            val itemColor = if (selected) {
+                                colorScheme.primary
+                            } else {
+                                colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+                            }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = destination.icon,
+                                    contentDescription = null,
+                                    tint = itemColor,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Text(
+                                    text = stringResource(destination.label),
+                                    fontSize = 6.sp,
+                                    maxLines = 1,
+                                    color = itemColor
+                                )
+                            }
                         }
                     }
                 }
@@ -599,6 +649,17 @@ private fun ThemePreviewCard(
     }
 }
 
+@Composable
+private fun PreviewBlock(
+    color: Color,
+    modifier: Modifier,
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(color)
+    )
+}
 @SuppressLint("NewApi")
 @Composable
 private fun ColorButtonMaterial(

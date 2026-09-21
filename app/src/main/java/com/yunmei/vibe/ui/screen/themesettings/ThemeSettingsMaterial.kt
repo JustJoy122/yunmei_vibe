@@ -603,11 +603,9 @@ private fun ThemePreviewCard(
                     }
                 }
 
-                // bottom bar：四个标签（首页/门锁/开门/设置）；开启悬浮底栏时渲染
-                // 圆角悬浮玻璃底栏（液态玻璃 = 半透明毛玻璃 + 细边框），与 Miuix 模板预览一致。
-                // bottom bar：与真实 Material 底栏保持一致。BottomBarMaterial 用的是贴底的
-                // FlexibleBottomAppBar（图标 + 文案），Material 不提供悬浮底栏（悬浮/模糊为 Miuix 独占），
-                // 所以预览图不再画悬浮胶囊，直接复用 BottomBarDestinationMaterial 的图标与文案。
+                // bottom bar：贴底形态，与 Material 真实底栏一致（Material 不提供悬浮底栏，
+                // 悬浮/模糊为 Miuix 独占）。三个图标按 BottomBarDestinationMaterial 的顺序各占一栏、
+                // 水平均分并垂直居中；这里只画图标不画文字，避免小字号在缩略图里偏移错位。
                 Surface(
                     color = colorScheme.surfaceContainer,
                     modifier = Modifier.fillMaxWidth()
@@ -615,30 +613,23 @@ private fun ThemePreviewCard(
                     Row(
                         modifier = Modifier
                             .height(40.dp)
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
+                            .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         BottomBarDestinationMaterial.entries.forEachIndexed { index, destination ->
-                            val selected = index == 0
-                            val itemColor = if (selected) {
-                                colorScheme.primary
-                            } else {
-                                colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Icon(
                                     imageVector = destination.icon,
                                     contentDescription = null,
-                                    tint = itemColor,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Text(
-                                    text = stringResource(destination.label),
-                                    fontSize = 6.sp,
-                                    maxLines = 1,
-                                    color = itemColor
+                                    tint = if (index == 0) {
+                                        colorScheme.primary
+                                    } else {
+                                        colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+                                    },
+                                    modifier = Modifier.size(15.dp)
                                 )
                             }
                         }

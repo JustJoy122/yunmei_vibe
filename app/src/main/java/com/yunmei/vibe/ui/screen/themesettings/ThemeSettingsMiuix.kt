@@ -659,8 +659,7 @@ private fun ThemePreviewCardMiuix(
                         modifier = Modifier
                             .height(36.dp)
                             .fillMaxWidth()
-                            .background(navBarColor)
-                            .padding(top = 2.dp, bottom = 8.dp),
+                            .background(navBarColor),
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {

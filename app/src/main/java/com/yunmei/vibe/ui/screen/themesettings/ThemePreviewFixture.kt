@@ -7,12 +7,13 @@ import com.yunmei.vibe.ui.screen.home.HomeActions
 import com.yunmei.vibe.ui.screen.home.HomeUiState
 
 /**
- * 主题预览图专用的「虚拟屏幕」宽度（dp）。
+ * 主题预览图的固定缩放比。
  *
- * 预览图不再自绘色块，而是把真实的首页组件按这个宽度组合出来，再用 graphicsLayer 等比缩小到
- * 手机模型大小，因此预览里的比例、间距、卡片形态与真机首页一致。
+ * 预览框 = 真机屏幕尺寸 × 该比例；虚拟屏 = 真机屏幕的 dp 尺寸（原始大小）。
+ * 两者都是确定值，缩放比因此是常量，不依赖任何测量结果——此前用「测量宽度 / 假设的 360dp」
+ * 反推缩放比，一旦测量值或推导高度异常就会只画出左上角一小块。
  */
-internal const val PREVIEW_SCREEN_WIDTH_DP = 360f
+internal const val THEME_PREVIEW_SCALE = 0.4f
 
 /**
  * 预览图用的示例首页状态：字段填满并给出一个可用门锁，

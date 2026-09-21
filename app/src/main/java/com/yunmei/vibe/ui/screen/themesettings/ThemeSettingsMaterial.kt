@@ -16,7 +16,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.requiredSize
@@ -504,7 +503,6 @@ private fun ThemePreviewCard(
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.toFloat()
     val screenHeight = configuration.screenHeightDp.toFloat()
-    val screenRatio = screenWidth / screenHeight
     val dynamicColor = keyColor == 0
 
     // 预览色板与色板格共用同一套进程级缓存，并放到 Default 线程计算：
@@ -556,41 +554,44 @@ private fun ThemePreviewCard(
     val previewHomeState = rememberPreviewHomeState()
     val previewHomeActions = rememberPreviewHomeActions()
 
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxWidth(0.4f)
-            .aspectRatio(screenRatio)
-            .clip(RoundedCornerShape(20.dp))
-            .background(colorScheme.background)
-            .border(1.dp, color = MaterialTheme.colorScheme.outlineVariant, shape = RoundedCornerShape(20.dp)),
-        contentAlignment = Alignment.TopStart,
+    // 预览框 = 真机屏幕的固定比例，虚拟屏 = 真机屏幕的 dp 尺寸；两者都是确定值，
+    // 缩放比是常量，内部首页拿到的是完整的屏幕级约束，不会被压扁或只露出一角。
+    val frameWidth = screenWidth * THEME_PREVIEW_SCALE
+    val frameHeight = screenHeight * THEME_PREVIEW_SCALE
+
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.TopCenter,
     ) {
-        // 预览图直接渲染真实首页（HomePagerMaterial + BottomBarMaterial），
-        // 再用 graphicsLayer 等比缩小到手机模型大小，布局与配色与真机完全一致。
-        val virtualWidth = PREVIEW_SCREEN_WIDTH_DP
-        val virtualHeight = virtualWidth / screenRatio
-        val previewScale = maxWidth.value / virtualWidth
         Box(
             modifier = Modifier
-                .requiredSize(virtualWidth.dp, virtualHeight.dp)
-                .graphicsLayer {
-                    scaleX = previewScale
-                    scaleY = previewScale
-                    transformOrigin = TransformOrigin(0f, 0f)
-                }
+                .requiredSize(frameWidth.dp, frameHeight.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(colorScheme.background)
+                .border(1.dp, color = MaterialTheme.colorScheme.outlineVariant, shape = RoundedCornerShape(20.dp)),
+            contentAlignment = Alignment.TopStart,
         ) {
-            // 预览必须用「正在预览的配色」而不是当前已生效的配色，才能在应用前看到效果。
-            MaterialTheme(colorScheme = colorScheme) {
-                CompositionLocalProvider(LocalMainPagerState provides previewMainPagerState) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Box(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .graphicsLayer {
+                        scaleX = THEME_PREVIEW_SCALE
+                        scaleY = THEME_PREVIEW_SCALE
+                        transformOrigin = TransformOrigin(0f, 0f)
+                    }
+                    .requiredSize(screenWidth.dp, screenHeight.dp)
+            ) {
+                // 预览必须用「正在预览的配色」，而不是当前已生效的配色，才能在应用前看到效果。
+                MaterialTheme(colorScheme = colorScheme) {
+                    CompositionLocalProvider(LocalMainPagerState provides previewMainPagerState) {
+                        // 与 MainActivity 相同的装配方式：底栏交给 Scaffold 承载，
+                        // 首页拿到的底部内边距与真机一致。
+                        Scaffold(bottomBar = { BottomBarMaterial() }) { innerPadding ->
                             HomePagerMaterial(
                                 state = previewHomeState,
                                 actions = previewHomeActions,
-                                bottomInnerPadding = 0.dp,
+                                bottomInnerPadding = innerPadding.calculateBottomPadding(),
                             )
                         }
-                        BottomBarMaterial()
                     }
                 }
             }

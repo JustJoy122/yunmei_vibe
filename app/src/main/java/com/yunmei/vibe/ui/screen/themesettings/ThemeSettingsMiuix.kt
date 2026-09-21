@@ -8,7 +8,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.requiredSize
@@ -526,7 +525,6 @@ private fun ThemePreviewCardMiuix(
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.toFloat()
     val screenHeight = configuration.screenHeightDp.toFloat()
-    val screenRatio = screenWidth / screenHeight
 
     val context = LocalContext.current
     val previewPagerState = rememberPagerState(pageCount = { MainPagerConfig.PAGE_COUNT })
@@ -561,65 +559,71 @@ private fun ThemePreviewCardMiuix(
         )
     }
 
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxWidth(0.4f)
-            .padding(top = 12.dp)
-            .aspectRatio(screenRatio)
-            .clip(RoundedCornerShape(20.dp))
-            .background(MiuixTheme.colorScheme.surface)
-            .border(1.dp, MiuixTheme.colorScheme.outline, RoundedCornerShape(20.dp)),
-        contentAlignment = Alignment.TopStart,
+    // 预览框 = 真机屏幕的固定比例，虚拟屏 = 真机屏幕的 dp 尺寸；两者都是确定值，
+    // 缩放比是常量，内部首页拿到的是完整的屏幕级约束，不会被压扁或只露出一角。
+    val frameWidth = screenWidth * THEME_PREVIEW_SCALE
+    val frameHeight = screenHeight * THEME_PREVIEW_SCALE
+
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.TopCenter,
     ) {
-        // 预览图直接渲染真实首页（HomePagerMiuix + BottomBarMiuix），
-        // 再用 graphicsLayer 等比缩小到手机模型大小，布局与配色与真机完全一致。
-        val virtualWidth = PREVIEW_SCREEN_WIDTH_DP
-        val virtualHeight = virtualWidth / screenRatio
-        val previewScale = maxWidth.value / virtualWidth
         Box(
             modifier = Modifier
-                .requiredSize(virtualWidth.dp, virtualHeight.dp)
-                .graphicsLayer {
-                    scaleX = previewScale
-                    scaleY = previewScale
-                    transformOrigin = TransformOrigin(0f, 0f)
-                }
+                .requiredSize(frameWidth.dp, frameHeight.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MiuixTheme.colorScheme.surface)
+                .border(1.dp, MiuixTheme.colorScheme.outline, RoundedCornerShape(20.dp)),
+            contentAlignment = Alignment.TopStart,
         ) {
-            MiuixTheme(
-                controller = previewController,
-                content = {
-                    // 与 MainActivity 相同的方式准备底栏 backdrop；预览里不启用模糊，
-                    // 避免在缩放图层里再套一层实时 backdrop。
-                    val previewSurface = MiuixTheme.colorScheme.surface
-                    val previewBackdrop = rememberLayerBackdrop {
-                        drawRect(previewSurface)
-                        drawContent()
+            Box(
+                modifier = Modifier
+                    .graphicsLayer {
+                        scaleX = THEME_PREVIEW_SCALE
+                        scaleY = THEME_PREVIEW_SCALE
+                        transformOrigin = TransformOrigin(0f, 0f)
                     }
-                    CompositionLocalProvider(
-                        LocalMainPagerState provides previewMainPagerState,
-                        LocalEnableBlur provides false,
-                        LocalEnableFloatingBottomBar provides enableFloatingBottomBar,
-                        LocalEnableFloatingBottomBarBlur provides enableFloatingBottomBarBlur,
-                    ) {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            Box(modifier = Modifier.weight(1f)) {
+                    .requiredSize(screenWidth.dp, screenHeight.dp)
+            ) {
+                MiuixTheme(
+                    controller = previewController,
+                    content = {
+                        // 与 MainActivity 相同的方式准备底栏 backdrop；预览里不启用模糊，
+                        // 避免在缩放图层里再套一层实时 backdrop。
+                        val previewSurface = MiuixTheme.colorScheme.surface
+                        val previewBackdrop = rememberLayerBackdrop {
+                            drawRect(previewSurface)
+                            drawContent()
+                        }
+                        CompositionLocalProvider(
+                            LocalMainPagerState provides previewMainPagerState,
+                            LocalEnableBlur provides false,
+                            LocalEnableFloatingBottomBar provides enableFloatingBottomBar,
+                            LocalEnableFloatingBottomBarBlur provides enableFloatingBottomBarBlur,
+                        ) {
+                            // 与 MainActivity 相同的装配方式：底栏交给 Scaffold 承载，
+                            // 首页拿到的底部内边距与真机一致。
+                            Scaffold(
+                                bottomBar = {
+                                    Box(modifier = Modifier.fillMaxWidth()) {
+                                        BottomBarMiuix(
+                                            blurBackdrop = null,
+                                            backdrop = previewBackdrop,
+                                            modifier = Modifier.align(Alignment.BottomCenter),
+                                        )
+                                    }
+                                },
+                            ) { innerPadding ->
                                 HomePagerMiuix(
                                     state = previewHomeState,
                                     actions = previewHomeActions,
-                                    bottomInnerPadding = 0.dp,
+                                    bottomInnerPadding = innerPadding.calculateBottomPadding(),
                                 )
                             }
-                            BottomBarMiuix(
-                                blurBackdrop = null,
-                                backdrop = previewBackdrop,
-                                modifier = Modifier,
-                            )
                         }
-                    }
-                },
-            )
+                    },
+                )
+            }
         }
     }
 }
-
-

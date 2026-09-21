@@ -1,4 +1,4 @@
-name: "CodeQL Advanced"
+name: "CodeQL 代码安全扫描"
 
 on:
   push:
@@ -6,19 +6,19 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '30 1 * * 0' # 每周日凌晨1:30自动扫描
+    - cron: '30 1 * * 0' # 每周日凌晨 1:30 自动扫描
 
 jobs:
   analyze:
-    name: Analyze (${{ matrix.language }})
+    name: 代码分析 (${{ matrix.language }})
     runs-on: ubuntu-latest
     permissions:
       security-events: write
-      packages: read # 允许读取 GitHub Packages
+      packages: read
       actions: read
       contents: read
 
-    # 🔴 核心环境变量：让 Gradle 能顺利从 GitHub Packages 下载 miuix 依赖
+    # 让 Gradle 能从 GitHub Packages 下载私有依赖
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -27,28 +27,26 @@ jobs:
       matrix:
         include:
         - language: java-kotlin
-          build-mode: manual # 手动控制编译，以便 CodeQL 能够观察 Kotlin 构建过程
+          build-mode: manual # 手动模式允许 CodeQL 观察 Kotlin 编译过程
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5 # 🔼 升级至 v5 (Node 24)
+    - name: 拉取代码
+      uses: actions/checkout@v5
 
-    # 1. 初始化 CodeQL
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v4 # 🔼 升级至 v4 (Node 24)
+    - name: 初始化 CodeQL
+      uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
 
-    # 2. 搭建构建环境
     - name: 设置 JDK 21
-      uses: actions/setup-java@v5 # 🔼 升级至 v5 (Node 24)
+      uses: actions/setup-java@v5
       with:
         distribution: temurin
         java-version: "21"
 
-    - name: 设置 Gradle
-      uses: gradle/actions/setup-gradle@v4 # 🔼 升级至 v4 (Node 24)
+    - name: 设置 Gradle 环境
+      uses: gradle/actions/setup-gradle@v4
 
     - name: 接受 Android SDK 许可
       run: |
@@ -60,14 +58,12 @@ jobs:
           "platforms;android-37.0" \
           "build-tools;36.0.0" > /dev/null
 
-    # 3. 执行编译，让 CodeQL 完整观察编译过程
     - name: 构建 Debug 安装包（供 CodeQL 扫描）
       run: |
         chmod +x gradlew
         ./gradlew --no-daemon assembleDebug
 
-    # 4. 执行 CodeQL 分析并生成报告
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v4 # 🔼 升级至 v4 (Node 24)
+    - name: 执行 CodeQL 分析并生成报告
+      uses: github/codeql-action/analyze@v4
       with:
         category: "/language:${{matrix.language}}"

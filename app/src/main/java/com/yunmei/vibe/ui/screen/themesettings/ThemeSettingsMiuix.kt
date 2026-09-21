@@ -513,6 +513,7 @@ private fun ThemePreviewCardMiuix(
     val screenWidth = configuration.screenWidthDp.toFloat()
     val screenHeight = configuration.screenHeightDp.toFloat()
     val screenRatio = screenWidth / screenHeight
+    val context = LocalContext.current
 
     // 预览配色直接走 Miuix 自己的推导入口：与 MiuixTemplateTheme 用同一个 ThemeController、
     // 同一套参数映射（莫奈/深浅色 → ColorSchemeMode，强调色 → keyColor 种子，色板与色彩标准 → 对应枚举），

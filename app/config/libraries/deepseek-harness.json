@@ -1,0 +1,22 @@
+{
+  "uniqueId": "com.yunmei.upstream:deepseek-harness",
+  "name": "DeepSeek Harness",
+  "description": "MIT · 本项目开发过程中使用的编码代理（DSH）",
+  "website": "https://github.com/deepseek-ai/deepseek-harness",
+  "developers": [
+    {
+      "name": "DeepSeek AI",
+      "organisationUrl": "https://github.com/deepseek-ai"
+    }
+  ],
+  "organization": {
+    "name": "DeepSeek AI"
+  },
+  "scm": {
+    "connection": "scm:git:https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "https://github.com/deepseek-ai/deepseek-harness"
+  },
+  "licenses": [
+    "MIT"
+  ]
+}

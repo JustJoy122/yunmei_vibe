@@ -5,6 +5,7 @@
 - [Android Gradle Plugin](https://developer.android.com/build)
 - [AndroidHiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass)
 - [AndroidX（Compose / Lifecycle / Navigation / DataStore / Security）](https://github.com/androidx/androidx)
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 - [FastBle](https://github.com/Jasonchenlijian/FastBle)
 - [InstallerX Revived](https://github.com/wxxsfxyzm/InstallerX-Revived)
 - [KernelSU](https://github.com/tiann/KernelSU)

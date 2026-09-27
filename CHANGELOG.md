@@ -11,7 +11,39 @@
 ---
 ## [Unreleased]
 
-**Full changelog**: [v0.4.4...HEAD](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.4...HEAD)
+**Full changelog**: [v0.4.5...HEAD](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.5...HEAD)
+
+## [0.4.5] - 2026-09-27
+
+**Full changelog**: [v0.4.4...v0.4.5](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.4...v0.4.5)
+
+### 添加
+- 打卡位置询问改为标准弹窗：原首页内嵌的询问卡片改为操作选择弹窗（Material 用 `AlertDialog` + `SegmentedListItem`，Miuix 复用项目已有 `ActionMenuDialog`），选项澄清为「使用上次位置 / 仅本次定位 / 定位并保存为默认位置」与「取消」，选择后立即执行并关闭，页面不再被卡片占位
+- 打卡定位方式设置项（`SignLocationMode`：每次询问 / 重新定位并保存 / 使用上次位置），首页打卡卡片显示对应中文文案
+- 第三方依赖清单新增 DeepSeek Harness：`docs/DEPENDENCIES.md` 与开放源代码许可页数据源 `app/config/libraries/deepseek-harness.json`（MIT）
+- 安全策略文档 `SECURITY.md`；GitHub Actions 新增 CodeQL 代码扫描工作流
+
+### 更改
+- Release 构建启用 R8 代码混淆与资源压缩（`isMinifyEnabled` + `isShrinkResources`），并补齐 FastBle、kotlinx-serialization、Retrofit / OkHttp、HiddenApiBypass、AboutLibraries 等 keep 规则
+- 冷启动与重组开销优化：FastBle 改为首次使用蓝牙时才初始化；主题色板启动后预热；首页 / 设置 / 主题设置的 Actions 与 Lazy 列表 key 补全
+- 首页开门、打卡、获取密码文案与仓库 / 定位提示统一资源化，新增 `SettingsPrefs` 统一偏好键名
+- 导航源码目录 `ui/navigation3` 更名为 `ui/navigation`；屏幕圆角适配抽为 `ui/util/CornerRadiusUtil.kt`
+- 首页「获取密码」与「自动获取密码」位置互换（按钮在上、开关在下）；「自动获取密码」开关不参与禁用逻辑，始终可开关
+- 门锁策略：添加的第一个门锁自动成为默认门锁，之后添加的门锁需在门锁详情页手动切换默认
+
+### 修复
+- Miuix 主题「默认」强调色不跟随莫奈（呈现固定蓝）：按 KernelSU 原版把系统动态取色主色作为种子传入，并按色板风格回退色彩标准（SPEC_2025 仅对部分风格生效）
+- Miuix 首页异常状态 Banner 视觉区分不足：复用 `WarningCard` 告警取色（莫奈开 `errorContainer` / `onErrorContainer`；莫奈关深色 `#310808`、浅色 `#F8E2E2`，内容色 `#F72727`），标题、摘要与警示图标同为告警红；正常状态维持主题绿，Material 侧保持 `secondaryContainer` / `errorContainer`
+- 未设置默认门锁时开门、打卡、获取密码仍可用：三处入口改为仅在存在默认门锁时可用（Material 用 Material 3 禁用配色，Miuix 用组件禁用色），未就绪时点击无效，并移除与顶部 Banner 重复的「未添加门锁」提示
+- Miuix 禁用行仍播放按压涟漪：改用 `BasicComponent(enabled = false)`（库内部不再挂 `clickable`），禁用时完全没有点击与涟漪反馈
+- Material 开放源代码许可页上半部与列表区背景不统一：`Scaffold` 与顶栏统一为 `surfaceContainer`
+- Material 主题设置页预览图误画悬浮底栏、底栏小字偏移：改为贴底三栏图标并去掉文字
+- 单位 / 学校编号映射与门锁默认标签修正（`UnitCodes` 改为按编号建表，`Lock.label` 默认值清空）
+
+### 移除
+- 无引用死代码：`ui/util/DeferredContent.kt`、`ui/component/ScrollToTop.kt`、`ui/component/KeyEventBlocker.kt`
+- 不再使用的字符串 `unlock_no_locks`
+- 回退「主题预览图改为等比缩小的真实首页」方案（恢复手绘色块预览，仅保留底栏图标修正）
 
 ## [0.4.4] - 2026-09-18
 
@@ -457,7 +489,8 @@
 版本对比链接定义（Keep a Changelog 惯例）。
 注意：标签需与标题中的 [x.y.z] 完全一致，Markdown 渲染时版本号才可点击。
 -->
-[Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.1...v0.4.2

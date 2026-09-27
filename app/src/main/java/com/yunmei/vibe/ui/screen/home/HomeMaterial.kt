@@ -352,17 +352,10 @@ private fun CodeCard(
 ) {
     SegmentedColumn(
         content = listOf(
-            {
-                SegmentedSwitchItem(
-                    icon = Icons.TwoTone.Password,
-                    title = stringResource(R.string.settings_auto_code),
-                    summary = stringResource(R.string.settings_auto_code_summary),
-                    checked = state.settings.autoCode,
-                    onCheckedChange = actions.onSetAutoCode,
-                )
-            },
+            // 获取密码：仅在存在默认门锁时可用，未就绪时按 Material 3 禁用配色灰显。
             {
                 SegmentedListItem(
+                    enabled = state.defaultLock != null,
                     onClick = actions.onGetCode,
                     headlineContent = { Text(stringResource(R.string.unlock_get_code)) },
                     supportingContent = {
@@ -377,6 +370,16 @@ private fun CodeCard(
                         )
                     },
                     leadingContent = { Icon(Icons.TwoTone.Key, null) },
+                )
+            },
+            // 自动获取密码：开关本身不参与禁用逻辑，位置移到按钮下方。
+            {
+                SegmentedSwitchItem(
+                    icon = Icons.TwoTone.Password,
+                    title = stringResource(R.string.settings_auto_code),
+                    summary = stringResource(R.string.settings_auto_code_summary),
+                    checked = state.settings.autoCode,
+                    onCheckedChange = actions.onSetAutoCode,
                 )
             },
         )

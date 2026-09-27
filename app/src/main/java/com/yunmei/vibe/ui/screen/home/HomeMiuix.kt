@@ -266,6 +266,8 @@ private fun LockStatusCardMiuix(
                         BasicComponent(
                             title = stringResource(R.string.home_status_empty_title),
                             summary = stringResource(R.string.home_status_add_action),
+                            titleColor = top.yukonga.miuix.kmp.basic.BasicComponentDefaults.titleColor(color = warningCardContentColor()),
+                            summaryColor = top.yukonga.miuix.kmp.basic.BasicComponentDefaults.summaryColor(color = warningCardContentColor()),
                             startAction = {
                                 Icon(
                                     Icons.Rounded.ErrorOutline,
@@ -294,6 +296,8 @@ private fun LockStatusCardMiuix(
                     BasicComponent(
                         title = stringResource(R.string.home_status_no_default_title),
                         summary = stringResource(R.string.home_status_set_default_action),
+                        titleColor = top.yukonga.miuix.kmp.basic.BasicComponentDefaults.titleColor(color = warningCardContentColor()),
+                        summaryColor = top.yukonga.miuix.kmp.basic.BasicComponentDefaults.summaryColor(color = warningCardContentColor()),
                         startAction = {
                             Icon(
                                 Icons.Rounded.ErrorOutline,
@@ -320,7 +324,7 @@ private fun UnlockActionCard(
         modifier = Modifier
             .fillMaxWidth()
             .alpha(if (enabled) 1f else DISABLED_CARD_ALPHA),
-        onClick = { if (enabled) actions.onOpenDoor() },
+        onClick = if (enabled) actions.onOpenDoor else null,
         showIndication = enabled,
     ) {
         Column(
@@ -439,20 +443,9 @@ private fun CodeCard(
     actions: HomeActions,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        SwitchPreference(
-            title = stringResource(R.string.settings_auto_code),
-            summary = stringResource(R.string.settings_auto_code_summary),
-            startAction = {
-                Icon(
-                    Icons.Rounded.Password,
-                    modifier = Modifier.padding(end = 6.dp),
-                    contentDescription = stringResource(R.string.settings_auto_code),
-                    tint = colorScheme.onBackground,
-                )
-            },
-            checked = state.settings.autoCode,
-            onCheckedChange = actions.onSetAutoCode,
-        )
+        // 获取密码：仅在存在默认门锁时可用。Miuix 的 BasicComponent 在 enabled = false 时
+        // 不会挂 clickable，所以既没有按压涟漪也没有点击行为，文字走组件自带禁用色。
+        val enabled = state.defaultLock != null
         BasicComponent(
             title = stringResource(R.string.unlock_get_code),
             summary = state.code ?: state.codeError
@@ -469,7 +462,23 @@ private fun CodeCard(
                     contentDescription = null,
                 )
             },
-            onClick = actions.onGetCode,
+            enabled = enabled,
+            onClick = if (enabled) actions.onGetCode else null,
+        )
+        // 自动获取密码：开关本身不参与禁用逻辑，位置移到按钮下方。
+        SwitchPreference(
+            title = stringResource(R.string.settings_auto_code),
+            summary = stringResource(R.string.settings_auto_code_summary),
+            startAction = {
+                Icon(
+                    Icons.Rounded.Password,
+                    modifier = Modifier.padding(end = 6.dp),
+                    contentDescription = stringResource(R.string.settings_auto_code),
+                    tint = colorScheme.onBackground,
+                )
+            },
+            checked = state.settings.autoCode,
+            onCheckedChange = actions.onSetAutoCode,
         )
     }
 }
@@ -479,13 +488,10 @@ private fun SignCard(
     state: HomeUiState,
     actions: HomeActions,
 ) {
-    // 仅在存在默认门锁时可用；未就绪时灰显且不响应点击（原因由顶部 Banner 说明）。
+    // 仅在存在默认门锁时可用；未就绪时由 BasicComponent 自带的禁用配色灰显、
+    // 且不挂 clickable（无涟漪无点击），原因由顶部 Banner 说明。
     val enabled = state.defaultLock != null
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(if (enabled) 1f else DISABLED_CARD_ALPHA),
-    ) {
+    Card(modifier = Modifier.fillMaxWidth()) {
         BasicComponent(
             title = stringResource(R.string.unlock_sign),
             summary = state.signMessage ?: signLocationLabel(state.settings.signLocationMode),
@@ -496,7 +502,8 @@ private fun SignCard(
                     contentDescription = null,
                 )
             },
-            onClick = { if (enabled) actions.onSign() },
+            enabled = enabled,
+            onClick = if (enabled) actions.onSign else null,
         )
     }
 }

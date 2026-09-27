@@ -47,6 +47,8 @@ import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.UnitCodes
 import com.yunmei.vibe.ui.component.ActionMenuItem
 import com.yunmei.vibe.ui.component.miuix.ActionMenuDialog
+import com.yunmei.vibe.ui.component.miuix.warningCardContainerColor
+import com.yunmei.vibe.ui.component.miuix.warningCardContentColor
 import com.yunmei.vibe.ui.theme.isInDarkTheme
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.util.BlurredBar
@@ -251,6 +253,10 @@ private fun LockStatusCardMiuix(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Card(
                         modifier = Modifier.weight(1f),
+                        colors = CardDefaults.defaultColors(
+                            color = warningCardContainerColor(),
+                            contentColor = warningCardContentColor(),
+                        ),
                         onClick = {
                             actions.onOpenLocks()
                         },
@@ -265,7 +271,7 @@ private fun LockStatusCardMiuix(
                                     Icons.Rounded.ErrorOutline,
                                     stringResource(R.string.home_status_empty_title),
                                     modifier = Modifier.padding(end = 6.dp),
-                                    tint = colorScheme.onBackground,
+                                    tint = warningCardContentColor(),
                                 )
                             },
                         )
@@ -275,6 +281,10 @@ private fun LockStatusCardMiuix(
 
             else -> {
                 Card(
+                    colors = CardDefaults.defaultColors(
+                        color = warningCardContainerColor(),
+                        contentColor = warningCardContentColor(),
+                    ),
                     onClick = {
                         actions.onOpenLocks()
                     },
@@ -289,7 +299,7 @@ private fun LockStatusCardMiuix(
                                 Icons.Rounded.ErrorOutline,
                                 stringResource(R.string.home_status_no_default_title),
                                 modifier = Modifier.padding(end = 6.dp),
-                                tint = colorScheme.onBackground,
+                                tint = warningCardContentColor(),
                             )
                         }
                     )

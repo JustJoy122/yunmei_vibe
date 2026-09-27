@@ -31,11 +31,7 @@ fun WarningCard(
         modifier = modifier,
         onClick = { onClick?.invoke() },
         colors = CardDefaults.defaultColors(
-            color = color ?: when {
-                isDynamicColor -> colorScheme.errorContainer
-                isInDarkTheme() -> Color(0XFF310808)
-                else -> Color(0xFFF8E2E2)
-            }
+            color = color ?: warningCardContainerColor()
         ),
         showIndication = onClick != null,
         pressFeedbackType = PressFeedbackType.Tilt
@@ -49,10 +45,26 @@ fun WarningCard(
         ) {
             Text(
                 text = message,
-                color = if (isDynamicColor) colorScheme.onErrorContainer else Color(0xFFF72727),
+                color = warningCardContentColor(),
                 fontSize = 14.sp
             )
             action?.invoke()
         }
     }
 }
+
+/**
+ * KernelSU 原版 WarningCard（level = Error）的告警容器色。
+ * 首页 Banner 的异常分支复用同一取色，保证告警语义一致。
+ */
+@Composable
+internal fun warningCardContainerColor(): Color = when {
+    isDynamicColor -> colorScheme.errorContainer
+    isInDarkTheme() -> Color(0xFF310808)
+    else -> Color(0xFFF8E2E2)
+}
+
+/** 告警内容色（文字 / 图标）：莫奈开用 onErrorContainer，否则用固定告警红。 */
+@Composable
+internal fun warningCardContentColor(): Color =
+    if (isDynamicColor) colorScheme.onErrorContainer else Color(0xFFF72727)

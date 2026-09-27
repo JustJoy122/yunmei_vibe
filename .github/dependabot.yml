@@ -1,0 +1,48 @@
+# Dependabot 配置
+#
+# 背景：本仓库 Dependabot 安全告警中的多数条目（io.netty、org.bouncycastle、
+# org.apache.httpcomponents、org.jdom、org.bitbucket.b_c:jose4j）来自
+# Android Gradle Plugin（AGP）及其构建工具链的「传递依赖」，实测来源为：
+#   - io.netty:*                  ← io.grpc:grpc-netty ← com.android.tools.utp / com.google.api.grpc
+#   - org.bouncycastle:*          ← com.android.tools.build:apkzlib / builder / gradle
+#   - org.apache.httpcomponents:* ← com.android.tools:sdklib / analytics-library:crash
+#   - org.jdom:jdom2              ← com.android.tools.build.jetifier:jetifier-processor
+#   - org.bitbucket.b_c:jose4j    ← com.android.tools.build:bundletool
+#
+# 这些库只存在于「构建脚本 / 插件 classpath」，不会打进 APK，应用代码也没有引用：
+#   ./gradlew :app:dependencies --configuration releaseRuntimeClasspath  中零命中。
+# 因此这里对它们关闭 Dependabot 的「版本更新」提醒，减少噪音。
+#
+# 两点必须注意：
+# 1) ignore 只影响 Dependabot 的「版本更新」PR，不会消除「安全告警」本身。
+#    已产生的告警需要在 GitHub「Security → Dependabot alerts」中手动 Dismiss，
+#    理由选择 "Vulnerable code is not actually used"（构建期依赖不入包）。
+# 2) 故意不忽略 com.android.tools.build:gradle（AGP 本体）：升级 AGP 才是这些
+#    传递依赖拿到修复版本的正规途径，需要保留它的更新 PR。
+#    应用真正打进 APK 的依赖（AndroidX / Compose / OkHttp / Retrofit /
+#    kotlinx-serialization / materialKolor / miuix 等）一律不忽略，真实告警照常提示。
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    ignore:
+      # 构建工具链的传递依赖（均在 buildscript / 插件 classpath，不入包）
+      - dependency-name: "io.netty:*"
+      - dependency-name: "io.grpc:*"
+      - dependency-name: "org.bouncycastle:*"
+      - dependency-name: "org.apache.httpcomponents:*"
+      - dependency-name: "org.jdom:*"
+      - dependency-name: "org.bitbucket.b_c:jose4j"
+      # Android 构建工具的其它传递依赖（不含 AGP 本体）
+      - dependency-name: "com.android.tools:*"
+      - dependency-name: "com.android.tools.analytics-library:*"
+      - dependency-name: "com.android.tools.utp:*"
+      - dependency-name: "com.android.tools.build:apkzlib"
+      - dependency-name: "com.android.tools.build:builder"
+      - dependency-name: "com.android.tools.build:bundletool"
+      - dependency-name: "com.android.tools.build.jetifier:*"

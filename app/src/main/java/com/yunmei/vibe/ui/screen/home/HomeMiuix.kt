@@ -46,6 +46,7 @@ import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.UnitCodes
 import com.yunmei.vibe.ui.component.ActionMenuItem
 import com.yunmei.vibe.ui.component.miuix.ActionMenuDialog
+import com.yunmei.vibe.ui.theme.isInDarkTheme
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
@@ -63,6 +64,7 @@ import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme.isDynamicColor
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -169,8 +171,14 @@ private fun LockStatusCardMiuix(
                 ) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
+                        // KernelSU 原版 StatusCard 的取色规则（KernelSU-main HomeMiuix.kt:272-280）：
+                        // 莫奈开 → secondaryContainer；莫奈关 → 深色 0xFF1A3825 / 浅色 0xFFDFFAE4。
                         colors = CardDefaults.defaultColors(
-                            color = colorScheme.secondaryContainer
+                            color = when {
+                                isDynamicColor -> colorScheme.secondaryContainer
+                                isInDarkTheme() -> Color(0xFF1A3825)
+                                else -> Color(0xFFDFFAE4)
+                            }
                         ),
                         onClick = {
                             actions.onOpenDetail(default)
@@ -188,7 +196,13 @@ private fun LockStatusCardMiuix(
                                 Icon(
                                     modifier = Modifier.size(110.dp),
                                     imageVector = Icons.Rounded.CheckCircleOutline,
-                                    tint = colorScheme.primary.copy(alpha = 0.8f),
+                                    // 与 KernelSU 原版同一分支（HomeMiuix.kt:299-303）：
+                                    // 莫奈开用 primary 0.8 透明度，莫奈关用固定状态绿。
+                                    tint = if (isDynamicColor) {
+                                        colorScheme.primary.copy(alpha = 0.8f)
+                                    } else {
+                                        Color(0xFF36D167)
+                                    },
                                     contentDescription = null
                                 )
                             }

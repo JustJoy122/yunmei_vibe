@@ -121,10 +121,10 @@ class HomeViewModel : ViewModel() {
     }
 
     private fun doOpenDoor() {
-        val lock = currentLock ?: run {
-            _uiState.update { it.copy(statusText = str(R.string.unlock_no_locks)) }
-            return
-        }
+        // 未设置默认门锁时不执行开门：按钮已禁用，这里兜底自动开门等入口；
+        // 未就绪的原因由顶部 Banner 说明，不再写重复提示。
+        if (_uiState.value.defaultLock == null) return
+        val lock = currentLock ?: return
         if (_uiState.value.isOpening) return
         if (!lock.isUsable) {
             _uiState.update { it.copy(statusText = str(R.string.unlock_lock_unusable)) }
@@ -187,6 +187,8 @@ class HomeViewModel : ViewModel() {
 
     /** 打卡入口：按 signLocationMode 分派（与原项目 sigLoc 的 ask/lst/rel 一致）。 */
     fun sign() {
+        // 同开门：没有默认门锁时静默返回，原因由顶部 Banner 说明。
+        if (_uiState.value.defaultLock == null) return
         val lock = currentLock ?: return
         viewModelScope.launch {
             // findUser 会读加密存储，必须放在协程里（内部已切到 IO）。

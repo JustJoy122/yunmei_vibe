@@ -33,8 +33,14 @@ class LockStore(private val secureStore: SecureStore) {
         if (locks.any { it.label == lock.label }) {
             throw DuplicateLockException()
         }
+        // 第一个门锁自动成为默认门锁；之后添加的门锁不自动设默认，
+        // 用户可在门锁详情页手动切换默认。
+        val isFirstLock = locks.isEmpty()
         locks.add(lock)
         secureStore.putJson(KEY_LOCKS, locks)
+        if (isFirstLock) {
+            secureStore.putJson(KEY_DEFAULT, lock)
+        }
         notifyChanged()
     }
 

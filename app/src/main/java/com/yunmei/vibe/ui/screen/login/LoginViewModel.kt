@@ -211,9 +211,6 @@ class LoginViewModel : ViewModel() {
             } catch (_: IllegalStateException) {
                 // 同名门锁已存在：视为添加完成（重复登录场景）。
             }
-            if (container.lockStore.getDefault() == null) {
-                container.lockStore.setDefault(lock)
-            }
         }
         _uiState.update { it.copy(loading = false, message = null) }
         UiMessageBus.send(UiMessage(text = text, tone = tone))

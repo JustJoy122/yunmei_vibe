@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.WhereToVote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -68,6 +69,9 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme.isDynamicColor
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+
+/** 未设置默认门锁时首页卡片的灰显透明度（与顶部 Banner 的「未设置默认门锁」状态一致）。 */
+private const val DISABLED_CARD_ALPHA = 0.38f
 
 @Composable
 fun HomePagerMiuix(
@@ -300,9 +304,14 @@ private fun UnlockActionCard(
     state: HomeUiState,
     actions: HomeActions,
 ) {
+    // 仅在存在默认门锁时可用；未就绪时灰显且不响应点击（原因由顶部 Banner 说明）。
+    val enabled = state.defaultLock != null
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = actions.onOpenDoor,
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else DISABLED_CARD_ALPHA),
+        onClick = { if (enabled) actions.onOpenDoor() },
+        showIndication = enabled,
     ) {
         Column(
             modifier = Modifier
@@ -460,7 +469,13 @@ private fun SignCard(
     state: HomeUiState,
     actions: HomeActions,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    // 仅在存在默认门锁时可用；未就绪时灰显且不响应点击（原因由顶部 Banner 说明）。
+    val enabled = state.defaultLock != null
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else DISABLED_CARD_ALPHA),
+    ) {
         BasicComponent(
             title = stringResource(R.string.unlock_sign),
             summary = state.signMessage ?: signLocationLabel(state.settings.signLocationMode),
@@ -471,7 +486,7 @@ private fun SignCard(
                     contentDescription = null,
                 )
             },
-            onClick = actions.onSign,
+            onClick = { if (enabled) actions.onSign() },
         )
     }
 }

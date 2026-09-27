@@ -213,7 +213,8 @@ private fun UnlockActionCard(
     state: HomeUiState,
     actions: HomeActions,
 ) {
-    TonalCard(onClick = actions.onOpenDoor) {
+    // 仅在存在默认门锁时可用；未就绪时置灰且不响应点击（原因由顶部 Banner 说明）。
+    TonalCard(enabled = state.defaultLock != null, onClick = actions.onOpenDoor) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -390,6 +391,7 @@ private fun SignCard(
     SegmentedColumn(
         content = listOf {
             SegmentedListItem(
+                enabled = state.defaultLock != null,
                 onClick = actions.onSign,
                 headlineContent = { Text(stringResource(R.string.unlock_sign)) },
                 supportingContent = {

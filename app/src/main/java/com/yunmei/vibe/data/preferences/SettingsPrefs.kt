@@ -29,6 +29,8 @@ object SettingsPrefs {
     const val PREDICTIVE_BACK_EXIT_DIRECTION = "predictive_back_exit_direction"
     const val ENABLE_BLUR = "enable_blur"
     const val PAGE_SCALE = "page_scale"
+    /** 「开门」快捷方式 Intent 的校验令牌（仅本应用可写，用于拒绝第三方直接启动入口）。 */
+    const val SHORTCUT_TOKEN = "shortcut_token"
 
     /** Miuix 侧莫奈取色开关。注意与 DataStore 中的 `theme_mode`（AppPreferences）语义不同，勿混用。 */
     const val MIUIX_MONET = "miuix_monet"

@@ -23,6 +23,11 @@
 
     <uses-permission android:name="android.permission.NFC" />
 
+    <!-- 「开门」快捷方式：通知权限 + 前台服务（connectedDevice 用于蓝牙开门） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+
     <uses-feature
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
@@ -67,6 +72,24 @@
                 android:resource="@xml/filepaths" />
         </provider>
 
+
+        <!--
+            「开门」快捷方式入口：无界面 Activity，校验令牌后交由前台服务执行开门，
+            不打开主界面；exported 必需（启动器以第三方身份启动），故用随机令牌校验调用方。
+        -->
+        <activity
+            android:name=".ui.unlock.UnlockShortcutActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- 快捷方式开门的前台服务：前台通知展示进度，结束后保留结果通知。 -->
+        <service
+            android:name=".ui.unlock.UnlockService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
     </application>
 
 </manifest>

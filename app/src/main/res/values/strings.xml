@@ -103,6 +103,16 @@
     <string name="unlock_progress_device_found">设备已找到</string>
     <string name="unlock_error_connect">连接失败</string>
     <string name="unlock_error_subscribe">订阅通知失败</string>
+    <!-- 「开门」快捷方式与通知 -->
+    <string name="shortcut_unlock_short">开锁</string>
+    <string name="shortcut_unlock_long">一键开门（默认门锁）</string>
+    <string name="shortcut_unlock_disabled">未设置默认门锁</string>
+    <string name="unlock_channel_name">开门</string>
+    <string name="unlock_channel_desc">快捷方式开门的进度与结果</string>
+    <string name="unlock_notification_preparing">正在准备…</string>
+    <string name="unlock_shortcut_no_default">未设置默认门锁，无法开门</string>
+    <string name="unlock_shortcut_no_permission">缺少蓝牙权限，请先打开应用授权</string>
+    <string name="unlock_shortcut_timeout">开门超时，请重试</string>
     <string name="unlock_progress_done">开门完成</string>
 
     <!-- 关于 -->

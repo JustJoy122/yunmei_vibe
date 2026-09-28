@@ -7,6 +7,13 @@ import android.os.Build
 import android.util.Log
 import com.yunmei.vibe.core.di.AppContainer
 import com.yunmei.vibe.data.preferences.SettingsPrefs
+import com.yunmei.vibe.ui.unlock.UnlockNotifications
+import com.yunmei.vibe.ui.unlock.UnlockShortcut
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.withContext
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import java.io.File
 import java.text.SimpleDateFormat
@@ -18,6 +25,9 @@ class YunMeiApp : Application() {
     lateinit var container: AppContainer
         private set
 
+    /** 应用级协程作用域：订阅门锁数据变化，同步「开门」快捷方式的可用性。 */
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     override fun onCreate() {
         super.onCreate()
         installCrashHandler()
@@ -25,6 +35,19 @@ class YunMeiApp : Application() {
         // FastBle 初始化已下沉到 UnlockManager（首次真正用到蓝牙时才 init），避免拖慢冷启动。
         container = AppContainer(this)
 
+        // 「开门」快捷方式：通知渠道只建一次；可用性随默认门锁变化。
+        // LockStore.revision 是 StateFlow，订阅时会先收到当前值，因此启动即完成一次同步。
+        UnlockNotifications.ensureChannel(this)
+        appScope.launch {
+            container.lockStore.revision.collect {
+                val hasDefault = withContext(Dispatchers.IO) {
+                    container.lockStore.getDefault() != null
+                }
+                withContext(Dispatchers.Main) {
+                    UnlockShortcut.sync(this@YunMeiApp, hasDefault)
+                }
+            }
+        }
         // 预测性返回手势：按保存的偏好初始化（与模板 TemplateApplication 一致）。
         // 键名统一走 SettingsPrefs，避免此处与设置页各自手写字符串。
         if (SettingsPrefs.of(this).getBoolean(SettingsPrefs.ENABLE_PREDICTIVE_BACK, false)) {

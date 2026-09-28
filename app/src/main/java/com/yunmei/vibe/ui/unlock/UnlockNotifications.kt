@@ -24,6 +24,9 @@ object UnlockNotifications {
     const val CHANNEL_ID = "unlock"
     const val NOTIFICATION_ID = 1001
 
+    /** 进度条最大值（百分比 0..100）。 */
+    private const val PROGRESS_MAX = 100
+
     /** 创建通知渠道（幂等）。 */
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -57,15 +60,19 @@ object UnlockNotifications {
                     setProgress(percent)
                 }
             }
-            return Notification.Builder(context, CHANNEL_ID)
+            val builder = Notification.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_unlock)
                 .setContentTitle(context.getString(R.string.unlock_open))
                 .setContentText(text)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setContentIntent(openAppIntent(context))
+                // 关键：同时写入经典进度字段（max / progress / indeterminate）。
+                // 系统若没有把 ProgressStyle 渲染成进度条（例如未获实况通知提升），
+                // 通知栏也会显示真实进度条，而不是只有阶段文字。
+                .setProgress(PROGRESS_MAX, percent ?: 0, percent == null)
                 .setStyle(style)
-                .build()
+            return builder.build()
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -79,7 +86,7 @@ object UnlockNotifications {
         if (percent == null) {
             builder.setProgress(0, 0, true)
         } else {
-            builder.setProgress(100, percent, false)
+            builder.setProgress(PROGRESS_MAX, percent, false)
         }
         return builder.build()
     }

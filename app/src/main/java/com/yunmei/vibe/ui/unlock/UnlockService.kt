@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
@@ -113,10 +114,9 @@ class UnlockService : Service() {
 
     private fun updateProgress(text: String, percent: Int) {
         if (finished.get()) return
-        startForeground(
-            UnlockNotifications.NOTIFICATION_ID,
-            UnlockNotifications.progress(this, text, percent),
-        )
+        Log.d(TAG, "unlock progress=$percent text=$text")
+        // 固定 ID 原地更新同一个通知：进度条由真实的进度字段驱动，不靠改标题/正文代替。
+        UnlockNotifications.post(this, UnlockNotifications.progress(this, text, percent))
     }
 
     private fun finishWithSuccess() {
@@ -148,6 +148,7 @@ class UnlockService : Service() {
     }
 
     private companion object {
+        const val TAG = "UnlockService"
         const val UNLOCK_TIMEOUT_MS = 45_000L
     }
 }

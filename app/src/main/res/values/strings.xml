@@ -107,6 +107,10 @@
     <string name="shortcut_unlock_short">开锁</string>
     <string name="shortcut_unlock_long">一键开门（默认门锁）</string>
     <string name="shortcut_unlock_disabled">未设置默认门锁</string>
+    <string name="unlock_live_channel_name">开门（实况）</string>
+    <string name="unlock_live_channel_desc">快捷方式开门的实况进度通知</string>
+    <string name="unlock_progress_channel_name">开门进度</string>
+    <string name="unlock_progress_channel_desc">快捷方式开门的进行中进度通知</string>
     <string name="unlock_channel_name">开门</string>
     <string name="unlock_channel_desc">快捷方式开门的进度与结果</string>
     <string name="unlock_notification_preparing">正在准备…</string>

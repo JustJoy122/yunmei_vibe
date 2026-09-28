@@ -18,11 +18,15 @@ coil = "2.7.0"
 securityCrypto = "1.1.0"
 zxingCore = "3.5.3"
 materialKolor = "5.0.0"
+# 小米超级岛（澎湃 OS 焦点通知 V3）参数构建库，与 InstallerX Revived 同版本。
+focusApi = "1.4"
 haze = "1.7.0"
 miuix = "0.9.4-103b737b-SNAPSHOT"
 aboutLibraries = "15.2.0"
 
 [libraries]
+# 小米超级岛参数库（JitPack）。
+focus-api = { module = "com.xzakota.hyper.notification:focus-api", version.ref = "focusApi" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }

@@ -167,6 +167,9 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.zxing.core)
 
+    // 小米超级岛（澎湃 OS 焦点通知 V3）参数构建：与 InstallerX Revived 同款依赖。
+    implementation(libs.focus.api)
+
     // 偏好设置（DataStore）。
     implementation(libs.hiddenapibypass)
     implementation(libs.androidx.datastore.preferences)

@@ -1,6 +1,5 @@
 package com.yunmei.vibe.ui.unlock
 
-import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
@@ -11,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.MainActivity
+import com.yunmei.vibe.ui.theme.ThemeColors
 
 /**
  * 快捷方式开门的通知（进行中 / 结果）。
@@ -18,15 +18,14 @@ import com.yunmei.vibe.ui.MainActivity
  * 渠道划分与构建方式整体移植自 InstallerX Revived 的通知实现，按设备能力分三条路径：
  *
  *  - 小米超级岛路径（对应 MiIslandNotificationBuilder）：小米机型且系统焦点通知协议为 3 时，
- *    标准通知 + `addExtras(miui.focus.param)`，固定挂在实况渠道（InstallerX 同样要求岛通知
- *    不切渠道，否则 MIUI 侧的岛会重建、出现闪烁或黑隙）。
+ *    标准通知 + `addExtras(miui.focus.param)`，固定挂在实况渠道。
  *  - 实况路径（Android 16+，对应 ModernNotificationBuilder）：IMPORTANCE_HIGH 实况渠道
- *    + 平台 `Notification.ProgressStyle`，并写入 `android.requestPromotedOngoing` 请求实况提升
- *    + `setShortCriticalText(...)`，并已在清单声明 `POST_PROMOTED_NOTIFICATIONS`，
- *    这是 ColorOS 流体云等国产 ROM 读取该通知的前提。
+ *    + `Notification.ProgressStyle`（分段彩色 + setStyledByProgress，与 InstallerX 同款）
+ *    + 请求实况提升的 extra + `setShortCriticalText(...)`，并已在清单声明 `POST_PROMOTED_NOTIFICATIONS`。
  *  - 旧式路径（Android 16 以下，对应 LegacyNotificationBuilder）：进行中用 IMPORTANCE_LOW 渠道
- *    + `setProgress(100, percent, false)`；结束（成功 / 失败）切到 IMPORTANCE_HIGH 渠道并取消 ongoing。
+ *    + `setProgress(100, percent, false)`，并以主题色着色；结束时切到 IMPORTANCE_HIGH 渠道。
  *
+ * 进度条颜色取自 [ThemeColors]，与 Material / Miuix 界面主题同源（同一套设置与同一个推导函数）。
  * 通知 ID 固定，进度持续更新同一条通知，不会反复新建。
  */
 object UnlockNotifications {
@@ -45,6 +44,14 @@ object UnlockNotifications {
 
     /** 进度最大值，与 InstallerX 一致恒为 100。 */
     private const val PROGRESS_MAX = 100
+
+    /**
+     * 分段长度与开门阶段对齐：扫描/快速连接 0-30、连接与订阅 30-50、发送数据 50-100。
+     * ProgressStyle 的进度上限等于各分段长度之和（=100），因此可以直接传百分比。
+     */
+    private const val SEGMENT_SCAN = 30
+    private const val SEGMENT_CONNECT = 20
+    private const val SEGMENT_SEND = 50
 
     /** Android 16 起才有实况通知（对应 InstallerX 的 isModernEligible）。 */
     private fun isModernEligible(): Boolean = Build.VERSION.SDK_INT >= 36
@@ -92,14 +99,16 @@ object UnlockNotifications {
             else -> legacyProgress(context, text, percent)
         }
 
-    /** 小米超级岛：标准通知 + 岛参数，固定实况渠道，进度用经典进度字段。 */
+    /** 小米超级岛：标准通知 + 岛参数，固定实况渠道，进度用经典进度字段并以主题色着色。 */
     private fun miIslandProgress(context: Context, text: String, percent: Int?): Notification {
         val title = context.getString(R.string.unlock_open)
+        val accent = ThemeColors.accent(context)
         return NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(title)
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
+            .setColor(accent.primary)
             .setSilent(true)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
@@ -109,29 +118,36 @@ object UnlockNotifications {
     }
 
     /**
-     * Android 16+：复刻 InstallerX ModernNotificationBuilder（进度样式 + 请求实况提升）。
+     * Android 16+：复刻 InstallerX ModernNotificationBuilder。
      *
-     * 进度样式改用平台 [Notification.ProgressStyle]：androidx 的 NotificationCompat.ProgressStyle
-     * 带 @RequiresApi(36)，在本项目工具链上可以解析类但解析不到其方法。
-     * 提升请求则完全按 androidx 的实现方式，直接写入公开 extra 键（android.requestPromotedOngoing），
-     * 因此 Android 16 与 Android 17 上都会生效。
+     * 与 InstallerX 一样使用 `ProgressStyle().setProgressSegments(segments).setStyledByProgress(true)`：
+     * 分段即进度条的彩色底层（按阶段着色），进度覆盖在其上，因此呈现「深色底 + 分段彩色」的观感，
+     * 而不是一条纯白实心条。同时保留经典进度字段作为不渲染该样式时的兜底。
      */
-    @SuppressLint("NewApi")
     private fun modernProgress(context: Context, text: String, percent: Int?): Notification {
-        val progressStyle = Notification.ProgressStyle().apply {
-            setStyledByProgress(true)
-            if (percent == null) {
-                setProgressIndeterminate(true)
-            } else {
-                setProgressIndeterminate(false)
-                setProgress(percent)
+        val accent = ThemeColors.accent(context)
+        val segments = listOf(
+            Notification.ProgressStyle.Segment(SEGMENT_SCAN).setColor(accent.tertiary),
+            Notification.ProgressStyle.Segment(SEGMENT_CONNECT).setColor(accent.primary),
+            Notification.ProgressStyle.Segment(SEGMENT_SEND).setColor(accent.primary),
+        )
+        val progressStyle = Notification.ProgressStyle()
+            .setProgressSegments(segments)
+            .setStyledByProgress(true)
+            .apply {
+                if (percent == null) {
+                    setProgressIndeterminate(true)
+                } else {
+                    setProgressIndeterminate(false)
+                    setProgress(percent)
+                }
             }
-        }
         val notification = Notification.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_open))
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
+            .setColor(accent.primary)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
             .setShortCriticalText(percent?.let { "$it%" } ?: text)
@@ -143,26 +159,30 @@ object UnlockNotifications {
         return notification
     }
 
-    /** Android 16 以下：复刻 InstallerX LegacyNotificationBuilder（经典进度条）。 */
-    private fun legacyProgress(context: Context, text: String, percent: Int?): Notification =
-        NotificationCompat.Builder(context, PROGRESS_CHANNEL_ID)
+    /** Android 16 以下：复刻 InstallerX LegacyNotificationBuilder（经典进度条 + 主题色）。 */
+    private fun legacyProgress(context: Context, text: String, percent: Int?): Notification {
+        val accent = ThemeColors.accent(context)
+        return NotificationCompat.Builder(context, PROGRESS_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_open))
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
+            .setColor(accent.primary)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
             .setProgress(PROGRESS_MAX, percent ?: 0, percent == null)
             .build()
+    }
 
     /**
      * 开门结果（成功 / 带具体原因的失败）。
      *
      * 与 InstallerX 一致：结束时取消 ongoing 并切到高优先级渠道，进度条随之为结果状态让位；
-     * 小米设备附带超级岛的结果态参数（岛通知保持在同一渠道）。
+     * 小米设备附带超级岛的结果态参数（岛通知保持在同一渠道）。失败用错误色，成功用主色。
      */
     fun result(context: Context, success: Boolean, text: String): Notification {
         val title = context.getString(if (success) R.string.unlock_success else R.string.unlock_failed)
+        val accent = ThemeColors.accent(context)
         val islandSupported = MiIslandNotification.isSupported(context)
         val channelId = if (islandSupported || isModernEligible()) LIVE_CHANNEL_ID else RESULT_CHANNEL_ID
         val builder = NotificationCompat.Builder(context, channelId)
@@ -170,6 +190,7 @@ object UnlockNotifications {
             .setContentTitle(title)
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
+            .setColor(if (success) accent.primary else accent.error)
             .setAutoCancel(true)
             .setOngoing(false)
             .setOnlyAlertOnce(false)

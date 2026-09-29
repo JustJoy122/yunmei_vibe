@@ -90,7 +90,7 @@ class UnlockService : Service() {
         // 兜底超时：底层回调偶发不返回时也要给出结果并退出前台服务。
         val timeoutJob = scope.launch {
             delay(UNLOCK_TIMEOUT_MS)
-            finishWithFailure(getString(R.string.unlock_shortcut_timeout))
+            finishWithFailure(getString(R.string.unlock_timeout))
         }
 
         container.unlockManager.openDoor(lock, quickConnect, object : UnlockManager.Listener {

@@ -148,13 +148,14 @@ class HomeViewModel : ViewModel() {
             }
 
             override fun onFailure(message: String) {
-                _uiState.update { it.copy(isOpening = false, statusText = message) }
+                // 失败时一并把进度归零，避免进度条停留在中途百分比。
+                _uiState.update { it.copy(isOpening = false, progress = 0, statusText = message) }
             }
         })
     }
 
     fun openDoorDenied() {
-        _uiState.update { it.copy(isOpening = false, statusText = str(R.string.unlock_permission_denied)) }
+        _uiState.update { it.copy(isOpening = false, progress = 0, statusText = str(R.string.unlock_permission_denied)) }
     }
 
     fun setAutoConnect(value: Boolean) = setSetting { container.appPreferences.setAutoConnect(value) }

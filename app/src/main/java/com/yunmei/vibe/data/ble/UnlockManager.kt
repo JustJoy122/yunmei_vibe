@@ -4,6 +4,8 @@ import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothGatt
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.clj.fastble.BleManager
 import com.clj.fastble.callback.BleGattCallback
 import com.clj.fastble.callback.BleNotifyCallback
@@ -49,10 +51,79 @@ class UnlockManager(context: Context) {
     /** 可选回调：扫描模式开门成功后，把学到的真实 MAC 写回门锁（与原项目行为一致）。 */
     var onMacDiscovered: ((Lock, String) -> Unit)? = null
 
-    // 冷启动不再由 Application init FastBle：改为首次访问 bleManager（开门/扫描）时才初始化。
-    private val bleManager: BleManager by lazy { BleManager.getInstance().apply { init(appContext as Application) } }
+    // 冷启动不初始化 FastBle；首次访问时初始化，并显式设置连接与读写超时（不依赖库默认值）。
+    private val bleManager: BleManager by lazy {
+        BleManager.getInstance().apply {
+            init(appContext as Application)
+            setConnectOverTime(CONNECT_TIMEOUT_MS)
+            setOperateTimeout(OPERATE_TIMEOUT_MS.toInt())
+        }
+    }
     private var connectedDevice: BleDevice? = null
     private var scanMode = false
+
+    // ── 看门狗 ───────────────────────────────────────────────────────────────
+    // 卡在某个百分比（最常见是 20%）的本质是「该阶段之后再也没有回调」：蓝牙连接回调丢失、
+    // GATT 静默失败、系统回收、ROM 限制扫描等都会造成这种结果。这里在每个阶段的起点重新计时，
+    // 超过 STALL_TIMEOUT_MS 没有新的进度或结果，就主动结束流程并回调失败。
+    private val handler = Handler(Looper.getMainLooper())
+    private var watchdog: Runnable? = null
+    private var completed = false
+    private var activeGuarded: GuardedListener? = null
+
+    /** 内部包装：统一处理「流程已结束后忽略迟到回调」与「每个阶段重新计时」。 */
+    private inner class GuardedListener(val delegate: Listener) : Listener {
+        override fun onProgress(percent: Int, message: String) {
+            if (completed) return
+            armWatchdog()
+            delegate.onProgress(percent, message)
+        }
+
+        override fun onBattery(percent: Int) {
+            if (completed) return
+            delegate.onBattery(percent)
+        }
+
+        override fun onSuccess() {
+            if (completed) return
+            completed = true
+            cancelWatchdog()
+            releaseBle()
+            delegate.onSuccess()
+        }
+
+        override fun onFailure(message: String) {
+            if (completed) return
+            completed = true
+            cancelWatchdog()
+            releaseBle()
+            delegate.onFailure(message)
+        }
+    }
+
+    private fun armWatchdog() {
+        cancelWatchdog()
+        val guarded = activeGuarded ?: return
+        val task = Runnable {
+            if (completed) return@Runnable
+            // 通过 GuardedListener 收口：置位完成标志、清理 BLE、再回调业务失败。
+            guarded.onFailure(appContext.getString(R.string.unlock_timeout))
+        }
+        watchdog = task
+        handler.postDelayed(task, STALL_TIMEOUT_MS)
+    }
+
+    private fun cancelWatchdog() {
+        watchdog?.let { handler.removeCallbacks(it) }
+        watchdog = null
+    }
+
+    /** 结束流程时停掉扫描并断开连接，避免残留 GATT 影响下一次开门。 */
+    private fun releaseBle() {
+        runCatching { bleManager.cancelScan() }
+        connectedDevice?.let { device -> runCatching { bleManager.disconnect(device) } }
+        connectedDevice = null
+    }
 
     fun openDoor(lock: Lock, quickConnect: Boolean, listener: Listener) {
         if (!lock.isUsable) {
@@ -70,12 +141,18 @@ class UnlockManager(context: Context) {
             return
         }
 
+        completed = false
+        val guarded = GuardedListener(listener)
+        activeGuarded = guarded
+        // 起点即计时：即使第一个回调就丢，也不会永久停在 20%。
+        armWatchdog()
+
         if (lock.mac.isNotBlank() && quickConnect) {
-            listener.onProgress(UnlockProgress.START, appContext.getString(R.string.unlock_progress_quick_connect))
-            connect(lock, lock.mac, listener)
+            guarded.onProgress(UnlockProgress.START, appContext.getString(R.string.unlock_progress_quick_connect))
+            connect(lock, lock.mac, guarded)
         } else {
-            listener.onProgress(UnlockProgress.START, appContext.getString(R.string.unlock_progress_scan_start))
-            scanAndConnect(lock, listener)
+            guarded.onProgress(UnlockProgress.START, appContext.getString(R.string.unlock_progress_scan_start))
+            scanAndConnect(lock, guarded)
         }
     }
 
@@ -99,7 +176,10 @@ class UnlockManager(context: Context) {
                 device: BleDevice,
                 gatt: BluetoothGatt,
                 status: Int,
-            ) = Unit
+            ) {
+                // 原实现是空实现：一旦连接中途断开且没有后续回调，流程就会永久卡住。
+                listener.onFailure(appContext.getString(R.string.unlock_disconnected))
+            }
         })
     }
 
@@ -113,6 +193,8 @@ class UnlockManager(context: Context) {
         bleManager.initScanRule(
             BleScanRuleConfig.Builder()
                 .setServiceUuids(arrayOf(serviceUuid))
+                // 显式声明扫描超时（FastBle 默认同为 10s），避免依赖默认值导致扫描不结束。
+                .setScanTimeOut(SCAN_TIMEOUT_MS)
                 .build()
         )
         bleManager.scanAndConnect(object : BleScanAndConnectCallback() {
@@ -149,7 +231,9 @@ class UnlockManager(context: Context) {
                 device: BleDevice,
                 gatt: BluetoothGatt,
                 status: Int,
-            ) = Unit
+            ) {
+                listener.onFailure(appContext.getString(R.string.unlock_disconnected))
+            }
         })
     }
 
@@ -238,5 +322,19 @@ class UnlockManager(context: Context) {
     private fun parseAsciiInt(data: ByteArray, offset: Int): Int {
         if (offset + 2 > data.size) return -1
         return String(data, offset, 2, Charsets.US_ASCII).toIntOrNull() ?: -1
+    }
+
+    private companion object {
+        /** 某阶段超过该时间没有任何回调即判定失败：扫描本身 10s，这里留足余量。 */
+        const val STALL_TIMEOUT_MS = 15_000L
+
+        /** 扫描超时（FastBle 默认同为 10s，显式声明避免依赖默认值）。 */
+        const val SCAN_TIMEOUT_MS = 10_000L
+
+        /** 连接超时（FastBle setConnectOverTime）。 */
+        const val CONNECT_TIMEOUT_MS = 15_000L
+
+        /** 读写/订阅操作超时（FastBle setOperateTimeout）。 */
+        const val OPERATE_TIMEOUT_MS = 10_000L
     }
 }

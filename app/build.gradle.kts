@@ -158,7 +158,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
 
-    // 网络层：登录/学校/门锁/打卡/开锁密码接口。
+    // 网络层：登录/学校/门锁/打卡/开门密码接口。
     implementation(libs.retrofit)
     implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.okhttp)

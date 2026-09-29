@@ -141,7 +141,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         response.lockPwd ?: throw YunMeiException(response.msg ?: appContext.getString(R.string.unlock_code_failed))
     }
 
-    /** 用已保存账号重新登录后获取开锁密码（供主界面长期使用）。 */
+    /** 用已保存账号重新登录后获取开门密码（供主界面长期使用）。 */
     suspend fun getLockPassword(user: StoredUser, lock: Lock): String {
         login(user.username, user.passwordMd5)
         val school = findSchool(lock.schoolNo)

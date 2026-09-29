@@ -66,7 +66,7 @@
     <string name="unlock_quick_connect">快速连接</string>
     <string name="unlock_quick_connect_summary">已知门锁号时跳过扫描，直接连接</string>
     <string name="unlock_get_code">获取开门密码</string>
-    <string name="unlock_code_hint">点击获取，用于门锁键盘开锁</string>
+    <string name="unlock_code_hint">点击获取，用于门锁键盘开门</string>
     <string name="unlock_sign">打卡</string>
     <string name="unlock_sign_success">打卡成功</string>
     <string name="unlock_sign_failed">打卡失败</string>
@@ -87,7 +87,7 @@
     <string name="unlock_bt_unsupported">设备不支持蓝牙</string>
     <string name="unlock_auto_exit">开门成功，程序即将退出</string>
     <string name="unlock_lock_unusable">当前门锁不可用，请重新登录或选择其他门锁</string>
-    <string name="unlock_code_failed">获取开锁密码失败</string>
+    <string name="unlock_code_failed">获取开门密码失败</string>
     <string name="unlock_preparing">正在准备</string>
     <string name="unlock_permission_denied">您拒绝了权限请求</string>
     <string name="unlock_sign_last_missing">上次定位信息不存在，请重新定位</string>
@@ -104,7 +104,7 @@
     <string name="unlock_error_connect">连接失败</string>
     <string name="unlock_error_subscribe">订阅通知失败</string>
     <!-- 「开门」快捷方式与通知 -->
-    <string name="shortcut_unlock_short">开锁</string>
+    <string name="shortcut_unlock_short">开门</string>
     <string name="shortcut_unlock_long">一键开门（默认门锁）</string>
     <string name="shortcut_unlock_disabled">未设置默认门锁</string>
     <string name="unlock_live_channel_name">开门（实况）</string>

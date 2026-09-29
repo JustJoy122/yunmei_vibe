@@ -70,7 +70,8 @@ object UnlockShortcut {
         return ShortcutInfoCompat.Builder(context, ID)
             .setShortLabel(context.getString(R.string.shortcut_unlock_short))
             .setLongLabel(context.getString(R.string.shortcut_unlock_long))
-            .setIcon(IconCompat.createWithResource(context, R.mipmap.ic_launcher))
+            // 图标取自 Miuix 图标库的 Unlock（单色剪影，见 drawable/ic_shortcut_unlock.xml）。
+            .setIcon(IconCompat.createWithResource(context, R.drawable.ic_shortcut_unlock))
             .setIntent(intent)
             .setRank(1)
             .build()

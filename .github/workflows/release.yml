@@ -84,6 +84,15 @@ jobs:
           if [ ! -s "$RUNNER_TEMP/release_notes.md" ]; then
             echo "本次发布未在 CHANGELOG.md 中找到 [$VERSION] 条目，请补充。" > "$RUNNER_TEMP/release_notes.md"
           fi
+          # 在说明内容前加入北京时间（GMT+8）的发布时间
+          RELEASE_TIME=$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')
+          {
+            echo "发布时间：$RELEASE_TIME（GMT+8）"
+            echo
+            cat "$RUNNER_TEMP/release_notes.md"
+          } > "$RUNNER_TEMP/release_notes.final.md"
+          mv "$RUNNER_TEMP/release_notes.final.md" "$RUNNER_TEMP/release_notes.md"
+
           echo "--- release notes ---"
           cat "$RUNNER_TEMP/release_notes.md"
 

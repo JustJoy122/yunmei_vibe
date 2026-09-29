@@ -66,7 +66,8 @@ jobs:
         run: |
           VERSION_NAME=$(sed -n 's/.*versionName *= *"\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)
           VERSION_CODE=$(sed -n 's/.*versionCode *= *\([0-9]*\).*/\1/p' app/build.gradle.kts | head -n 1)
-          DATE_STAMP=$(date -u +%Y%m%d)
+          # tag / 产物名里的日期段按北京时间生成，避免凌晨 08:00 前触发时落到前一天
+          DATE_STAMP=$(TZ='Asia/Shanghai' date +%Y%m%d)
           {
             echo "name=$VERSION_NAME"
             echo "code=$VERSION_CODE"
@@ -142,6 +143,9 @@ jobs:
           fi
           echo "compare base: ${PREV_CI:-<none>}"
 
+          # 构建时间按北京时间（GMT+8）生成
+          BUILD_TIME=$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')
+
           {
             echo "Debug 自动构建（CI 更新渠道）"
             echo
@@ -149,6 +153,7 @@ jobs:
             echo "- CI 构建号：$BUILD_STAMP"
             echo "- 提交：$GITHUB_SHA"
             echo "- 运行：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "- 构建时间：$BUILD_TIME（GMT+8）"
             if [ -n "$PREV_CI" ]; then
               echo
               echo "**Full changelog**: [$PREV_CI...$TAG]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/$PREV_CI...$TAG)"

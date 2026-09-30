@@ -3,6 +3,11 @@ package com.yunmei.vibe.ui.screen.home
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -96,6 +101,25 @@ fun HomePager(
         onGranted = { viewModel.sign() },
         onDenied = { viewModel.signLocationDenied() },
     )
+    // 开门前若蓝牙未开启，用系统对话框请求开启（同意后继续开门，拒绝则提示失败）。
+    val bluetoothEnableLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.onBluetoothEnableResult(result.resultCode == Activity.RESULT_OK)
+    }
+    LaunchedEffect(uiState.pendingBluetoothEnable) {
+        if (uiState.pendingBluetoothEnable) {
+            viewModel.onBluetoothEnableRequested()
+            val launched = runCatching {
+                bluetoothEnableLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            }.isSuccess
+            if (!launched) {
+                // 拉不起系统对话框时按失败处理，避免一直卡在"准备中"。
+                Toast.makeText(context, R.string.unlock_bluetooth_disabled, Toast.LENGTH_LONG).show()
+                viewModel.onBluetoothEnableResult(false)
+            }
+        }
+    }
 
     // 「自动开门」+「开门后自动退出」同时开启：三重危险确认（原项目行为，随开关迁至首页）。
     val dangerTitle1 = stringResource(R.string.settings_danger_title)

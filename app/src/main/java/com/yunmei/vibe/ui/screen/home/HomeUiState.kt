@@ -19,6 +19,8 @@ data class HomeUiState(
     val statusText: String = "",
     val battery: Int? = null,
     val isOpening: Boolean = false,
+    /** 需要先请求用户开启蓝牙（由 UI 层拉起系统对话框，同意后继续开门）。 */
+    val pendingBluetoothEnable: Boolean = false,
     // 获取密码
     val code: String? = null,
     val codeLoading: Boolean = false,

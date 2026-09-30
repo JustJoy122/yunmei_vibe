@@ -213,6 +213,101 @@ object UnlockNotifications {
     }
 
     /** 用固定 ID 更新同一条通知；通知被系统关闭时静默跳过。 */
+    /**
+     * 蓝牙未开启 / 用户拒绝开启时的失败通知。
+     *
+     * 与开门失败的处理方式一致：Android 16+ 保留实况样式与进度条（分段 30/20/50），
+     * 把扫描分段标成 error 色（蓝牙没开，流程停在扫描阶段之前），
+     * 低版本用经典进度条 + error 色；通知可划走，动作最多 2 个。
+     */
+    fun bluetoothFailure(
+        context: Context,
+        text: String,
+        actions: List<Notification.Action> = emptyList(),
+    ): Notification {
+        val accent = ThemeColors.accent(context)
+        val percent = SEGMENT_SCAN
+        if (isModernEligible()) {
+            val style = Notification.ProgressStyle()
+                .setProgressSegments(
+                    listOf(
+                        Notification.ProgressStyle.Segment(SEGMENT_SCAN).setColor(accent.error),
+                        Notification.ProgressStyle.Segment(SEGMENT_CONNECT).setColor(accent.tertiary),
+                        Notification.ProgressStyle.Segment(SEGMENT_SEND).setColor(accent.primary),
+                    )
+                )
+                .setStyledByProgress(true)
+                .apply {
+                    setProgressIndeterminate(false)
+                    setProgress(percent)
+                }
+            val builder = Notification.Builder(context, LIVE_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification_unlock)
+                .setContentTitle(context.getString(R.string.unlock_failed))
+                .setContentText(text)
+                .setContentIntent(openAppIntent(context))
+                .setColor(accent.error)
+                .setOngoing(false)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(false)
+                .setStyle(style)
+            for (action in actions) builder.addAction(action)
+            return builder.build()
+        }
+        val builder = NotificationCompat.Builder(context, RESULT_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification_unlock)
+            .setContentTitle(context.getString(R.string.unlock_failed))
+            .setContentText(text)
+            .setContentIntent(openAppIntent(context))
+            .setColor(accent.error)
+            .setOngoing(false)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(false)
+            .setSilent(false)
+            .setProgress(PROGRESS_MAX, percent, false)
+        for (action in actions) builder.addAction(0, action.title, action.actionIntent)
+        return builder.build()
+    }
+
+    /** 「重试」：通知按钮直接后台重跑开门（前台服务动作，不受后台启动限制）。 */
+    fun retryAction(context: Context): Notification.Action = Notification.Action.Builder(
+        null,
+        context.getString(R.string.unlock_retry),
+        PendingIntent.getForegroundService(
+            context,
+            10,
+            Intent(context, UnlockService::class.java).setAction(UnlockService.ACTION_RETRY),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        ),
+    ).build()
+
+    /** 「完成」：收起通知并结束服务。 */
+    fun finishAction(context: Context): Notification.Action = Notification.Action.Builder(
+        null,
+        context.getString(R.string.unlock_finish),
+        PendingIntent.getForegroundService(
+            context,
+            11,
+            Intent(context, UnlockService::class.java).setAction(UnlockService.ACTION_FINISH),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        ),
+    ).build()
+
+    /** 「开启蓝牙」：用 PendingIntent.getActivity 打开跳板 Activity 发起系统请求（用户点击触发，可靠）。 */
+    fun enableBluetoothAction(context: Context): Notification.Action = Notification.Action.Builder(
+        null,
+        context.getString(R.string.unlock_bluetooth_enable),
+        PendingIntent.getActivity(
+            context,
+            12,
+            Intent(context, UnlockShortcutActivity::class.java)
+                .setAction(UnlockShortcut.ACTION)
+                .putExtra(UnlockShortcut.EXTRA_TOKEN, UnlockShortcut.token(context))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        ),
+    ).build()
+
     fun post(context: Context, notification: Notification) {
         val manager = NotificationManagerCompat.from(context)
         if (!manager.areNotificationsEnabled()) return

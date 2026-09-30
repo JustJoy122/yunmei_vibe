@@ -261,4 +261,24 @@
     <string name="scan_camera">相机扫描</string>
     <string name="scan_gallery">相册选择</string>
     <string name="scan_image_unreadable">无法读取所选图片</string>
+    <string name="sign_live_channel_name">打卡实况</string>
+    <string name="sign_live_channel_desc">打卡进行中的实况/进度通知</string>
+    <string name="sign_progress_channel_name">打卡进度</string>
+    <string name="sign_progress_channel_desc">低优先级打卡进度通知（旧版 Android）</string>
+    <string name="sign_result_channel_name">打卡结果</string>
+    <string name="sign_result_channel_desc">打卡成功或失败的结果通知</string>
+    <string name="sign_choose_location">选择定位方式</string>
+    <string name="sign_locating">正在获取定位…</string>
+    <string name="sign_signaling">正在打卡…</string>
+    <string name="sign_preparing">正在准备打卡…</string>
+    <string name="sign_timeout">等待选择定位方式超时，请重试</string>
+    <string name="sign_permission_needed">需要通知与定位权限才能后台打卡</string>
+    <string name="sign_open_location_settings">去开启定位</string>
+    <string name="shortcut_sign_short">打卡</string>
+    <string name="shortcut_sign_long">一键打卡（默认门锁）</string>
+    <string name="sign_retry">重试</string>
+    <string name="sign_finish">完成</string>
+    <string name="unlock_retry">重试</string>
+    <string name="unlock_finish">完成</string>
+    <string name="unlock_bluetooth_enable">开启蓝牙</string>
 </resources>

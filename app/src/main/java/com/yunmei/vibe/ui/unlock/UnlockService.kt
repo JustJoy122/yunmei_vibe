@@ -35,6 +35,16 @@ class UnlockService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         UnlockNotifications.ensureChannel(this)
+
+        if (intent?.action == ACTION_FINISH) {
+            dismissAndStop()
+            return START_NOT_STICKY
+        }
+        if (intent?.getBooleanExtra(EXTRA_BT_DENIED, false) == true) {
+            // 用户在系统对话框里拒绝了开启蓝牙：保留实况通知与进度条，动作是重试/完成。
+            postBluetoothFailure(offerEnable = false)
+            return START_NOT_STICKY
+        }
         // 前台服务必须在 5 秒内 startForeground；同时兜住权限在启动瞬间被撤销等极端情况，
         // 失败时退回普通通知并结束自己，避免整个进程因未调用 startForeground 而崩溃。
         val foregroundStarted = runCatching {
@@ -70,6 +80,11 @@ class UnlockService : Service() {
 
     private suspend fun runUnlock() {
         val container = YunMeiApp.app.container
+        // 蓝牙未开启（含「重试」时仍关着的情况）：不要闷头失败，给出「开启蓝牙」入口。
+        if (!isBluetoothEnabled()) {
+            postBluetoothFailure(offerEnable = true)
+            return
+        }
         val lock = withContext(Dispatchers.IO) { container.lockStore.getDefault() }
         if (lock == null) {
             finishWithFailure(getString(R.string.unlock_shortcut_no_default))
@@ -137,6 +152,48 @@ class UnlockService : Service() {
         stopSelfSafely()
     }
 
+    /** 蓝牙相关的失败通知：offerEnable=true 时给「开启蓝牙」，否则给「重试」（用户刚拒绝过，不再反复弹）。 */
+    private fun postBluetoothFailure(offerEnable: Boolean) {
+        if (!finished.compareAndSet(false, true)) return
+        val actions = if (offerEnable) {
+            listOf(
+                UnlockNotifications.enableBluetoothAction(this),
+                UnlockNotifications.finishAction(this),
+            )
+        } else {
+            listOf(
+                UnlockNotifications.retryAction(this),
+                UnlockNotifications.finishAction(this),
+            )
+        }
+        val notification = UnlockNotifications.bluetoothFailure(
+            this,
+            getString(R.string.unlock_bluetooth_disabled),
+            actions,
+        )
+        // 该分支由 startForegroundService 拉活，必须先成为前台服务（5 秒规则）；
+        // 直接以失败通知充当前台通知，随后 detach，保证通知留在通知栏。
+        runCatching { startForeground(UnlockNotifications.NOTIFICATION_ID, notification) }
+            .onFailure { UnlockNotifications.post(this, notification) }
+        stopForeground(STOP_FOREGROUND_DETACH)
+        stopSelf()
+    }
+
+    /** 「完成」：用占位通知顶替同 ID 的通知后立即移除，并按规则先完成 startForeground。 */
+    private fun dismissAndStop() {
+        val placeholder = android.app.Notification.Builder(this, UnlockNotifications.PROGRESS_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification_unlock)
+            .setContentTitle(getString(R.string.unlock_preparing))
+            .build()
+        runCatching { startForeground(UnlockNotifications.NOTIFICATION_ID, placeholder) }
+        runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
+        stopSelf()
+    }
+
+    private fun isBluetoothEnabled(): Boolean =
+        runCatching { android.bluetooth.BluetoothAdapter.getDefaultAdapter()?.isEnabled == true }
+            .getOrDefault(false)
+
     private fun stopSelfSafely() {
         // 结果通知保留在通知栏，只撤掉前台服务身份。
         stopForeground(STOP_FOREGROUND_DETACH)
@@ -147,8 +204,17 @@ class UnlockService : Service() {
         ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
     }
 
-    private companion object {
-        const val TAG = "UnlockService"
-        const val UNLOCK_TIMEOUT_MS = 45_000L
+    companion object {
+        private const val TAG = "UnlockService"
+        private const val UNLOCK_TIMEOUT_MS = 45_000L
+
+        /** 失败通知的「重试」：重跑一次开门。 */
+        const val ACTION_RETRY = "com.yunmei.vibe.action.UNLOCK_RETRY"
+
+        /** 失败通知的「完成」：收起通知并结束服务。 */
+        const val ACTION_FINISH = "com.yunmei.vibe.action.UNLOCK_FINISH"
+
+        /** 用户拒绝开启蓝牙：只发失败通知，不执行开门。 */
+        const val EXTRA_BT_DENIED = "unlock_bt_denied"
     }
 }

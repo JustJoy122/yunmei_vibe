@@ -8,6 +8,7 @@ import android.util.Log
 import com.yunmei.vibe.core.di.AppContainer
 import com.yunmei.vibe.data.preferences.SettingsPrefs
 import com.yunmei.vibe.ui.unlock.UnlockNotifications
+import com.yunmei.vibe.ui.sign.SignShortcut
 import com.yunmei.vibe.ui.unlock.UnlockShortcut
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +58,7 @@ class YunMeiApp : Application() {
         }
         withContext(Dispatchers.Main) {
             UnlockShortcut.sync(this@YunMeiApp, hasDefault)
+            SignShortcut.sync(this@YunMeiApp, hasDefault)
         }
     }
 

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
+import android.bluetooth.BluetoothAdapter
 import com.yunmei.vibe.data.ble.UnlockManager
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.Lock
@@ -130,6 +131,18 @@ class HomeViewModel : ViewModel() {
             _uiState.update { it.copy(statusText = str(R.string.unlock_lock_unusable)) }
             return
         }
+        // 蓝牙未开启时先请系统对话框开启，不直接失败（由 UI 层拉起对话框，同意后回到 onBluetoothEnableResult）。
+        if (!isBluetoothEnabled()) {
+            _uiState.update {
+                it.copy(
+                    isOpening = false,
+                    progress = 0,
+                    statusText = str(R.string.unlock_bluetooth_off),
+                    pendingBluetoothEnable = true,
+                )
+            }
+            return
+        }
         _uiState.update { it.copy(isOpening = true, progress = 0, battery = null, statusText = str(R.string.unlock_preparing)) }
         container.unlockManager.openDoor(lock, _uiState.value.quickConnect, object : UnlockManager.Listener {
             override fun onProgress(percent: Int, message: String) {
@@ -153,6 +166,29 @@ class HomeViewModel : ViewModel() {
             }
         })
     }
+
+    /** UI 层已拉起系统蓝牙对话框，清掉一次性标志，避免重组时重复弹出。 */
+    fun onBluetoothEnableRequested() {
+        _uiState.update { it.copy(pendingBluetoothEnable = false) }
+    }
+
+    /** 系统蓝牙对话框结果：同意则继续开门，拒绝则提示失败（与权限拒绝一致，不打扰通知栏）。 */
+    fun onBluetoothEnableResult(enabled: Boolean) {
+        if (enabled) {
+            doOpenDoor()
+        } else {
+            _uiState.update {
+                it.copy(
+                    isOpening = false,
+                    progress = 0,
+                    statusText = str(R.string.unlock_bluetooth_disabled),
+                )
+            }
+        }
+    }
+
+    private fun isBluetoothEnabled(): Boolean =
+        runCatching { BluetoothAdapter.getDefaultAdapter()?.isEnabled == true }.getOrDefault(false)
 
     fun openDoorDenied() {
         _uiState.update { it.copy(isOpening = false, progress = 0, statusText = str(R.string.unlock_permission_denied)) }

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  「打卡」快捷方式图标：主 Logo 配色 + 打卡（WhereToVote，与 App 内打卡同一图标）主体。
+
+  结构与 App 主 Logo 一致：底色取自 ic_launcher_background（#D4E3FF 浅蓝），
+  主体颜色取自 ic_launcher_foreground（#004784 品牌深蓝），外层为圆角矩形（圆角 24 / 108 画布）。
+  主体图形取自 Material Icons 的 Icons.Rounded.WhereToVote（androidx.compose.material:material-icons-extended，
+  Apache-2.0），仅把 Compose 的 path 指令逐条转换为 Android 矢量 pathData，形状未做改动；
+  缩放 2.625 并居中（约占画布 58%）。
+
+  说明：捷径图标由启动器绘制、无法跟随应用主题，因此这里用固定品牌色，浅色与深色模式下都清晰；
+  不再依赖主题反色（原先的 light/dark 两套单色剪影已移除）。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFD4E3FF"
+        android:pathData="M30,6 H78 A24,24 0 0 1 102,30 V78 A24,24 0 0 1 78,102 H30 A24,24 0 0 1 6,78 V30 A24,24 0 0 1 30,6 Z" />
+    <group
+        android:scaleX="2.625"
+        android:scaleY="2.625"
+        android:translateX="22.5"
+        android:translateY="22.5">
+        <path
+            android:fillColor="#FF004784"
+            android:pathData="M12.0,2.0 c-4.2,0.0,-8.0,3.22,-8.0,8.2 c0.0,3.18,2.45,6.92,7.34,11.23 c0.38,0.33,0.95,0.33,1.33,0.0 C17.55,17.12,20.0,13.38,20.0,10.2 C20.0,5.22,16.2,2.0,12.0,2.0 Z M10.23,12.66 l-1.41,-1.41 c-0.39,-0.39,-0.39,-1.02,0.0,-1.41 l0.0,0.0 c0.39,-0.39,1.02,-0.39,1.41,0.0 l0.71,0.71 l2.83,-2.83 c0.39,-0.39,1.02,-0.39,1.41,0.0 l0.0,0.0 c0.39,0.39,0.39,1.02,0.0,1.41 l-3.54,3.54 C11.26,13.05,10.62,13.05,10.23,12.66 Z" />
+    </group>
+</vector>

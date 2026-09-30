@@ -3,6 +3,7 @@ package com.yunmei.vibe
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.pm.ApplicationInfo
+import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
 import com.yunmei.vibe.core.di.AppContainer
@@ -28,6 +29,9 @@ class YunMeiApp : Application() {
     /** 应用级协程作用域：订阅门锁数据变化，同步「开门」快捷方式的可用性。 */
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    /** 上次同步快捷方式时的系统深色模式，避免配置变化时做无谓的重复推送。 */
+    private var lastNightMode: Boolean? = null
+
     override fun onCreate() {
         super.onCreate()
         installCrashHandler()
@@ -38,20 +42,42 @@ class YunMeiApp : Application() {
         // 「开门」快捷方式：通知渠道只建一次；可用性随默认门锁变化。
         // LockStore.revision 是 StateFlow，订阅时会先收到当前值，因此启动即完成一次同步。
         UnlockNotifications.ensureChannel(this)
+        lastNightMode = UnlockShortcut.isNightMode(this)
         appScope.launch {
             container.lockStore.revision.collect {
-                val hasDefault = withContext(Dispatchers.IO) {
-                    container.lockStore.getDefault() != null
-                }
-                withContext(Dispatchers.Main) {
-                    UnlockShortcut.sync(this@YunMeiApp, hasDefault)
-                }
+                refreshUnlockShortcut()
             }
         }
         // 预测性返回手势：按保存的偏好初始化（与模板 TemplateApplication 一致）。
         // 键名统一走 SettingsPrefs，避免此处与设置页各自手写字符串。
         if (SettingsPrefs.of(this).getBoolean(SettingsPrefs.ENABLE_PREDICTIVE_BACK, false)) {
             enableOnBackInvokedCallback(true)
+        }
+    }
+
+    /**
+     * 系统深浅色切换时刷新快捷方式图标。
+     *
+     * 快捷方式图标是静态资源（由启动器绘制），不会随主题自动反色，因此需要在 uiMode 变化后
+     * 重新推送一次快捷方式；只有深色模式确实改变时才推送，避免无意义的重复调用。
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (!::container.isInitialized) return
+        val night = UnlockShortcut.isNightMode(this)
+        if (night != lastNightMode) {
+            lastNightMode = night
+            appScope.launch { refreshUnlockShortcut() }
+        }
+    }
+
+    /** 读取默认门锁状态并同步「开门」快捷方式（图标按当前深色模式选择）。 */
+    private suspend fun refreshUnlockShortcut() {
+        val hasDefault = withContext(Dispatchers.IO) {
+            container.lockStore.getDefault() != null
+        }
+        withContext(Dispatchers.Main) {
+            UnlockShortcut.sync(this@YunMeiApp, hasDefault)
         }
     }
 

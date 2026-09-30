@@ -27,6 +27,15 @@ import com.yunmei.vibe.ui.theme.ThemeColors
  *
  * 进度条颜色取自 [ThemeColors]，与 Material / Miuix 界面主题同源（同一套设置与同一个推导函数）。
  * 通知 ID 固定，进度持续更新同一条通知，不会反复新建。
+ *
+ * 关于通知小图标与 ColorOS：
+ *  - 三条路径（超级岛 / 实况 / 旧式）以及结果通知统一使用 R.drawable.ic_notification_unlock：
+ *    24dp 矢量、透明背景、纯白单色剪影，仅 alpha 通道有效（颜色由系统决定），
+ *    任何位置都不使用彩色 App 图标或带底色的图标。
+ *  - 遵循 Android 规范的系统（原生 Android 与其他 ROM）会据此渲染单色剪影，并随深浅色自动反色。
+ *  - ColorOS 15 及以上可能在通知初始化时把小图标强制替换为彩色 App 图标：这是系统级行为，
+ *    App 层无法绕过（本项目也不会为此做系统级 Hook、不引入 LSPosed 等模块）。
+ *    因此在 ColorOS 上看到彩色 App 图标属该系统行为，并不代表本 App 未设置单色小图标。
  */
 object UnlockNotifications {
 

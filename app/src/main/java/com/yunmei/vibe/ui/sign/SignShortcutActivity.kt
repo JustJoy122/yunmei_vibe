@@ -11,7 +11,6 @@ import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.lifecycle.lifecycleScope
-import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.ui.util.LOCATION_PERMISSIONS

@@ -62,7 +62,7 @@ class UnlockService : Service() {
         // 失败时退回普通通知并结束自己，避免整个进程因未调用 startForeground 而崩溃。
         val foregroundStarted = runCatching {
             startForeground(
-                UnlockNotifications.NOTIFICATION_ID,
+                UnlockNotifications.UNLOCK_NOTIFICATION_ID,
                 UnlockNotifications.progress(
                     this,
                     getString(R.string.unlock_notification_preparing),
@@ -173,7 +173,7 @@ class UnlockService : Service() {
         )
         // 失败时继续以这个通知作为前台服务通知（不 detach、不 stopSelf）：实况/流体云的"提升"依赖
         // 应用仍处于前台服务状态，一旦立刻停服，系统会把通知降级成普通通知。
-        runCatching { startForeground(UnlockNotifications.NOTIFICATION_ID, notification) }
+        runCatching { startForeground(UnlockNotifications.UNLOCK_NOTIFICATION_ID, notification) }
             .onFailure { UnlockNotifications.post(this, notification) }
         armFailureTimeout()
     }
@@ -185,7 +185,7 @@ class UnlockService : Service() {
             delay(FAILURE_KEEP_MS)
             runCatching {
                 NotificationManagerCompat.from(this@UnlockService)
-                    .cancel(UnlockNotifications.NOTIFICATION_ID)
+                    .cancel(UnlockNotifications.UNLOCK_NOTIFICATION_ID)
             }
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
@@ -207,7 +207,7 @@ class UnlockService : Service() {
         )
         // 该分支由 startForegroundService 拉活，必须先成为前台服务（5 秒规则）；
         // 直接以失败通知充当前台通知，随后 detach，保证通知留在通知栏。
-        runCatching { startForeground(UnlockNotifications.NOTIFICATION_ID, notification) }
+        runCatching { startForeground(UnlockNotifications.UNLOCK_NOTIFICATION_ID, notification) }
             .onFailure { UnlockNotifications.post(this, notification) }
         stopForeground(STOP_FOREGROUND_DETACH)
         stopSelf()
@@ -219,7 +219,7 @@ class UnlockService : Service() {
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(getString(R.string.unlock_preparing))
             .build()
-        runCatching { startForeground(UnlockNotifications.NOTIFICATION_ID, placeholder) }
+        runCatching { startForeground(UnlockNotifications.UNLOCK_NOTIFICATION_ID, placeholder) }
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
         stopSelf()
     }

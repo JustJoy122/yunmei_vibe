@@ -270,7 +270,6 @@
     <string name="sign_choose_location">选择定位方式</string>
     <string name="sign_locating">正在获取定位…</string>
     <string name="sign_signaling">正在打卡…</string>
-    <string name="sign_preparing">正在准备打卡…</string>
     <string name="sign_timeout">等待选择定位方式超时，请重试</string>
     <string name="sign_permission_needed">需要通知与定位权限才能后台打卡</string>
     <string name="sign_open_location_settings">去开启定位</string>

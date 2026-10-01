@@ -40,10 +40,10 @@ import com.yunmei.vibe.ui.theme.ThemeController
 /**
  * 打卡的轻量定位方式弹窗（每次询问模式的「选择定位方式」动作打开的就是这里）。
  *
- * 设计对齐 InstallerX 的中间状态交互：多选一交给弹窗承载，弹窗由
- * `PendingIntent.getActivity` 打开（Android 10+ 只认这种用户主动触发的启动方式），
- * 不打开主界面——本 Activity 使用透明主题，界面上只有一个对话框，
- * 复用项目自带的 Material `AlertDialog` + `SegmentedColumn` 与 Miuix `ActionMenuDialog`。
+ * 需要用户多选一时的交互：由通知动作/通知点击产生的 `PendingIntent.getActivity` 打开本页
+ * （用户主动触发，不受 Android 10+ 后台启动 Activity 限制），不打开主界面——
+ * 本 Activity 使用对话框主题，界面上只有一个对话框，复用项目自带的
+ * Material `AlertDialog` + `SegmentedColumn` 与 Miuix `ActionMenuDialog`。
  *
  * 选中需要新定位的选项而系统定位未开启时，先拉起系统定位设置页；
  * 返回后无论结果如何都把选择交回 [SignService]（服务会再判断并给出明确通知）。

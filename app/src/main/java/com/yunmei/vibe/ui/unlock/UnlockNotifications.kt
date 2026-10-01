@@ -49,7 +49,8 @@ object UnlockNotifications {
     const val RESULT_CHANNEL_ID = "unlock_channel"
 
     /** 固定通知 ID：进度与结果始终是同一条通知。 */
-    const val NOTIFICATION_ID = 1001
+    /** 固定通知 ID：进度与结果始终是同一条通知（与打卡通知的 1002 区分）。 */
+    const val UNLOCK_NOTIFICATION_ID = 1001
 
     /** 进度最大值，与 InstallerX 一致恒为 100。 */
     private const val PROGRESS_MAX = 100
@@ -401,7 +402,7 @@ object UnlockNotifications {
     fun post(context: Context, notification: Notification) {
         val manager = NotificationManagerCompat.from(context)
         if (!manager.areNotificationsEnabled()) return
-        runCatching { manager.notify(NOTIFICATION_ID, notification) }
+        runCatching { manager.notify(UNLOCK_NOTIFICATION_ID, notification) }
     }
 
     private fun openAppIntent(context: Context): PendingIntent {

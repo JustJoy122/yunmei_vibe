@@ -31,6 +31,9 @@ class UnlockService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val finished = AtomicBoolean(false)
 
+    /** 最近一次进度，用于失败时判断哪个分段变红。 */
+    private var lastPercent = 0
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -42,7 +45,7 @@ class UnlockService : Service() {
         }
         if (intent?.getBooleanExtra(EXTRA_BT_DENIED, false) == true) {
             // 用户在系统对话框里拒绝了开启蓝牙：保留实况通知与进度条，动作是重试/完成。
-            postBluetoothFailure(offerEnable = false)
+            postBluetoothFailure()
             return START_NOT_STICKY
         }
         // 前台服务必须在 5 秒内 startForeground；同时兜住权限在启动瞬间被撤销等极端情况，
@@ -82,7 +85,7 @@ class UnlockService : Service() {
         val container = YunMeiApp.app.container
         // 蓝牙未开启（含「重试」时仍关着的情况）：不要闷头失败，给出「开启蓝牙」入口。
         if (!isBluetoothEnabled()) {
-            postBluetoothFailure(offerEnable = true)
+            postBluetoothFailure()
             return
         }
         val lock = withContext(Dispatchers.IO) { container.lockStore.getDefault() }
@@ -131,6 +134,7 @@ class UnlockService : Service() {
         if (finished.get()) return
         Log.d(TAG, "unlock progress=$percent text=$text")
         // 固定 ID 原地更新同一个通知：进度条由真实的进度字段驱动，不靠改标题/正文代替。
+        lastPercent = percent
         UnlockNotifications.post(this, UnlockNotifications.progress(this, text, percent))
     }
 
@@ -145,30 +149,34 @@ class UnlockService : Service() {
 
     private fun finishWithFailure(message: String) {
         if (!finished.compareAndSet(false, true)) return
+        // 严格对齐 InstallerX：失败不退回传统通知，保留实况与进度条，失败分段变红、进度停在失败处，
+        // 通知常驻（ongoing，不 autoCancel），由用户通过「重试 / 完成」结束。
         UnlockNotifications.post(
             this,
-            UnlockNotifications.result(this, false, message),
+            UnlockNotifications.failure(
+                this,
+                message,
+                UnlockNotifications.stageOf(lastPercent),
+                listOf(
+                    UnlockNotifications.retryAction(this),
+                    UnlockNotifications.finishAction(this),
+                ),
+            ),
         )
         stopSelfSafely()
     }
 
-    /** 蓝牙相关的失败通知：offerEnable=true 时给「开启蓝牙」，否则给「重试」（用户刚拒绝过，不再反复弹）。 */
-    private fun postBluetoothFailure(offerEnable: Boolean) {
+    /** 蓝牙相关的失败通知：与其它开门失败一致，保留实况与进度条（扫描分段变红），动作是重试/完成。 */
+    private fun postBluetoothFailure() {
         if (!finished.compareAndSet(false, true)) return
-        val actions = if (offerEnable) {
-            listOf(
-                UnlockNotifications.enableBluetoothAction(this),
-                UnlockNotifications.finishAction(this),
-            )
-        } else {
-            listOf(
-                UnlockNotifications.retryAction(this),
-                UnlockNotifications.finishAction(this),
-            )
-        }
-        val notification = UnlockNotifications.bluetoothFailure(
+        val actions = listOf(
+            UnlockNotifications.retryAction(this),
+            UnlockNotifications.finishAction(this),
+        )
+        val notification = UnlockNotifications.failure(
             this,
             getString(R.string.unlock_bluetooth_disabled),
+            0,
             actions,
         )
         // 该分支由 startForegroundService 拉活，必须先成为前台服务（5 秒规则）；

@@ -67,6 +67,16 @@ object UnlockNotifications {
 
     /** 创建渠道（幂等；与 InstallerX 一样按用途分成三个渠道）。 */
     fun ensureChannel(context: Context) {
+        // 旧版本把实况渠道建成了完全静音（setSound(null) + 关闭振动），而渠道创建后声音/振动
+        // 无法直接更新，只能删除重建；否则失败通知永远无法"提醒一次"。
+        val manager = NotificationManagerCompat.from(context)
+        val existingLiveChannel = manager.getNotificationChannel(LIVE_CHANNEL_ID)
+        if (existingLiveChannel != null &&
+            existingLiveChannel.sound == null &&
+            !existingLiveChannel.shouldVibrate()
+        ) {
+            manager.deleteNotificationChannel(LIVE_CHANNEL_ID)
+        }
         val channels = listOf(
             NotificationChannelCompat.Builder(
                 LIVE_CHANNEL_ID,
@@ -74,9 +84,8 @@ object UnlockNotifications {
             )
                 .setName(context.getString(R.string.unlock_live_channel_name))
                 .setDescription(context.getString(R.string.unlock_live_channel_desc))
-                // 与 InstallerX 的 setSilent(true) 一致：高优先级但不响铃不振动。
-                .setSound(null, null)
-                .setVibrationEnabled(false)
+                // 与 InstallerX 一致：渠道保持系统默认提示能力，进行中靠 setSilent(true) 抑制，
+                // 失败时才真正提醒一次——渠道一旦静音，失败就永远提醒不了。
                 .build(),
             NotificationChannelCompat.Builder(
                 PROGRESS_CHANNEL_ID,
@@ -136,11 +145,11 @@ object UnlockNotifications {
     private fun modernProgress(context: Context, text: String, percent: Int?): Notification {
         val accent = ThemeColors.accent(context)
         val segments = listOf(
-            Notification.ProgressStyle.Segment(SEGMENT_SCAN).setColor(accent.tertiary),
-            Notification.ProgressStyle.Segment(SEGMENT_CONNECT).setColor(accent.primary),
-            Notification.ProgressStyle.Segment(SEGMENT_SEND).setColor(accent.primary),
+            NotificationCompat.ProgressStyle.Segment(SEGMENT_SCAN).setColor(accent.tertiary),
+            NotificationCompat.ProgressStyle.Segment(SEGMENT_CONNECT).setColor(accent.primary),
+            NotificationCompat.ProgressStyle.Segment(SEGMENT_SEND).setColor(accent.primary),
         )
-        val progressStyle = Notification.ProgressStyle()
+        val progressStyle = NotificationCompat.ProgressStyle()
             .setProgressSegments(segments)
             .setStyledByProgress(true)
             .apply {
@@ -151,12 +160,14 @@ object UnlockNotifications {
                     setProgress(percent)
                 }
             }
-        val notification = Notification.Builder(context, LIVE_CHANNEL_ID)
+        val notification = NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_open))
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
             .setColor(accent.primary)
+            // 与 InstallerX 的 baseBuilder 一致：进行中静音，只有失败才提醒。
+            .setSilent(true)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
             .setShortCriticalText(percent?.let { "$it%" } ?: text)
@@ -267,6 +278,80 @@ object UnlockNotifications {
             .setProgress(PROGRESS_MAX, percent, false)
         for (action in actions) builder.addAction(0, action.title, action.actionIntent)
         return builder.build()
+    }
+
+    /**
+     * 开门失败通知（严格对齐 InstallerX）：
+     *  - 保持实况：Android 16+ 继续用 ProgressStyle，不退回传统通知；进度条保留；
+     *  - 失败的阶段对应的 Segment 变红，其余分段仍用主题色（分段变红，不是整条变红）；
+     *  - 进度停在失败阶段末尾（InstallerX 做法），渠道固定实况渠道（实况路径不切渠道）；
+     *  - setOnlyAlertOnce(false).setSilent(false)：确保失败提醒一次；
+     *  - 保持常驻（ongoing，且不 autoCancel），由用户点「重试」或「完成」结束。
+     */
+    fun failure(
+        context: Context,
+        text: String,
+        stage: Int,
+        actions: List<Notification.Action> = emptyList(),
+    ): Notification {
+        val accent = ThemeColors.accent(context)
+        val percent = when (stage) {
+            0 -> SEGMENT_SCAN
+            1 -> SEGMENT_SCAN + SEGMENT_CONNECT
+            else -> PROGRESS_MAX
+        }
+        if (isModernEligible()) {
+            val segments = listOf(
+                NotificationCompat.ProgressStyle.Segment(SEGMENT_SCAN)
+                    .setColor(if (stage == 0) accent.error else accent.tertiary),
+                NotificationCompat.ProgressStyle.Segment(SEGMENT_CONNECT)
+                    .setColor(if (stage == 1) accent.error else accent.primary),
+                NotificationCompat.ProgressStyle.Segment(SEGMENT_SEND)
+                    .setColor(if (stage >= 2) accent.error else accent.primary),
+            )
+            val style = NotificationCompat.ProgressStyle()
+                .setProgressSegments(segments)
+                .setStyledByProgress(true)
+                .apply {
+                    setProgressIndeterminate(false)
+                    setProgress(percent)
+                }
+            val builder = NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification_unlock)
+                .setContentTitle(context.getString(R.string.unlock_failed))
+                .setContentText(text)
+                .setContentIntent(openAppIntent(context))
+                .setColor(accent.error)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setOnlyAlertOnce(false)
+                .setSilent(false)
+                .setProgress(PROGRESS_MAX, percent, false)
+                .setStyle(style)
+            for (action in actions) builder.addAction(0, action.title, action.actionIntent)
+            return builder.build()
+        }
+        // 低版本没有实况样式：保留进度条与错误色；失败切到高优先级结果渠道（InstallerX 旧式实现同样会切）。
+        val builder = NotificationCompat.Builder(context, RESULT_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification_unlock)
+            .setContentTitle(context.getString(R.string.unlock_failed))
+            .setContentText(text)
+            .setContentIntent(openAppIntent(context))
+            .setColor(accent.error)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setOnlyAlertOnce(false)
+            .setSilent(false)
+            .setProgress(PROGRESS_MAX, percent, false)
+        for (action in actions) builder.addAction(0, action.title, action.actionIntent)
+        return builder.build()
+    }
+
+    /** 按当前进度推断失败发生在哪个分段（0=扫描、1=连接、2=发送）。 */
+    fun stageOf(percent: Int): Int = when {
+        percent < SEGMENT_SCAN -> 0
+        percent < SEGMENT_SCAN + SEGMENT_CONNECT -> 1
+        else -> 2
     }
 
     /** 「重试」：通知按钮直接后台重跑开门（前台服务动作，不受后台启动限制）。 */

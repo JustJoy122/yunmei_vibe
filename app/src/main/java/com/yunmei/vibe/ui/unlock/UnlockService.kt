@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
@@ -12,6 +13,7 @@ import com.yunmei.vibe.data.ble.UnlockManager
 import com.yunmei.vibe.ui.util.BLE_PERMISSIONS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -31,6 +33,9 @@ class UnlockService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val finished = AtomicBoolean(false)
 
+    /** 失败通知保持实况的最长时间，超时后释放前台服务。 */
+    private var failureTimeoutJob: Job? = null
+
     /** 最近一次进度，用于失败时判断哪个分段变红。 */
     private var lastPercent = 0
 
@@ -38,6 +43,11 @@ class UnlockService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         UnlockNotifications.ensureChannel(this)
+        // 每次新命令都重置完成标记：失败后服务会保持存活以承载实况通知，
+        // 此时用户点「重试」若不清零，进度回调与再次失败都会被 early-return 吞掉。
+        if (intent?.action != ACTION_FINISH) {
+            finished.set(false)
+        }
 
         if (intent?.action == ACTION_FINISH) {
             dismissAndStop()
@@ -77,6 +87,7 @@ class UnlockService : Service() {
     }
 
     override fun onDestroy() {
+        failureTimeoutJob?.cancel()
         scope.cancel()
         super.onDestroy()
     }
@@ -151,19 +162,34 @@ class UnlockService : Service() {
         if (!finished.compareAndSet(false, true)) return
         // 严格对齐 InstallerX：失败不退回传统通知，保留实况与进度条，失败分段变红、进度停在失败处，
         // 通知常驻（ongoing，不 autoCancel），由用户通过「重试 / 完成」结束。
-        UnlockNotifications.post(
+        val notification = UnlockNotifications.failure(
             this,
-            UnlockNotifications.failure(
-                this,
-                message,
-                UnlockNotifications.stageOf(lastPercent),
-                listOf(
-                    UnlockNotifications.retryAction(this),
-                    UnlockNotifications.finishAction(this),
-                ),
+            message,
+            UnlockNotifications.stageOf(lastPercent),
+            listOf(
+                UnlockNotifications.retryAction(this),
+                UnlockNotifications.finishAction(this),
             ),
         )
-        stopSelfSafely()
+        // 失败时继续以这个通知作为前台服务通知（不 detach、不 stopSelf）：实况/流体云的"提升"依赖
+        // 应用仍处于前台服务状态，一旦立刻停服，系统会把通知降级成普通通知。
+        runCatching { startForeground(UnlockNotifications.NOTIFICATION_ID, notification) }
+            .onFailure { UnlockNotifications.post(this, notification) }
+        armFailureTimeout()
+    }
+
+    /** 失败通知的兜底清理：用户长时间不理会时释放前台服务，避免常驻。 */
+    private fun armFailureTimeout() {
+        failureTimeoutJob?.cancel()
+        failureTimeoutJob = scope.launch {
+            delay(FAILURE_KEEP_MS)
+            runCatching {
+                NotificationManagerCompat.from(this@UnlockService)
+                    .cancel(UnlockNotifications.NOTIFICATION_ID)
+            }
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        }
     }
 
     /** 蓝牙相关的失败通知：与其它开门失败一致，保留实况与进度条（扫描分段变红），动作是重试/完成。 */
@@ -215,6 +241,9 @@ class UnlockService : Service() {
     companion object {
         private const val TAG = "UnlockService"
         private const val UNLOCK_TIMEOUT_MS = 45_000L
+
+        /** 失败通知保持实况的最长时间（10 分钟），超时后释放前台服务。 */
+        private const val FAILURE_KEEP_MS = 10 * 60 * 1000L
 
         /** 失败通知的「重试」：重跑一次开门。 */
         const val ACTION_RETRY = "com.yunmei.vibe.action.UNLOCK_RETRY"

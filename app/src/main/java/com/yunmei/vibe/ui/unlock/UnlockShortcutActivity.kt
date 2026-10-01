@@ -11,27 +11,23 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.util.BLE_PERMISSIONS
+import com.yunmei.vibe.ui.util.PermissionRequester
 
 /**
- * 「开门」快捷方式（以及「开启蓝牙」通知动作）的入口 Activity：完全无界面。
+ * 「开门」快捷方式 / 「开启蓝牙」通知动作的入口 Activity：完全无界面。
  *
- * 流程与打卡的 SignShortcutActivity 同构：
- *  1. 校验令牌（快捷方式 Intent 与本应用签发的 PendingIntent 都带令牌），第三方直接启动时静默忽略；
- *  2. Android 13+ 先确保通知权限（开门反馈全靠通知）；
- *  3. 缺蓝牙权限（Android 12+ 的 BLUETOOTH_CONNECT）时不启动前台服务，改用普通通知说明原因；
- *  4. 蓝牙未开启时先用系统对话框请求开启：同意后继续开门；拒绝则交给 UnlockService
- *     发出「蓝牙未开启，无法开门」的失败通知（保留实况与进度条，动作是重试/完成）；
- *  5. 系统对话框若因后台启动限制拉不起来，退化为高优先级通知，由用户点击
- *     （PendingIntent.getActivity 是可靠路径）再发起请求。
+ * 权限处理遵循 Android 官方做法：**在承载流程的 Activity 里用 registerForActivityResult
+ * 直接发起系统请求**，授权后继续开门，拒绝就发失败通知并结束，不会引导用户去打开 App 主界面。
+ *
+ * 顺序：令牌校验 → 通知权限（Android 13+）→ 蓝牙运行时权限（Android 12+ 的 BLUETOOTH_CONNECT）
+ * → 蓝牙总开关（ACTION_REQUEST_ENABLE）→ 启动 UnlockService 执行开门。
+ * 系统对话框若被后台启动限制拦下，退化为高优先级通知，由用户点击后再请求；
+ * 通知动作/点击产生的 PendingIntent.getActivity 属于系统认可的用户主动启动路径，
+ * 不受 Android 10+ 后台启动 Activity 限制约束。
  */
 class UnlockShortcutActivity : ComponentActivity() {
 
-    private val notificationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) {
-        // 无论是否授权都继续开门：未授权时通知不可见，但开门本身照常执行。
-        proceed()
-    }
+    private val permissionRequester = PermissionRequester(this)
 
     private val enableBluetoothLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -52,32 +48,47 @@ class UnlockShortcutActivity : ComponentActivity() {
             finish()
             return
         }
-
-        val needNotificationPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        if (needNotificationPermission) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            proceed()
-        }
+        proceed()
     }
 
+    /** 依次补齐通知权限与蓝牙权限，缺哪个就请求哪个；全部就绪后检查蓝牙总开关。 */
     private fun proceed() {
-        // Android 14+ 起，缺少蓝牙权限时启动 connectedDevice 类型的前台服务会直接抛异常，
-        // 因此先用普通通知说明原因，由用户点通知回到应用内授权。
-        if (!hasBlePermissions()) {
-            UnlockNotifications.post(
-                this,
-                UnlockNotifications.result(
-                    this,
-                    false,
-                    getString(R.string.unlock_shortcut_no_permission),
-                ),
+        if (needNotificationPermission()) {
+            permissionRequester.request(
+                permissions = arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                onGranted = { proceed() },
+                // 通知权限被拒绝不影响开门（只是没有进度反馈），继续走蓝牙分支。
+                onDenied = { checkBluetoothPermission() },
             )
-            finish()
             return
         }
+        checkBluetoothPermission()
+    }
+
+    private fun checkBluetoothPermission() {
+        if (!hasBlePermissions()) {
+            permissionRequester.request(
+                permissions = BLE_PERMISSIONS,
+                onGranted = { checkBluetoothEnabled() },
+                onDenied = {
+                    // 用户拒绝授权：发失败通知并结束流程，不停在中间态。
+                    UnlockNotifications.post(
+                        this,
+                        UnlockNotifications.result(
+                            this,
+                            false,
+                            getString(R.string.unlock_shortcut_no_permission),
+                        ),
+                    )
+                    finish()
+                },
+            )
+            return
+        }
+        checkBluetoothEnabled()
+    }
+
+    private fun checkBluetoothEnabled() {
         if (!isBluetoothEnabled()) {
             requestBluetoothEnable()
             return
@@ -125,6 +136,11 @@ class UnlockShortcutActivity : ComponentActivity() {
         }
         finish()
     }
+
+    private fun needNotificationPermission(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
 
     private fun hasBlePermissions(): Boolean = BLE_PERMISSIONS.all { permission ->
         ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED

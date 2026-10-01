@@ -330,7 +330,11 @@ object UnlockNotifications {
                 .setProgress(PROGRESS_MAX, percent, false)
                 .setStyle(style)
             for (action in actions) builder.addAction(action)
-            return builder.build()
+            val failed = builder.build()
+            // 失败同样要保持"实况/流体云"提升：InstallerX 的基础构建器全程 setRequestPromotedOngoing(true)，
+            // 失败分支复用同一个 builder；这份之前漏了这个 extra，导致失败即掉出实况。
+            failed.extras.putBoolean(NotificationCompat.EXTRA_REQUEST_PROMOTED_ONGOING, true)
+            return failed
         }
         // 低版本没有实况样式：保留进度条与错误色；失败切到高优先级结果渠道（InstallerX 旧式实现同样会切）。
         val builder = NotificationCompat.Builder(context, RESULT_CHANNEL_ID)

@@ -94,8 +94,12 @@ object SignNotifications {
         locationUnavailable: Boolean = false,
         completed: Boolean = false,
         retrySubMode: String? = null,
+        promptChooser: Boolean = false,
     ): Notification {
         val accent = ThemeColors.accent(context)
+        // 需要选择定位方式时，通知整体点击也直接进弹窗（与按钮同一个 PendingIntent），
+        // 避免个别 ROM 折叠/吞掉通知动作时用户完全无法选择。
+        val contentIntent = if (promptChooser) chooserIntent(context) else openAppIntent(context)
         val actions = if (failedStage != null) {
             failureActions(context, locationUnavailable, retrySubMode)
         } else {
@@ -118,10 +122,10 @@ object SignNotifications {
                     setProgress(percent)
                 }
             val builder = Notification.Builder(context, LIVE_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_shortcut_check_in)
+                .setSmallIcon(R.drawable.ic_notification_sign)
                 .setContentTitle(context.getString(R.string.unlock_sign))
                 .setContentText(text)
-                .setContentIntent(openAppIntent(context))
+                .setContentIntent(contentIntent)
                 .setColor(accent.primary)
                 .setOngoing(failedStage == null && !completed)
                 .setAutoCancel(completed)
@@ -145,10 +149,10 @@ object SignNotifications {
         // 进入需要关注/结果状态时切到高优先级渠道）；实况路径则全程不切渠道。
         val channelId = if (failedStage != null) RESULT_CHANNEL_ID else PROGRESS_CHANNEL_ID
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_shortcut_check_in)
+            .setSmallIcon(R.drawable.ic_notification_sign)
             .setContentTitle(context.getString(R.string.unlock_sign))
             .setContentText(text)
-            .setContentIntent(openAppIntent(context))
+            .setContentIntent(contentIntent)
             .setColor(if (failedStage != null) accent.error else accent.primary)
             .setOngoing(failedStage == null && !completed)
             .setAutoCancel(completed)
@@ -170,7 +174,7 @@ object SignNotifications {
     fun result(context: Context, success: Boolean, text: String): Notification {
         val accent = ThemeColors.accent(context)
         return NotificationCompat.Builder(context, RESULT_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_shortcut_check_in)
+            .setSmallIcon(R.drawable.ic_notification_sign)
             .setContentTitle(
                 context.getString(if (success) R.string.unlock_sign_success else R.string.unlock_sign_failed)
             )

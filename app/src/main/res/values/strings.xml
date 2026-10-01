@@ -115,7 +115,7 @@
     <string name="unlock_channel_desc">快捷方式开门的进度与结果</string>
     <string name="unlock_notification_preparing">正在准备…</string>
     <string name="unlock_shortcut_no_default">未设置默认门锁，无法开门</string>
-    <string name="unlock_shortcut_no_permission">缺少蓝牙权限，请先打开应用授权</string>
+    <string name="unlock_shortcut_no_permission">缺少蓝牙权限，无法开门</string>
     <string name="unlock_timeout">开门超时，请重试</string>
     <string name="unlock_disconnected">蓝牙连接已断开，请重试</string>
     <string name="unlock_progress_done">开门完成</string>

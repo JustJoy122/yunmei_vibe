@@ -28,4 +28,16 @@
         <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/splash_background_amoled</item>
     </style>
 
+    <!-- 打卡「选择定位方式」轻量弹窗：透明、无标题、点击外部关闭；内容是 Compose 对话框。
+         之前用的平台 Theme.Translucent.NoTitleBar 对 Compose 的 Dialog 窗口不友好，
+         个别 ROM 上会出现"点了没反应"（窗口透明且 Dialog 主题缺失）。 -->
+    <style name="Theme.YunmeiVibe.Dialog" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.4</item>
+    </style>
 </resources>

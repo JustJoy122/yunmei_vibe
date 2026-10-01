@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  打卡通知的小图标：透明背景 + 纯白单色剪影（24dp 矢量）。
+
+  规范依据：通知小图标只取 alpha 通道，由系统着色。之前这里误用了彩色的快捷方式图标
+  （drawable/ic_shortcut_check_in），它底层是一整块不透明的浅蓝圆角矩形，alpha 全满，
+  因此系统渲染成白色方块。本文件去掉了底色，只保留打卡图形本身，并缩到画布约 65%
+  （主体 60%-70%、四周留边），与开门通知的 ic_notification_unlock 保持同一套规范。
+
+  图形与快捷方式图标的打卡主体同源（Icons.Rounded.WhereToVote 的几何，形状未改）。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 主体缩到画布约 65%，四周留白，避免状态栏裁切。 -->
+    <group
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:pivotX="12"
+        android:pivotY="12">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M30,6 H78 A24,24 0 0 1 102,30 V78 A24,24 0 0 1 78,102 H30 A24,24 0 0 1 6,78 V30 A24,24 0 0 1 30,6 Z" />
+    </group>
+</vector>

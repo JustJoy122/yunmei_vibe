@@ -75,6 +75,18 @@ class SignService : Service() {
                 }
             }
             // 失败通知的「完成」：收起通知并结束服务。
+            // 跳板 Activity 在流程内请求权限被拒：直接发失败通知并结束，不停在中间态。
+            ACTION_PERMISSION_DENIED -> {
+                SignNotifications.post(
+                    this,
+                    SignNotifications.result(
+                        this,
+                        false,
+                        getString(R.string.sign_permission_needed),
+                    ),
+                )
+                stopSelf()
+            }
             ACTION_FINISH -> finishAndDismiss()
             else -> startBySettingsMode()
         }
@@ -88,8 +100,12 @@ class SignService : Service() {
     }
 
     /** 首次进入时以前台服务身份发通知；已在运行则原地更新。 */
-    private fun startAsForegroundIfNeeded(progressText: String, percent: Int) {
-        val notification = SignNotifications.progress(this, progressText, percent)
+    private fun startAsForegroundIfNeeded(
+        progressText: String,
+        percent: Int,
+        promptChooser: Boolean = false,
+    ) {
+        val notification = SignNotifications.progress(this, progressText, percent, promptChooser = promptChooser)
         val type = foregroundServiceType()
         runCatching {
             ServiceCompat.startForeground(this, SignNotifications.SIGN_NOTIFICATION_ID, notification, type)
@@ -138,7 +154,7 @@ class SignService : Service() {
                     runFlow(SignSubMode.LOCATE_SAVE)
                 }
                 SignLocationMode.ASK -> {
-                    startAsForegroundIfNeeded(getString(R.string.sign_choose_location), 50)
+                    startAsForegroundIfNeeded(getString(R.string.sign_choose_location), 50, promptChooser = true)
                     armWaitTimeout()
                 }
             }
@@ -334,6 +350,9 @@ class SignService : Service() {
         const val ACTION_WITH_MODE = "com.yunmei.vibe.action.SIGN_WITH_MODE"
         const val ACTION_RETRY = "com.yunmei.vibe.action.SIGN_RETRY"
         const val ACTION_FINISH = "com.yunmei.vibe.action.SIGN_FINISH"
+
+        /** 权限被拒（由跳板 Activity 在流程内请求后回报）。 */
+        const val ACTION_PERMISSION_DENIED = "com.yunmei.vibe.action.SIGN_PERMISSION_DENIED"
         const val EXTRA_SUB_MODE = "sign_sub_mode"
 
         private const val TAG = "SignService"

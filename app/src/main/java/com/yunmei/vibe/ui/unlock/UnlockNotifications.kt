@@ -145,11 +145,11 @@ object UnlockNotifications {
     private fun modernProgress(context: Context, text: String, percent: Int?): Notification {
         val accent = ThemeColors.accent(context)
         val segments = listOf(
-            NotificationCompat.ProgressStyle.Segment(SEGMENT_SCAN).setColor(accent.tertiary),
-            NotificationCompat.ProgressStyle.Segment(SEGMENT_CONNECT).setColor(accent.primary),
-            NotificationCompat.ProgressStyle.Segment(SEGMENT_SEND).setColor(accent.primary),
+            Notification.ProgressStyle.Segment(SEGMENT_SCAN).setColor(accent.tertiary),
+            Notification.ProgressStyle.Segment(SEGMENT_CONNECT).setColor(accent.primary),
+            Notification.ProgressStyle.Segment(SEGMENT_SEND).setColor(accent.primary),
         )
-        val progressStyle = NotificationCompat.ProgressStyle()
+        val progressStyle = Notification.ProgressStyle()
             .setProgressSegments(segments)
             .setStyledByProgress(true)
             .apply {
@@ -160,14 +160,14 @@ object UnlockNotifications {
                     setProgress(percent)
                 }
             }
-        val notification = NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
+        // 进行中：平台 Builder 没有 setSilent，静音改由渠道/onlyAlertOnce 控制：
+        // 实况渠道保持系统默认提示能力（否则失败无法提醒），进行中靠 setOnlyAlertOnce(true) 抑制重复提醒。
+        val notification = Notification.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_open))
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
             .setColor(accent.primary)
-            // 与 InstallerX 的 baseBuilder 一致：进行中静音，只有失败才提醒。
-            .setSilent(true)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
             .setShortCriticalText(percent?.let { "$it%" } ?: text)
@@ -302,21 +302,23 @@ object UnlockNotifications {
         }
         if (isModernEligible()) {
             val segments = listOf(
-                NotificationCompat.ProgressStyle.Segment(SEGMENT_SCAN)
+                Notification.ProgressStyle.Segment(SEGMENT_SCAN)
                     .setColor(if (stage == 0) accent.error else accent.tertiary),
-                NotificationCompat.ProgressStyle.Segment(SEGMENT_CONNECT)
+                Notification.ProgressStyle.Segment(SEGMENT_CONNECT)
                     .setColor(if (stage == 1) accent.error else accent.primary),
-                NotificationCompat.ProgressStyle.Segment(SEGMENT_SEND)
+                Notification.ProgressStyle.Segment(SEGMENT_SEND)
                     .setColor(if (stage >= 2) accent.error else accent.primary),
             )
-            val style = NotificationCompat.ProgressStyle()
+            val style = Notification.ProgressStyle()
                 .setProgressSegments(segments)
                 .setStyledByProgress(true)
                 .apply {
                     setProgressIndeterminate(false)
                     setProgress(percent)
                 }
-            val builder = NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
+            // 失败：保持实况样式与进度条，不退回传统通知；渠道固定实况渠道（不切渠道）。
+            // 平台 Builder 没有 setSilent，提醒能力由实况渠道提供，这里只关掉 onlyAlertOnce。
+            val builder = Notification.Builder(context, LIVE_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_unlock)
                 .setContentTitle(context.getString(R.string.unlock_failed))
                 .setContentText(text)
@@ -325,10 +327,9 @@ object UnlockNotifications {
                 .setOngoing(true)
                 .setAutoCancel(false)
                 .setOnlyAlertOnce(false)
-                .setSilent(false)
                 .setProgress(PROGRESS_MAX, percent, false)
                 .setStyle(style)
-            for (action in actions) builder.addAction(0, action.title, action.actionIntent)
+            for (action in actions) builder.addAction(action)
             return builder.build()
         }
         // 低版本没有实况样式：保留进度条与错误色；失败切到高优先级结果渠道（InstallerX 旧式实现同样会切）。

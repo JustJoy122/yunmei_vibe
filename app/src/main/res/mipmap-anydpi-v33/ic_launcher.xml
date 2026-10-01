@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  API 33+ 的自适应图标变体（内容与 mipmap-anydpi-v26 下的同名文件完全一致）。
+
+  为什么需要这一份：
+  · 主题图标（Themed Icons）是 Android 13（API 33）引入的机制，系统/启动器在 33+ 才读取
+    <monochrome> 层；
+  · 本项目 minSdk = 26，aapt2 会把 anydpi-v26 里的版本限定符当作冗余剥离，发布包里
+    该资源只剩下 (anydpi) 配置；而参照实现 PiliPlus（minSdk 较低）打包后保留的是
+    (anydpi-v26)。这是两个应用在"图标资源限定符"上唯一的结构性差异；
+  · 部分 ROM/启动器的主题图标实现会依据资源限定符做判断，因此在 33+ 显式提供一份
+    版本限定的自适应图标（含 monochrome 一层），与 PiliPlus 的打包形态对齐。
+  · v33 变体只在 API 33+ 生效，26~32 仍走 anydpi-v26 那份，行为不变。
+
+  说明：这是一处"对齐已知可用形态"的防御性配置，不是已证实的根因修复；真正的主题图标
+  着色仍由系统完成，App 侧不参与。
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>

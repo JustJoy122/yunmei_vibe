@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  资源压缩保护（对应 AGP 的 isShrinkResources）。
+
+  自适应图标的 monochrome 层只被 res/mipmap-anydpi-v26/*.xml 里的
+  <monochrome android:drawable="..."/> 引用，属于"仅被资源引用、没有代码引用"的情况；
+  一旦资源压缩（或后续重构、改名、换目录）判断失误，单色层就会在 release 包里消失，
+  系统随即认为该应用没有主题图标 → 开启"主题图标"后图标不变色。
+
+  因此这里显式保留图标三层，PiliPlus 那边没有开压缩所以不存在这个风险；
+  本项目保留压缩，就用 keep 规则把风险封住。
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_launcher_background,@drawable/ic_launcher_foreground,@drawable/ic_launcher_monochrome,@mipmap/ic_launcher,@mipmap/ic_launcher_round" />

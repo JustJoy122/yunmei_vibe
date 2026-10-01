@@ -18,11 +18,12 @@ class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 
     val appPreferences: AppPreferences by lazy {
-        AppPreferences(appContext)
+        AppPreferences(appContext, secureStore)
     }
 
     private val secureStore: SecureStore by lazy {
-        SecureStore(appContext)
+        // 进程内单例：与快捷方式令牌等其它调用方共用同一个实例
+        SecureStore.get(appContext)
     }
 
     val accountStore: AccountStore by lazy {

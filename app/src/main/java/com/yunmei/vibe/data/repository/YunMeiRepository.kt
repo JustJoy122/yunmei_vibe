@@ -57,17 +57,15 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         this.usernameMd5 = Md5.hex(username)
         client.token = safeUser.token
         client.userId = safeUser.userId
-        android.util.Log.d("YunMei", "login token=${safeUser.token} userId=${safeUser.userId}")
+        // 安全：不打印 token / userId（会被"发送日志"整包带出）
         safeUser
     }
 
     suspend fun fetchSchools(): List<SchoolEntry> = mutex.withLock {
         val userId = requireUserId()
         val schools = client.api(YunMeiApiClient.BASE_URL).getSchools(userId)
-        android.util.Log.d(
-            "YunMei",
-            "schools=" + schools.joinToString { s -> "${s.schoolNo}/${s.school?.schoolName}/${s.school?.serverUrl}/${s.token}" }
-        )
+        // 安全：只打印学校数量与编号，不打印 serverUrl/token
+        android.util.Log.d("YunMei", "schools=" + schools.joinToString { s -> s.schoolNo ?: "" })
         schools
     }
 

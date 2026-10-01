@@ -2,6 +2,9 @@ package com.yunmei.vibe.data.preferences
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import com.yunmei.vibe.data.local.SecureStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -26,7 +29,7 @@ data class AppSettings(
     val signLocationMode: String = "ask",
 )
 
-class AppPreferences(private val context: Context) {
+class AppPreferences(private val context: Context, private val secureStore: SecureStore) {
 
     val themeMode: Flow<ThemeMode> = context.settingsDataStore.data.map { prefs ->
         prefs[KEY_THEME_MODE]
@@ -93,12 +96,22 @@ class AppPreferences(private val context: Context) {
         context.settingsDataStore.edit { it[KEY_SIGN_LOCATION_MODE] = value }
     }
 
-    suspend fun setLastLocation(value: String) {
-        context.settingsDataStore.edit { it[KEY_LAST_LOCATION] = value }
+    /** 上次打卡位置属个人数据，改存加密存储（旧版本明文值在首次读取时迁移并清除）。 */
+    suspend fun setLastLocation(value: String) = withContext(Dispatchers.IO) {
+        secureStore.putString(KEY_LAST_LOCATION_SECURE, value)
     }
 
-    suspend fun getLastLocation(): String =
-        context.settingsDataStore.data.first()[KEY_LAST_LOCATION] ?: ""
+    suspend fun getLastLocation(): String = withContext(Dispatchers.IO) {
+        val encrypted = secureStore.getString(KEY_LAST_LOCATION_SECURE)
+        if (encrypted.isNotBlank()) return@withContext encrypted
+        // 兼容旧版本：DataStore 里的明文位置迁移一次，然后删除明文
+        val legacy = context.settingsDataStore.data.first()[KEY_LAST_LOCATION] ?: ""
+        if (legacy.isNotBlank()) {
+            secureStore.putString(KEY_LAST_LOCATION_SECURE, legacy)
+            context.settingsDataStore.edit { it.remove(KEY_LAST_LOCATION) }
+        }
+        legacy
+    }
 
     private companion object {
         val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
@@ -113,5 +126,8 @@ class AppPreferences(private val context: Context) {
         val KEY_RECORD_OBJECT = stringPreferencesKey("record_object")
         val KEY_SIGN_LOCATION_MODE = stringPreferencesKey("sign_location_mode")
         val KEY_LAST_LOCATION = stringPreferencesKey("last_location")
+
+        /** 加密存储中的上次位置键（与旧 DataStore 键同名，便于理解）。 */
+        const val KEY_LAST_LOCATION_SECURE = "last_location"
     }
 }

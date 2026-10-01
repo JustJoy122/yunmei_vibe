@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  云备份 / adb backup 排除规则（Android 11 及以下走本文件，Android 12+ 走 data_extraction_rules.xml）。
+
+  排除项（本次安全审计确认）：
+   - settings.xml：全局偏好，含快捷方式校验令牌；
+   - yunmei_secure.xml：账号（用户名/密码 MD5）与门锁密钥（BLE secret）的加密存储；
+     它依赖 Android Keystore 密钥，换机后本就无法解密，备份它只会带来困惑与数据损坏风险。
+  说明：上次打卡位置已迁入加密存储，DataStore 里不再保存位置，因此 DataStore 文件保留在备份中，
+  以维持其余偏好（主题/开关等）的换机迁移体验。
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="settings.xml" />
+    <exclude domain="sharedpref" path="yunmei_secure.xml" />
+</full-backup-content>

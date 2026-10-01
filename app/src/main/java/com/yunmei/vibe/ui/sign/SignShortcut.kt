@@ -7,6 +7,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.yunmei.vibe.R
+import com.yunmei.vibe.data.local.SecureStore
 import com.yunmei.vibe.data.preferences.SettingsPrefs
 import java.util.UUID
 
@@ -24,6 +25,9 @@ object SignShortcut {
     const val EXTRA_TOKEN = "sign_shortcut_token"
 
     private const val TAG = "SignShortcut"
+
+    /** 加密存储中的打卡快捷方式令牌键（与开门的不共用）。 */
+    private const val KEY_TOKEN = "sign_shortcut_token"
 
     /** 按默认门锁是否存在，同步快捷方式可用状态（需在主线程调用）。 */
     fun sync(context: Context, hasDefaultLock: Boolean) {
@@ -47,11 +51,14 @@ object SignShortcut {
 
     /** 与「开门」快捷方式共用同一个校验令牌，防止第三方直接启动跳板 Activity。 */
     fun token(context: Context): String {
-        val prefs = SettingsPrefs.of(context)
-        val saved = prefs.getString(SettingsPrefs.SHORTCUT_TOKEN, null)
-        if (!saved.isNullOrBlank()) return saved
-        val generated = UUID.randomUUID().toString().replace("-", "")
-        prefs.edit().putString(SettingsPrefs.SHORTCUT_TOKEN, generated).apply()
+        // 安全：令牌存加密存储，与开门快捷方式各自独立（旧版共用的明文令牌由开门侧负责清理）。
+        val store = SecureStore.get(context)
+        val saved = store.getString(KEY_TOKEN)
+        if (saved.isNotBlank()) return saved
+        val generated = UUID.randomUUID().toString().replace("-", "") +
+            UUID.randomUUID().toString().replace("-", "")
+        store.putString(KEY_TOKEN, generated)
+        SettingsPrefs.of(context).edit().remove(SettingsPrefs.SHORTCUT_TOKEN).apply()
         return generated
     }
 

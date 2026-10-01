@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  自适应图标的密度限定副本（与 mipmap-anydpi-v26 / mipmap-anydpi-v33 下的同名文件内容一致）。
+
+  背景：本项目 minSdk = 26，aapt2 会把 anydpi-v26 的版本限定符当冗余剥离，发布包里
+  mipmap/ic_launcher 只剩 (anydpi) 一份配置、没有任何密度限定条目；而三个"图标能跟随系统主题
+  变色"的参考项目（PiliPlus、ColorBlendr、Android-DataBackup）**无一例外**都在
+  mipmap-mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi 下有图标条目。部分启动器/ROM 的主题图标实现会按
+  目标密度解析应用图标，缺少密度条目时可能走非自适应路径，从而取不到 monochrome 层。
+
+  这里补齐密度条目，但**放的是自适应图标 XML 而不是彩色位图**：既不引入会在
+  低版本遮住自适应图标的旧式位图，也让资源表在形态上与三个参考项目一致。
+  任何dpi 变体都只在对应密度下作为候选，anydpi 仍然优先，因此正常路径行为不变。
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>

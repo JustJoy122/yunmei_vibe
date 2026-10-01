@@ -97,7 +97,6 @@
             android:name=".ui.sign.SignShortcutActivity"
             android:exported="true"
             android:excludeFromRecents="true"
-            android:noHistory="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 

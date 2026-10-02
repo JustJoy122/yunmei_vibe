@@ -199,6 +199,7 @@ state.lockCount == 0 -> {
                     iconTint = warningCardContentColor().copy(alpha = 0.8f),
                     containerColor = warningCardContainerColor(),
                     contentColor = warningCardContentColor(),
+                    pressFeedback = PressFeedbackType.Sink,
                     onClick = actions.onOpenLocks,
                 )
             }
@@ -212,6 +213,7 @@ else -> {
                     iconTint = warningCardContentColor().copy(alpha = 0.8f),
                     containerColor = warningCardContainerColor(),
                     contentColor = warningCardContentColor(),
+                    pressFeedback = PressFeedbackType.Sink,
                     onClick = actions.onOpenLocks,
                 )
             }
@@ -431,6 +433,7 @@ private fun MiuixStatusCard(
     iconTint: Color,
     containerColor: Color,
     contentColor: Color? = null,
+    pressFeedback: PressFeedbackType = PressFeedbackType.Tilt,
     onClick: () -> Unit,
 ) {
     // 首页三种状态共用这一种版式：左侧标题/副标题/底部补充信息，右侧一个巨大圆图标被卡片右边缘裁切。
@@ -450,7 +453,7 @@ private fun MiuixStatusCard(
             },
             onClick = onClick,
             showIndication = true,
-            pressFeedbackType = PressFeedbackType.Tilt,
+            pressFeedbackType = pressFeedback,
         ) {
             Box {
                 Box(

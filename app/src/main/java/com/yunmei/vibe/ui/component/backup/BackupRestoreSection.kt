@@ -11,7 +11,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Save
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Save as SaveRounded
+import androidx.compose.material.icons.twotone.History
+import androidx.compose.material.icons.twotone.Save
+import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +37,10 @@ import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.data.backup.BackupManager
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
+import com.yunmei.vibe.ui.component.ActionMenuItem
+import com.yunmei.vibe.ui.component.material.ActionMenuBottomSheet
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
+import com.yunmei.vibe.ui.component.miuix.ActionMenuDialog
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextField
@@ -221,9 +228,11 @@ fun BackupRestoreEntry() {
             title = stringResource(R.string.backup_restore_title),
             startAction = {
                 Icon(
-                    Icons.Rounded.Save,
+                    Icons.Rounded.SaveRounded,
                     contentDescription = stringResource(R.string.backup_restore_title),
                     modifier = Modifier.padding(end = 6.dp),
+                    // 跟随 Miuix 主题语义色，深色模式下不再发黑
+                    tint = colorScheme.onBackground,
                 )
             },
             onClick = { showChooser = true },
@@ -232,38 +241,47 @@ fun BackupRestoreEntry() {
         SegmentedListItem(
             onClick = { showChooser = true },
             headlineContent = { Text(stringResource(R.string.backup_restore_title)) },
-            leadingContent = { Icon(Icons.Rounded.Save, null) },
+            leadingContent = { Icon(Icons.TwoTone.Save, null) },
         )
     }
 
-    // 1. 选择动作
+    // 1. 选择动作：与「扫码添加门锁」弹窗复用同一套容器与图标分派方式
+    //    （Material = ActionMenuBottomSheet，Miuix = ActionMenuDialog；图标 TwoTone / Rounded）。
     if (showChooser) {
-        AlertDialog(
-            onDismissRequest = { showChooser = false },
-            title = { Text(stringResource(R.string.backup_restore_title)) },
-            text = {
-                Text(
-                    text = stringResource(R.string.backup_restore_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline,
-                )
+        val useTwoToneIcons = uiMode == UiMode.Material
+        val items = listOf(
+            ActionMenuItem(
+                if (useTwoToneIcons) Icons.TwoTone.Save else Icons.Rounded.SaveRounded,
+                stringResource(R.string.backup_action),
+            ) {
+                showChooser = false
+                password = ""
+                pendingAction = BackupAction.BACKUP
+                createLauncher.launch(BackupManager.fileName())
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    showChooser = false
-                    password = ""
-                    pendingAction = BackupAction.BACKUP
-                    createLauncher.launch(BackupManager.fileName())
-                }) { Text(stringResource(R.string.backup_action)) }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showChooser = false
-                    password = ""
-                    openLauncher.launch(arrayOf("*/*"))
-                }) { Text(stringResource(R.string.restore_action)) }
+            ActionMenuItem(
+                if (useTwoToneIcons) Icons.TwoTone.History else Icons.Rounded.History,
+                stringResource(R.string.restore_action),
+            ) {
+                showChooser = false
+                password = ""
+                openLauncher.launch(arrayOf("*/*"))
             },
         )
+        when (uiMode) {
+            UiMode.Miuix -> ActionMenuDialog(
+                show = true,
+                title = stringResource(R.string.backup_restore_title),
+                summary = stringResource(R.string.backup_restore_hint),
+                items = items,
+                onDismissRequest = { showChooser = false },
+            )
+
+            UiMode.Material -> ActionMenuBottomSheet(
+                items = items,
+                onDismiss = { showChooser = false },
+            )
+        }
     }
 
     // 2. 口令输入（按主题分派）

@@ -122,7 +122,7 @@ object SignNotifications {
                     setProgress(percent)
                 }
             val builder = Notification.Builder(context, LIVE_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification_sign)
+                .setSmallIcon(R.drawable.ic_notification_unlock)
                 .setContentTitle(context.getString(R.string.unlock_sign))
                 .setContentText(text)
                 .setContentIntent(contentIntent)
@@ -149,7 +149,7 @@ object SignNotifications {
         // 进入需要关注/结果状态时切到高优先级渠道）；实况路径则全程不切渠道。
         val channelId = if (failedStage != null) RESULT_CHANNEL_ID else PROGRESS_CHANNEL_ID
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_notification_sign)
+            .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_sign))
             .setContentText(text)
             .setContentIntent(contentIntent)
@@ -174,7 +174,7 @@ object SignNotifications {
     fun result(context: Context, success: Boolean, text: String): Notification {
         val accent = ThemeColors.accent(context)
         return NotificationCompat.Builder(context, RESULT_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification_sign)
+            .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(
                 context.getString(if (success) R.string.unlock_sign_success else R.string.unlock_sign_failed)
             )

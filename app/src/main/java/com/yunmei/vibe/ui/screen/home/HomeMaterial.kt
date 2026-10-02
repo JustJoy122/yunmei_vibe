@@ -1,7 +1,5 @@
 package com.yunmei.vibe.ui.screen.home
 
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -155,9 +153,14 @@ private fun LockStatusCard(
                 stringResource(R.string.home_status_set_default_action)
             }
 
-        // 底部补充信息：就绪时展示门锁标签（原 StatusTag 的文案），异常时为 null。
-        val statusFooter: String? = if (ready && default != null) {
-            default.label.ifBlank { default.mac }
+        val statusTrailing: (@Composable () -> Unit)? = if (ready && default != null) {
+            {
+                StatusTag(
+                    label = default.label.ifBlank { default.mac },
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    backgroundColor = MaterialTheme.colorScheme.primary
+                )
+            }
         } else null
 
         Surface(
@@ -175,52 +178,34 @@ private fun LockStatusCard(
         ) {
             // 与 Miuix 侧保持同一结构：左侧三段文本，右侧一个巨大圆图标被卡片右边缘裁切。
             // 正常/异常共用这一种版式，只有图标与语义色不同（不再有"小图标 + 扁平"的异常版式）。
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .offset(27.dp, 31.dp),
-                    contentAlignment = Alignment.BottomEnd,
-                ) {
-                    Icon(
-                        modifier = Modifier.size(110.dp),
-                        imageVector = statusIcon,
-                        contentDescription = statusTitle,
-                        // 与容器同源的内容色降一点透明度，保证在 errorContainer/
-                        // secondaryContainer 上都有足够对比度。
-                        tint = contentColor.copy(alpha = 0.8f),
+            ListItem(
+                modifier = Modifier,
+                leadingContent = {
+                    Icon(statusIcon, contentDescription = statusTitle)
+                },
+                trailingContent = statusTrailing,
+                overlineContent = null,
+                supportingContent = {
+                    Text(
+                        text = statusSummary,
+                        style = MaterialTheme.typography.bodyMedium
                     )
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp, 14.dp),
-                    contentAlignment = Alignment.TopStart,
-                ) {
-                    Column {
-                        Text(
-                            text = statusTitle,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(Modifier.height(1.dp))
-                        Text(
-                            text = statusSummary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                        if (statusFooter != null) {
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                text = statusFooter,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = contentColor.copy(alpha = 0.85f),
-                            )
-                        }
-                    }
-                }
-            }
+                },
+                colors = ListItemDefaults.colors(
+                    containerColor = Color.Transparent,
+                    contentColor = contentColor,
+                    leadingContentColor = contentColor,
+                    trailingContentColor = contentColor,
+                    supportingContentColor = contentColor.copy(alpha = 0.7f)
+                ),
+                elevation = ListItemDefaults.elevation(),
+                content = {
+                    Text(
+                        text = statusTitle,
+                        style = MaterialTheme.typography.titleMediumEmphasized
+                    )
+                },
+            )
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.home
 
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -168,146 +169,51 @@ private fun LockStatusCardMiuix(
         val default = state.defaultLock
 
         when {
-            ready && default != null -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        // KernelSU 原版 StatusCard 的取色规则（KernelSU-main HomeMiuix.kt:272-280）：
-                        // 莫奈开 → secondaryContainer；莫奈关 → 深色 0xFF1A3825 / 浅色 0xFFDFFAE4。
-                        colors = CardDefaults.defaultColors(
-                            color = when {
-                                isDynamicColor -> colorScheme.secondaryContainer
-                                isInDarkTheme() -> Color(0xFF1A3825)
-                                else -> Color(0xFFDFFAE4)
-                            }
-                        ),
-                        onClick = {
-                            actions.onOpenDetail(default)
-                        },
-                        showIndication = true,
-                        pressFeedbackType = PressFeedbackType.Tilt
-                    ) {
-                        Box {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .offset(27.dp, 31.dp),
-                                contentAlignment = Alignment.BottomEnd
-                            ) {
-                                Icon(
-                                    modifier = Modifier.size(110.dp),
-                                    imageVector = Icons.Rounded.CheckCircleOutline,
-                                    // 与 KernelSU 原版同一分支（HomeMiuix.kt:299-303）：
-                                    // 莫奈开用 primary 0.8 透明度，莫奈关用固定状态绿。
-                                    tint = if (isDynamicColor) {
-                                        colorScheme.primary.copy(alpha = 0.8f)
-                                    } else {
-                                        Color(0xFF36D167)
-                                    },
-                                    contentDescription = null
-                                )
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp, 10.dp),
-                                contentAlignment = Alignment.BottomStart,
-                            ) {
-                                Text(
-                                    text = default.label.ifBlank { default.mac },
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp, 14.dp),
-                                contentAlignment = Alignment.TopStart,
-                            ) {
-                                Column {
-                                    Text(
-                                        text = stringResource(R.string.home_status_ready_title),
-                                        fontSize = 22.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                    Spacer(Modifier.height(1.dp))
-                                    Text(
-                                        text = UnitCodes.name(default.schoolNo) ?: default.schoolNo,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Medium,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            state.lockCount == 0 -> {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.defaultColors(
-                            color = warningCardContainerColor(),
-                            contentColor = warningCardContentColor(),
-                        ),
-                        onClick = {
-                            actions.onOpenLocks()
-                        },
-                        showIndication = true,
-                        pressFeedbackType = PressFeedbackType.Sink
-                    ) {
-                        BasicComponent(
-                            title = stringResource(R.string.home_status_empty_title),
-                            summary = stringResource(R.string.home_status_add_action),
-                            titleColor = top.yukonga.miuix.kmp.basic.BasicComponentDefaults.titleColor(color = warningCardContentColor()),
-                            summaryColor = top.yukonga.miuix.kmp.basic.BasicComponentDefaults.summaryColor(color = warningCardContentColor()),
-                            startAction = {
-                                Icon(
-                                    Icons.Rounded.ErrorOutline,
-                                    stringResource(R.string.home_status_empty_title),
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    tint = warningCardContentColor(),
-                                )
-                            },
-                        )
-                    }
-                }
-            }
-
-            else -> {
-                Card(
-                    colors = CardDefaults.defaultColors(
-                        color = warningCardContainerColor(),
-                        contentColor = warningCardContentColor(),
-                    ),
-                    onClick = {
-                        actions.onOpenLocks()
+ready && default != null -> {
+                MiuixStatusCard(
+                    title = stringResource(R.string.home_status_ready_title),
+                    subtitle = UnitCodes.name(default.schoolNo) ?: default.schoolNo,
+                    footer = default.label.ifBlank { default.mac },
+                    icon = Icons.Rounded.CheckCircleOutline,
+                    iconTint = if (isDynamicColor) {
+                        colorScheme.primary.copy(alpha = 0.8f)
+                    } else {
+                        Color(0xFF36D167)
                     },
-                    showIndication = true,
-                    pressFeedbackType = PressFeedbackType.Sink
-                ) {
-                    BasicComponent(
-                        title = stringResource(R.string.home_status_no_default_title),
-                        summary = stringResource(R.string.home_status_set_default_action),
-                        titleColor = top.yukonga.miuix.kmp.basic.BasicComponentDefaults.titleColor(color = warningCardContentColor()),
-                        summaryColor = top.yukonga.miuix.kmp.basic.BasicComponentDefaults.summaryColor(color = warningCardContentColor()),
-                        startAction = {
-                            Icon(
-                                Icons.Rounded.ErrorOutline,
-                                stringResource(R.string.home_status_no_default_title),
-                                modifier = Modifier.padding(end = 6.dp),
-                                tint = warningCardContentColor(),
-                            )
-                        }
-                    )
-                }
+                    containerColor = when {
+                        isDynamicColor -> colorScheme.secondaryContainer
+                        isInDarkTheme() -> Color(0xFF1A3825)
+                        else -> Color(0xFFDFFAE4)
+                    },
+                    contentColor = null,
+                    onClick = { actions.onOpenDetail(default) },
+                )
+            }
+
+state.lockCount == 0 -> {
+                MiuixStatusCard(
+                    title = stringResource(R.string.home_status_empty_title),
+                    subtitle = stringResource(R.string.home_status_add_action),
+                    footer = null,
+                    icon = Icons.Rounded.ErrorOutline,
+                    iconTint = warningCardContentColor().copy(alpha = 0.8f),
+                    containerColor = warningCardContainerColor(),
+                    contentColor = warningCardContentColor(),
+                    onClick = actions.onOpenLocks,
+                )
+            }
+
+else -> {
+                MiuixStatusCard(
+                    title = stringResource(R.string.home_status_no_default_title),
+                    subtitle = stringResource(R.string.home_status_set_default_action),
+                    footer = null,
+                    icon = Icons.Rounded.ErrorOutline,
+                    iconTint = warningCardContentColor().copy(alpha = 0.8f),
+                    containerColor = warningCardContainerColor(),
+                    contentColor = warningCardContentColor(),
+                    onClick = actions.onOpenLocks,
+                )
             }
         }
     }
@@ -505,5 +411,98 @@ private fun SignCard(
             enabled = enabled,
             onClick = if (enabled) actions.onSign else null,
         )
+    }
+}
+
+
+/**
+ * 首页异常状态卡（Miuix）：与正常状态卡完全相同的版式——
+ * 左侧标题 + 副标题，右侧一个巨大圆形感叹号图标被卡片右边缘裁切。
+ *
+ * 颜色沿用现有的错误语义色（warningCardContainerColor / warningCardContentColor），
+ * 图标用同一内容色，保证与容器有足够对比度。
+ */
+@Composable
+private fun MiuixStatusCard(
+    title: String,
+    subtitle: String?,
+    footer: String?,
+    icon: ImageVector,
+    iconTint: Color,
+    containerColor: Color,
+    contentColor: Color? = null,
+    onClick: () -> Unit,
+) {
+    // 首页三种状态共用这一种版式：左侧标题/副标题/底部补充信息，右侧一个巨大圆图标被卡片右边缘裁切。
+    // 只通过参数区分文案、图标、语义色与点击行为，不再存在"扁平小图标"的异常版式。
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = if (contentColor != null) {
+                CardDefaults.defaultColors(color = containerColor, contentColor = contentColor)
+            } else {
+                CardDefaults.defaultColors(color = containerColor)
+            },
+            onClick = onClick,
+            showIndication = true,
+            pressFeedbackType = PressFeedbackType.Tilt,
+        ) {
+            Box {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .offset(27.dp, 31.dp),
+                    contentAlignment = Alignment.BottomEnd,
+                ) {
+                    Icon(
+                        modifier = Modifier.size(110.dp),
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconTint,
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp, 10.dp),
+                    contentAlignment = Alignment.BottomStart,
+                ) {
+                    if (footer != null) {
+                        Text(
+                            text = footer,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp, 14.dp),
+                    contentAlignment = Alignment.TopStart,
+                ) {
+                    Column {
+                        Text(
+                            text = title,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        if (subtitle != null) {
+                            Spacer(Modifier.height(1.dp))
+                            Text(
+                                text = subtitle,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }

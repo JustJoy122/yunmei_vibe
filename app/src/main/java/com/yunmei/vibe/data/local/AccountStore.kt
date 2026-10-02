@@ -23,6 +23,11 @@ class AccountStore(private val secureStore: SecureStore) {
         secureStore.putJson(KEY_USERS, users)
     }
 
+    /** 还原：整表替换（备份还原专用）。 */
+    fun replaceAll(users: List<StoredUser>) {
+        secureStore.putJson(KEY_USERS, users)
+    }
+
     fun removeByUsernameMd5(md5: String) {
         secureStore.putJson(KEY_USERS, getAll().filterNot { it.usernameMd5 == md5 })
     }

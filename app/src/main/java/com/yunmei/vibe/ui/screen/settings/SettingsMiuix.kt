@@ -42,6 +42,9 @@ import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.ui.component.dialog.rememberLoadingDialog
+import com.yunmei.vibe.YunMeiApp
+import com.yunmei.vibe.ui.component.backup.BackupRestoreEntry
+import com.yunmei.vibe.ui.component.backup.BackupSecureStoreWarning
 import com.yunmei.vibe.ui.component.miuix.SendLogDialog
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.util.BlurredBar
@@ -299,6 +302,10 @@ fun SettingPagerMiuix(
                             onDismissRequest = { showSendLogDialog.value = false },
                             loadingDialog = loadingDialog
                         )
+                        // 安全存储不可用时的内联提示（方案 A：不弹阻断式对话框；恢复后自动隐藏）
+                        BackupSecureStoreWarning(show = !YunMeiApp.app.container.secureStoreAvailable)
+                        // 「备份与还原」入口（含口令输入 / SAF 文件选择 / 覆盖确认）
+                        BackupRestoreEntry()
                         val about = stringResource(id = R.string.settings_about)
                         ArrowPreference(
                             title = about,

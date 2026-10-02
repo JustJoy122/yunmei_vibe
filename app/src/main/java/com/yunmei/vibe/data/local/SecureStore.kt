@@ -40,6 +40,16 @@ class SecureStore(context: Context) {
     /** 安全存储当前是否可用；不可用时调用方只会读到空数据（旧数据仍在磁盘上未被改动）。 */
     val isAvailable: Boolean get() = prefs != null
 
+    /**
+     * 若此前创建失败，这里再尝试一次（Keystore 短暂不可用后恢复的场景），
+     * 使界面上的"安全存储暂时不可用"提示能够自动消失。失败不改动任何数据。
+     */
+    fun retryIfUnavailable() {
+        if (prefs == null) {
+            prefs = createEncrypted(appContext)
+        }
+    }
+
     /** 最近一次失败原因，供界面/日志提示使用；成功时为 null。 */
     val lastError: Throwable? get() = error
 
@@ -102,6 +112,6 @@ class SecureStore(context: Context) {
         fun get(context: Context): SecureStore =
             instance ?: synchronized(this) {
                 instance ?: SecureStore(context.applicationContext).also { instance = it }
-            }
+            }.also { it.retryIfUnavailable() }
     }
 }

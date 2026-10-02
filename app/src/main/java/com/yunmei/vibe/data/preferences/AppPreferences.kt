@@ -113,6 +113,21 @@ class AppPreferences(private val context: Context, private val secureStore: Secu
         legacy
     }
 
+    /** 还原：把备份中的应用设置写回（缺字段用默认值补齐）。 */
+    suspend fun restoreFrom(backup: com.yunmei.vibe.data.backup.DataStoreSettings) {
+        setThemeMode(runCatching { ThemeMode.valueOf(backup.themeMode) }.getOrDefault(ThemeMode.MATERIAL3))
+        setQuickConnect(backup.quickConnect)
+        setAutoConnect(backup.autoConnect)
+        setAutoExit(backup.autoExit)
+        setAutoCode(backup.autoCode)
+        setAlwaysCode(backup.alwaysCode)
+        setHideSign(backup.hideSign)
+        setHideCode(backup.hideCode)
+        setAttemptUpload(backup.attemptUpload)
+        setRecordObject(backup.recordObject)
+        setSignLocationMode(backup.signLocationMode)
+    }
+
     private companion object {
         val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         val KEY_QUICK_CONNECT = booleanPreferencesKey("quick_connect")

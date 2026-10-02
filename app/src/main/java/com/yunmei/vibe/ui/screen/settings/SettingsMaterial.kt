@@ -52,6 +52,9 @@ import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedDropdownItem
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
+import com.yunmei.vibe.YunMeiApp
+import com.yunmei.vibe.ui.component.backup.BackupRestoreEntry
+import com.yunmei.vibe.ui.component.backup.BackupSecureStoreWarning
 import com.yunmei.vibe.ui.component.material.SendLogBottomSheet
 import com.yunmei.vibe.ui.component.material.SnackBarHost
 
@@ -214,6 +217,8 @@ fun SettingPagerMaterial(
             )
 
             // 其他
+            // 安全存储不可用时的内联提示（方案 A：设置页，不弹阻断式对话框；恢复后自动隐藏）
+            BackupSecureStoreWarning(show = !YunMeiApp.app.container.secureStoreAvailable)
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
                 title = stringResource(R.string.settings_group_other),
@@ -229,6 +234,9 @@ fun SettingPagerMaterial(
                                 )
                             },
                         )
+                    },
+                    {
+                        BackupRestoreEntry()
                     },
                     {
                         SegmentedListItem(

@@ -53,6 +53,13 @@ class LockStore(private val secureStore: SecureStore) {
         notifyChanged()
     }
 
+    /** 还原：整表替换（备份还原专用）。 */
+    fun replaceAll(locks: List<Lock>, default: Lock?) {
+        secureStore.putJson(KEY_LOCKS, locks)
+        if (default == null) clearDefault() else secureStore.putJson(KEY_DEFAULT, default)
+        notifyChanged()
+    }
+
     fun setDefault(lock: Lock?) {
         if (lock == null) {
             clearDefault()

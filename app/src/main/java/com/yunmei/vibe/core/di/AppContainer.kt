@@ -26,6 +26,9 @@ class AppContainer(context: Context) {
         SecureStore.get(appContext)
     }
 
+    /** 安全存储是否可用（供设置页做内联提示）。 */
+    val secureStoreAvailable: Boolean get() = secureStore.isAvailable
+
     val accountStore: AccountStore by lazy {
         AccountStore(secureStore)
     }

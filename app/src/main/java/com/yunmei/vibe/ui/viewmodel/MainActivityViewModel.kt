@@ -4,6 +4,9 @@ import com.yunmei.vibe.data.preferences.SettingsPrefs
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.SavedStateHandle
+import com.yunmei.vibe.ui.navigation.Route
+
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yunmei.vibe.YunMeiApp
@@ -22,7 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivityViewModel(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val prefs = SettingsPrefs.of(YunMeiApp.app)
@@ -37,6 +40,24 @@ class MainActivityViewModel(
     private val _uiState = MutableStateFlow(readUiState())
     val uiState: StateFlow<MainActivityUiState> = _uiState.asStateFlow()
     val selectedMainPage: StateFlow<Int> = mainPageState.selectedPage
+
+    /**
+     * 重建（如预测性返回开关触发的 recreate()）之前记录当前路由，
+     * 重建后由 MainActivity 消费并恢复到该页面，避免用户被甩回首页。
+     * 存于 SavedStateHandle，可跨 Activity 重建存活。
+     */
+    fun markPendingRoute(route: Route?) {
+        if (route != null) {
+            savedStateHandle[PENDING_ROUTE_KEY] = route
+        }
+    }
+
+    /** 取出并清除待恢复路由（只消费一次）。 */
+    fun consumePendingRoute(): Route? {
+        val route = savedStateHandle.get<Route>(PENDING_ROUTE_KEY) ?: return null
+        savedStateHandle.remove<Route>(PENDING_ROUTE_KEY)
+        return route
+    }
 
     /** 自动开门请求（autoConnect）：主界面加载完成后触发一次，同一进程内只消费一次。 */
     private val _autoOpenTrigger = MutableStateFlow(0L)
@@ -157,3 +178,6 @@ object MainPagerConfig {
 
     fun coercePage(page: Int): Int = page.coerceIn(0, LAST_PAGE_INDEX)
 }
+
+/** 跨 Activity 重建保存"重建前所在路由"的 SavedStateHandle 键。 */
+private const val PENDING_ROUTE_KEY = "yunmei_pending_route"

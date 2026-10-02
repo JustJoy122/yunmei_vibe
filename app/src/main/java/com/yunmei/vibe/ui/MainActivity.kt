@@ -168,6 +168,13 @@ class MainActivity : ComponentActivity() {
             // 游客模式：启动一律直接进入主界面，登录页仅作为二级页面按需进入，
             // 不再强制"必须先登录且必须有门锁"。
             val navigator = rememberNavigator(Route.Main)
+            // 若因主题相关操作或预测性返回开关发生过 Activity 重建，
+            // 这里把用户送回原页面，而不是停在返回栈起点（Route.Main = 首页）。
+            LaunchedEffect(Unit) {
+                viewModel.consumePendingRoute()?.let { route ->
+                    if (navigator.current() != route) navigator.push(route)
+                }
+            }
             val systemDensity = LocalDensity.current
             val density = remember(systemDensity, uiState.pageScale) {
                 Density(systemDensity.density * uiState.pageScale, systemDensity.fontScale)

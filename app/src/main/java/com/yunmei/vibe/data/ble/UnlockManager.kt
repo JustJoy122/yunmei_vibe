@@ -31,7 +31,7 @@ private object UnlockProgress {
     const val START = 20
     const val DEVICE_FOUND = 30
     const val CONNECTED = 40
-    const val CONNECTING = 43
+    const val CONNECTING = 35
     const val SUBSCRIBED = 50
     const val SENDING = 75
     const val DONE = 100

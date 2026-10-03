@@ -297,4 +297,5 @@
     <string name="permission_request_notice">正在请求权限，请在系统弹窗中允许</string>
     <string name="permission_settings_notice">正在打开系统设置，请开启后返回</string>
     <string name="permission_request_bluetooth">正在请求开启蓝牙</string>
+    <string name="sign_start_failed">无法在后台启动打卡，请打开 App 后重试</string>
 </resources>

@@ -9,6 +9,7 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
@@ -54,13 +55,16 @@ class SignService : Service() {
         when (action) {
             // 通知按钮：使用上次位置，直接后台执行
             ACTION_USE_LAST -> {
-                startAsForegroundIfNeeded(progressText = getString(R.string.sign_signaling), percent = 75)
+                // 使用上次位置：跳过定位阶段，从签名阶段（50%）起步
+                startAsForegroundIfNeeded(progressText = getString(R.string.sign_signaling), percent = 50)
                 runFlow(SignSubMode.USE_LAST)
             }
             // 弹窗回调：带上用户选择
             ACTION_WITH_MODE -> {
                 val mode = SignSubMode.fromValue(intent?.getStringExtra(EXTRA_SUB_MODE))
-                startAsForegroundIfNeeded(progressText = getString(R.string.sign_signaling), percent = 75)
+                // 需定位的模式从定位阶段（25%）起步；仅用上次位置时从签名阶段（50%）起步
+                val startPercent = if (mode == SignSubMode.USE_LAST) 50 else 25
+                startAsForegroundIfNeeded(progressText = getString(R.string.sign_signaling), percent = startPercent)
                 runFlow(mode)
             }
             // 入口：按设置里的定位方式决定
@@ -70,8 +74,10 @@ class SignService : Service() {
                 if (sub.isNullOrBlank()) {
                     startBySettingsMode()
                 } else {
-                    startAsForegroundIfNeeded(getString(R.string.sign_signaling), 75)
-                    runFlow(SignSubMode.fromValue(sub))
+                    val retryMode = SignSubMode.fromValue(sub)
+                    val retryPercent = if (retryMode == SignSubMode.USE_LAST) 50 else 25
+                    startAsForegroundIfNeeded(getString(R.string.sign_signaling), retryPercent)
+                    runFlow(retryMode)
                 }
             }
             // 失败通知的「完成」：收起通知并结束服务。
@@ -318,17 +324,26 @@ class SignService : Service() {
                 retrySubMode = retrySubMode?.value,
             ),
         )
+        cancelOwnNotification()
         stopForegroundCompat()
         stopSelf()
     }
 
     private fun complete() {
+        cancelOwnNotification()
         stopForegroundCompat()
         stopSelf()
     }
 
     private fun stopForegroundCompat() {
         runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH) }
+    }
+
+    /** 收尾时只清除打卡自己的通知（1002），绝不影响开门通知（1001）。 */
+    private fun cancelOwnNotification() {
+        runCatching {
+            NotificationManagerCompat.from(this).cancel(SignNotifications.SIGN_NOTIFICATION_ID)
+        }
     }
 
     /** 弹窗回传的定位方式（与设置项解耦，仅表达"这一次打卡怎么取位置"）。 */

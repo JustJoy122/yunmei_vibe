@@ -39,6 +39,9 @@ class UnlockService : Service() {
     /** 最近一次进度，用于失败时判断哪个分段变红。 */
     private var lastPercent = 0
 
+    /** 本次开门执行的 Job：与 Service 生命周期作用域分离，取消只影响本次执行。 */
+    private var runJob: Job? = null
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -52,6 +55,20 @@ class UnlockService : Service() {
         if (intent?.action == ACTION_FINISH) {
             dismissAndStop()
             return START_NOT_STICKY
+        }
+        // 「重试」：显式分支。取消上一次执行，并让通知立刻回到"不确定进度"，
+        // 用户点下去马上有可见反馈（此前只有常量定义、没有分支）。
+        if (intent?.action == ACTION_RETRY) {
+            runJob?.cancel()
+            runJob = null
+            UnlockNotifications.post(
+                this,
+                UnlockNotifications.progress(
+                    this,
+                    getString(R.string.unlock_retry),
+                    null,
+                ),
+            )
         }
         if (intent?.getBooleanExtra(EXTRA_BT_DENIED, false) == true) {
             // 用户在系统对话框里拒绝了开启蓝牙：保留实况通知与进度条，动作是重试/完成。
@@ -82,7 +99,8 @@ class UnlockService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        scope.launch { runUnlock() }
+        runJob?.cancel()
+        runJob = scope.launch { runUnlock() }
         return START_NOT_STICKY
     }
 

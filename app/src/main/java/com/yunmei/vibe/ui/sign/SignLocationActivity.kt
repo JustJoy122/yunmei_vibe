@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import android.widget.Toast
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -93,7 +94,12 @@ class SignLocationActivity : ComponentActivity() {
         val intent = Intent(this, SignService::class.java)
             .setAction(SignService.ACTION_WITH_MODE)
             .putExtra(SignService.EXTRA_SUB_MODE, subMode.value)
-        runCatching { ContextCompat.startForegroundService(this, intent) }
+        // Android 12+ 在后台启动前台服务可能被系统拒绝：此处不再静默吞掉异常，
+        // 失败时给出可见反馈，避免用户以为"点了没反应"。
+        val started = runCatching { ContextCompat.startForegroundService(this, intent) }.isSuccess
+        if (!started) {
+            Toast.makeText(this, R.string.sign_start_failed, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun isLocationEnabled(): Boolean {

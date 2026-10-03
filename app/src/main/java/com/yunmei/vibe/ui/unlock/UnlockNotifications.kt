@@ -171,7 +171,9 @@ object UnlockNotifications {
             .setColor(accent.primary)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
-            .setShortCriticalText(percent?.let { "$it%" } ?: text)
+            // ColorOS 实况/胶囊形态只显示 shortCriticalText，必须包含阶段文字，
+            // 否则「快速连接」等阶段只会看到一个百分比。
+            .setShortCriticalText(if (percent == null) text else "$text $percent%")
             .setProgress(PROGRESS_MAX, percent ?: 0, percent == null)
             .setStyle(progressStyle)
             .build()

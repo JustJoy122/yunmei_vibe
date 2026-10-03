@@ -33,6 +33,7 @@ import com.yunmei.vibe.ui.navigation.Navigator
 import com.yunmei.vibe.ui.navigation.Route
 import com.yunmei.vibe.ui.util.BLE_PERMISSIONS
 import com.yunmei.vibe.ui.util.LOCATION_PERMISSIONS
+import com.yunmei.vibe.ui.util.PermissionNotice
 import com.yunmei.vibe.ui.util.rememberPermissionRequester
 import com.yunmei.vibe.ui.viewmodel.MainPagerConfig
 import kotlinx.coroutines.flow.StateFlow
@@ -111,6 +112,7 @@ fun HomePager(
         if (uiState.pendingBluetoothEnable) {
             viewModel.onBluetoothEnableRequested()
             val launched = runCatching {
+                PermissionNotice.show(context, R.string.permission_request_bluetooth, "bluetooth_enable")
                 bluetoothEnableLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
             }.isSuccess
             if (!launched) {

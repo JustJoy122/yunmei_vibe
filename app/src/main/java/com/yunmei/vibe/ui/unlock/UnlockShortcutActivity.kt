@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.util.BLE_PERMISSIONS
+import com.yunmei.vibe.ui.util.PermissionNotice
 import com.yunmei.vibe.ui.util.PermissionRequester
 
 /**
@@ -99,6 +100,7 @@ class UnlockShortcutActivity : ComponentActivity() {
     /** 用系统对话框请求开启蓝牙；同意后继续开门，拒绝则发失败通知。 */
     private fun requestBluetoothEnable() {
         val launched = runCatching {
+            PermissionNotice.show(this, R.string.permission_request_bluetooth, "bluetooth_enable")
             enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
         }.isSuccess
         if (launched) return

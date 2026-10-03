@@ -64,6 +64,7 @@ import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
 import com.yunmei.vibe.ui.component.message.GlobalMessageHost
 import com.yunmei.vibe.ui.navigation.LocalNavigator
 import com.yunmei.vibe.ui.navigation.Navigator
+import com.yunmei.vibe.ui.navigation.PendingRouteHolder
 import com.yunmei.vibe.ui.navigation.Route
 import com.yunmei.vibe.ui.navigation.rememberNavigator
 import com.yunmei.vibe.ui.screen.about.AboutScreen
@@ -171,7 +172,7 @@ class MainActivity : ComponentActivity() {
             // 若因主题相关操作或预测性返回开关发生过 Activity 重建，
             // 这里把用户送回原页面，而不是停在返回栈起点（Route.Main = 首页）。
             LaunchedEffect(Unit) {
-                viewModel.consumePendingRoute()?.let { route ->
+                PendingRouteHolder.consume()?.let { route ->
                     if (navigator.current() != route) navigator.push(route)
                 }
             }

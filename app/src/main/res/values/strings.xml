@@ -294,4 +294,7 @@
     <string name="restore_success">还原完成</string>
     <string name="restore_failed">还原失败：%1$s</string>
     <string name="secure_store_unavailable">安全存储暂时不可用，已保存的账号与门锁暂时无法读取，请稍后重试。</string>
+    <string name="permission_request_notice">正在请求权限，请在系统弹窗中允许</string>
+    <string name="permission_settings_notice">正在打开系统设置，请开启后返回</string>
+    <string name="permission_request_bluetooth">正在请求开启蓝牙</string>
 </resources>

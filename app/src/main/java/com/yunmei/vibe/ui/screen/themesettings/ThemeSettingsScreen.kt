@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
@@ -9,16 +10,14 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.ui.navigation.LocalNavigator
+import com.yunmei.vibe.ui.navigation.PendingRouteHolder
 import com.yunmei.vibe.ui.navigation.Route
-import com.yunmei.vibe.ui.viewmodel.MainActivityViewModel
 import com.yunmei.vibe.ui.theme.ColorMode
 import com.yunmei.vibe.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.delay
@@ -34,8 +33,6 @@ private const val PREDICTIVE_BACK_APPLY_DELAY_MS = 320L
 @Composable
 fun ThemeSettingsScreen() {
     val navigator = LocalNavigator.current
-    // 与 MainActivity 同一实例（Activity 作用域），用于重建前记录路由。
-    val mainActivityViewModel = viewModel<MainActivityViewModel>()
     val activity = LocalActivity.current
     val viewModel = viewModel<SettingsViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -93,7 +90,7 @@ fun ThemeSettingsScreen() {
                     if (!host.isFinishing && !host.isDestroyed) {
                         // recreate 本身保留（setEnableOnBackInvokedCallback 是隐藏标志，需要新窗口才生效），
                         // 这里补齐它的副作用：重建前记录当前路由，重建后由 MainActivity 恢复。
-                        mainActivityViewModel.markPendingRoute(navigator.current() as? Route)
+                        PendingRouteHolder.route = navigator.current() as? Route
                         host.recreate()
                     }
                 }

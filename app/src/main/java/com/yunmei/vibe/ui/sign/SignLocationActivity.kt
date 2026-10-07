@@ -96,7 +96,12 @@ class SignLocationActivity : ComponentActivity() {
             .putExtra(SignService.EXTRA_SUB_MODE, subMode.value)
         // Android 12+ 在后台启动前台服务可能被系统拒绝：此处不再静默吞掉异常，
         // 失败时给出可见反馈，避免用户以为"点了没反应"。
-        val started = runCatching { ContextCompat.startForegroundService(this, intent) }.isSuccess
+        // 经前台跳板启动服务：本页是半透明弹窗 Activity，跳板同样在前台，
+        // 但统一走跳板可以避免"服务启动被系统拒绝"这类静默失败。
+        val trampoline = Intent(this, SignTrampolineActivity::class.java)
+            .putExtra(SignTrampolineActivity.EXTRA_ACTION, SignService.ACTION_WITH_MODE)
+            .putExtra(SignService.EXTRA_SUB_MODE, subMode.value)
+        val started = runCatching { startActivity(trampoline) }.isSuccess
         if (!started) {
             Toast.makeText(this, R.string.sign_start_failed, Toast.LENGTH_LONG).show()
         }

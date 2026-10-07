@@ -247,34 +247,34 @@ object SignNotifications {
         )
     }
 
-    private fun useLastIntent(context: Context): PendingIntent =
-        PendingIntent.getForegroundService(
+    /** 经前台跳板启动服务，绕开 Android 12+ 的后台启动前台服务限制。 */
+    private fun trampolineIntent(context: Context, action: String, subMode: String?, requestCode: Int): PendingIntent {
+        val intent = Intent(context, SignTrampolineActivity::class.java)
+            .putExtra(SignTrampolineActivity.EXTRA_ACTION, action)
+        if (subMode != null) {
+            intent.putExtra(SignService.EXTRA_SUB_MODE, subMode)
+        }
+        return PendingIntent.getActivity(
             context,
-            0,
-            Intent(context, SignService::class.java).setAction(SignService.ACTION_USE_LAST),
+            requestCode,
+            intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+    }
+
+    private fun useLastIntent(context: Context): PendingIntent =
+        trampolineIntent(context, SignService.ACTION_USE_LAST, null, 0)
 
     private fun retryIntent(context: Context, retrySubMode: String?): PendingIntent {
         val intent = Intent(context, SignService::class.java).setAction(SignService.ACTION_RETRY)
         if (retrySubMode != null) {
             intent.putExtra(SignService.EXTRA_SUB_MODE, retrySubMode)
         }
-        return PendingIntent.getForegroundService(
-            context,
-            4,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+        return trampolineIntent(context, SignService.ACTION_RETRY, retrySubMode, 4)
     }
 
     private fun finishIntent(context: Context): PendingIntent =
-        PendingIntent.getForegroundService(
-            context,
-            5,
-            Intent(context, SignService::class.java).setAction(SignService.ACTION_FINISH),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+        trampolineIntent(context, SignService.ACTION_FINISH, null, 5)
 
     private fun locationSettingsIntent(context: Context): PendingIntent =
         PendingIntent.getActivity(

@@ -90,6 +90,22 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- 快捷方式开门的前台服务：前台通知展示进度，结束后保留结果通知。 -->
+        <!-- 打卡跳板：由通知/弹窗的 PendingIntent.getActivity 打开，在前台启动 SignService -->
+        <activity
+            android:name=".ui.sign.SignTrampolineActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.YunmeiVibe.Dialog" />
+
+        <!-- 开门跳板：由失败通知的「重试/完成」按钮打开，带 token 校验 -->
+        <activity
+            android:name=".ui.unlock.UnlockTrampolineActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.YunmeiVibe.Dialog" />
+
         <service
             android:name=".ui.unlock.UnlockService"
             android:exported="false"

@@ -124,7 +124,7 @@ object UnlockNotifications {
         val accent = ThemeColors.accent(context)
         return NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
-            .setContentTitle(title)
+            .setContentTitle(title + " · " + text)
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
             .setColor(accent.primary)
@@ -165,7 +165,7 @@ object UnlockNotifications {
         // 实况渠道保持系统默认提示能力（否则失败无法提醒），进行中靠 setOnlyAlertOnce(true) 抑制重复提醒。
         val notification = Notification.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
-            .setContentTitle(context.getString(R.string.unlock_open))
+            .setContentTitle(context.getString(R.string.unlock_open) + " · " + text)
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
             .setColor(accent.primary)
@@ -187,7 +187,7 @@ object UnlockNotifications {
         val accent = ThemeColors.accent(context)
         return NotificationCompat.Builder(context, PROGRESS_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
-            .setContentTitle(context.getString(R.string.unlock_open))
+            .setContentTitle(context.getString(R.string.unlock_open) + " · " + text)
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
             .setColor(accent.primary)
@@ -210,7 +210,7 @@ object UnlockNotifications {
         val channelId = if (islandSupported || isModernEligible()) LIVE_CHANNEL_ID else RESULT_CHANNEL_ID
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification_unlock)
-            .setContentTitle(title)
+            .setContentTitle(title + " · " + text)
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
             .setColor(if (success) accent.primary else accent.error)
@@ -366,10 +366,13 @@ object UnlockNotifications {
     fun retryAction(context: Context): Notification.Action = Notification.Action.Builder(
         null,
         context.getString(R.string.unlock_retry),
-        PendingIntent.getForegroundService(
+        PendingIntent.getActivity(
             context,
             10,
-            Intent(context, UnlockService::class.java).setAction(UnlockService.ACTION_RETRY),
+            Intent(context, UnlockTrampolineActivity::class.java)
+                .putExtra(UnlockTrampolineActivity.EXTRA_ACTION, UnlockService.ACTION_RETRY)
+                .putExtra(UnlockShortcut.EXTRA_TOKEN, UnlockShortcut.token(context))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         ),
     ).build()
@@ -378,10 +381,13 @@ object UnlockNotifications {
     fun finishAction(context: Context): Notification.Action = Notification.Action.Builder(
         null,
         context.getString(R.string.unlock_finish),
-        PendingIntent.getForegroundService(
+        PendingIntent.getActivity(
             context,
             11,
-            Intent(context, UnlockService::class.java).setAction(UnlockService.ACTION_FINISH),
+            Intent(context, UnlockTrampolineActivity::class.java)
+                .putExtra(UnlockTrampolineActivity.EXTRA_ACTION, UnlockService.ACTION_FINISH)
+                .putExtra(UnlockShortcut.EXTRA_TOKEN, UnlockShortcut.token(context))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         ),
     ).build()

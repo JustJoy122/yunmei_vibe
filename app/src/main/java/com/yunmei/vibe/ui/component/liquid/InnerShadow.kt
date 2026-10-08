@@ -3,6 +3,7 @@
 
 package com.yunmei.vibe.ui.component.liquid
 
+import android.os.Build
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
@@ -117,7 +118,12 @@ private class InnerShadowNode(
         layer.alpha = shadow.alpha
         layer.blendMode = shadow.blendMode
         if (prevRadius != radius) {
-            layer.renderEffect = if (radius > 0f) BlurEffect(radius, radius, TileMode.Decal) else null
+            // Compose 的 BlurEffect 底层依赖 RenderEffect，仅 Android 12(API 31)+ 可用；低版本跳过，避免 NoClassDefFoundError。
+            layer.renderEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && radius > 0f) {
+                BlurEffect(radius, radius, TileMode.Decal)
+            } else {
+                null
+            }
             prevRadius = radius
         }
 

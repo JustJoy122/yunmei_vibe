@@ -1,5 +1,17 @@
 package com.yunmei.vibe.ui.sign
 
+import com.yunmei.vibe.ui.component.material.SegmentedListItem
+import com.yunmei.vibe.ui.component.material.SegmentedColumn
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Column
 import android.content.Intent
 import android.location.LocationManager
 import android.os.Bundle
@@ -107,45 +119,66 @@ class SignLocationActivity : ComponentActivity() {
 }
 
 /**
- * 打卡定位方式弹窗。结构与交互对齐 `ScanAddLockMenu`：
- *  - 两套主题共用同一份 items，仅图标族按主题切换（Material TwoTone / Miuix Rounded）；
- *  - Miuix 走 `ActionMenuDialog`，Material 走 `ActionMenuBottomSheet`；
- *  - 点击后的收尾统一交给 [SignLocationActivity.choose]（先关闭、再执行；跳系统设置时例外）。
+ * 打卡「选择定位方式」弹窗。
+ *
+ * 结构对齐 InstallerX 的选项弹窗：标题 + 说明条 + 一组「主标题 + 右箭头」选项 + 取消按钮；
+ * 选项区使用 InstallerX 移植过来的 `SegmentedColumn`（`ui/component/setting/SegmentedColumn.kt`）。
+ *
+ * **两套主题统一走同一个 `AlertDialog` 外壳**，原因（有实测依据）：
+ *  - Material 侧原本就是 `AlertDialog + SegmentedColumn`，用户实测**点击正常**；
+ *  - Miuix 侧原本走我方移植的 `ActionMenuDialog`（内部是 Miuix `OverlayDialog` + `ArrowPreference`），
+ *    用户实测**弹窗能打开但点击选项无响应**；
+ *  - 因此这里不再按主题分派两套外壳，统一采用已被验证可点击的那一套，
+ *    避免再出现"只有 Miuix 点不动"的问题。
+ *
+ * 点击后的业务逻辑保持不变：[SignLocationActivity.choose]（先关闭、再启动打卡；
+ * 需要跳系统定位设置时不关闭）。
  */
 @Composable
 private fun SignLocationDialog(
     onChoice: (SignService.SignSubMode) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val uiMode = LocalUiMode.current
-    val useTwoToneIcons = uiMode == UiMode.Material
-    val items = listOf(
-        ActionMenuItem(
-            if (useTwoToneIcons) Icons.TwoTone.History else Icons.Rounded.History,
-            stringResource(R.string.unlock_sign_use_last),
-        ) { onChoice(SignService.SignSubMode.USE_LAST) },
-        ActionMenuItem(
-            if (useTwoToneIcons) Icons.TwoTone.LocationOn else Icons.Rounded.LocationOn,
-            stringResource(R.string.unlock_sign_locate),
-        ) { onChoice(SignService.SignSubMode.LOCATE_ONLY) },
-        ActionMenuItem(
-            if (useTwoToneIcons) Icons.TwoTone.Save else Icons.Rounded.Save,
-            stringResource(R.string.unlock_sign_relocate),
-        ) { onChoice(SignService.SignSubMode.LOCATE_SAVE) },
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.unlock_sign_ask_title)) },
+        text = {
+            Column {
+                Text(
+                    text = stringResource(R.string.sign_choose_location),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+                Spacer(Modifier.height(12.dp))
+                SegmentedColumn(
+                    content = listOf(
+                        {
+                            SegmentedListItem(
+                                onClick = { onChoice(SignService.SignSubMode.USE_LAST) },
+                                headlineContent = { Text(stringResource(R.string.unlock_sign_use_last)) },
+                                leadingContent = { Icon(Icons.Rounded.History, null) },
+                            )
+                        },
+                        {
+                            SegmentedListItem(
+                                onClick = { onChoice(SignService.SignSubMode.LOCATE_ONLY) },
+                                headlineContent = { Text(stringResource(R.string.unlock_sign_locate)) },
+                                leadingContent = { Icon(Icons.Rounded.LocationOn, null) },
+                            )
+                        },
+                        {
+                            SegmentedListItem(
+                                onClick = { onChoice(SignService.SignSubMode.LOCATE_SAVE) },
+                                headlineContent = { Text(stringResource(R.string.unlock_sign_relocate)) },
+                                leadingContent = { Icon(Icons.Rounded.Save, null) },
+                            )
+                        },
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
     )
-
-    when (uiMode) {
-        UiMode.Miuix -> ActionMenuDialog(
-            show = true,
-            title = stringResource(R.string.unlock_sign_ask_title),
-            summary = stringResource(R.string.sign_choose_location),
-            items = items,
-            onDismissRequest = onDismiss,
-        )
-
-        UiMode.Material -> ActionMenuBottomSheet(
-            items = items,
-            onDismiss = onDismiss,
-        )
-    }
 }

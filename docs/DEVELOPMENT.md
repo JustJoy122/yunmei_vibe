@@ -205,8 +205,8 @@ app/src/main/java/com/yunmei/vibe/
 ### 通知实况与渠道纪律
 
 - **同一通知全程使用同一 ID、同一渠道**：开门固定 `UNLOCK_NOTIFICATION_ID = 1001`、打卡固定 `SIGN_NOTIFICATION_ID = 1002`；进行中、失败、结束都留在各自的 `*_live_channel`。
-- **禁止中途换渠道**：渠道是通知身份的一部分，"同 ID 换渠道"会被系统视为另一条通知，已提升的实况（流体云）会随即消失。历史上打卡与开门都因"进度走 progress 渠道、失败/结束切 result 渠道"而掉回普通通知。
-- `*_progress_channel` / `*_result_channel` 目前仅用于 `ensureChannel()` 建渠道，不再用于发送；新增状态时**不要**把它们当作发送渠道。
+- **禁止中途换渠道**：渠道是通知身份的一部分，"同 ID 换渠道"会被系统视为另一条通知，已提升的实况（流体云）随即消失。进行中、失败与结束状态都使用实况渠道。
+- `*_progress_channel` / `*_result_channel` 仅用于 `ensureChannel()` 建渠道，不作为发送渠道；新增状态时使用实况渠道。
 - 实况相关属性每帧都要带上：`setOngoing(true)`（进行中与失败态）、`setOnlyAlertOnce(true)`（进行中）、以及 `EXTRA_REQUEST_PROMOTED_ONGOING = true`（androidx 的 `setRequestPromotedOngoing` 在本工程解析不到，统一用 extra 写法）。
 - 等待用户操作时，实况短文本用 `setShortCriticalText(getString(R.string.notification_short_text_pending))`（"待处理"）；超级岛走 `MiIslandNotification.extras(..., shortText = ...)`。
 
@@ -220,7 +220,7 @@ app/src/main/java/com/yunmei/vibe/
 ### 打卡定位弹窗的取舍
 
 - 当前实现：`ui/sign/SignLocationActivity` 的 `SignLocationDialog` = Compose 原生 `Dialog`（`usePlatformDefaultWidth = false`）+ 全屏 `Box` 底部对齐 + 顶部 32dp×4dp 视觉把手；选项行使用移植自 InstallerX 的 `NavigationItemWidget`。
-- **刻意不使用 `ModalBottomSheet` / `BottomSheetDialog`**：Miuix 侧最初用 `OverlayDialog + ArrowPreference` 时选项点击完全无响应，换成原生 `Dialog` 后才恢复；更换弹窗容器会重新引入"点击事件是否送达"的不确定性，需要一次真机验证才能确认。
+- **弹窗容器选择**：使用 Compose 原生 `Dialog` 可保证两套界面风格下选项点击行为稳定；改用 `ModalBottomSheet` / `BottomSheetDialog` 前需要先验证两端的点击行为。
 - 因此该弹窗**没有下滑关闭手势**，只支持点击外部或返回键关闭（`onDismissRequest`）。
 
 ## 待办与技术债
@@ -229,10 +229,15 @@ app/src/main/java/com/yunmei/vibe/
 
 - **Android 10（API 29）启动稳定性**：已为此加了两处版本守卫（`ui/component/liquid/InnerShadow.kt` 的 `RenderEffect`/`BlurEffect` 仅 API 31+ 使用、`ui/component/liquid/Lens.kt` 改用本机版本判断以避开 minSdk 33 的 `miuix-blur`），但**没有设备验证**是否已彻底解决启动崩溃。
 - **小米超级岛**：`ui/unlock/MiIslandNotification.kt` 的整条路径（设备判定、`miui.focus.param` 渲染、短文本槽位）未在小米机型上验证；打卡侧尚无超级岛路径。
-- **通知实况形态**：Android 16+ 的流体云提升、"待处理"短文本、结束态不回落，均未在真机验证。
-- **开门通知的「重试/完成」**：已改为跳板 Activity 触发，但部分 ROM 会拦截"通知动作启动 Activity"，未验证。
+- **通知实况结束态**：见下方「已知问题」，结束状态仍会回落为普通通知。
+- **开门通知的「重试」**：在部分 ROM 上"通知动作启动 Activity"可能被拦截；「完成」按钮行为正常。
+
+### 已知问题
+
+- **流体云结束态回落**：通知在成功或失败的结束状态会从流体云回落为普通通知；进行中与失败阶段保持实况。
 
 ### 已知风险与妥协
+
 
 - **未使用标准 ModalBottomSheet**：原因见上文「打卡定位弹窗的取舍」；若要换容器，必须安排一次真机点击验证。
 - **`miuix-blur` 在 API < 33 未完全隔离**：`ui/component/miuix/effect/BgEffectBackground.kt`、`ui/screen/about/AboutMiuix.kt`、`ui/component/miuix/effect/BgEffectPainter.kt` 仍直接引用该库（minSdk 33，靠清单 `tools:overrideLibrary` 放行）。仓储层已把 `enableBlur` / `enableFloatingBottomBarBlur` 在低版本强制为 `false`，但彻底方案是把这些调用抽到仅 33+ 加载的独立类。
@@ -242,7 +247,7 @@ app/src/main/java/com/yunmei/vibe/
 
 - **跳板 Activity 重复逻辑**：`ui/sign/SignShortcutActivity`、`ui/sign/SignTrampolineActivity`、`ui/unlock/UnlockShortcutActivity`、`ui/unlock/UnlockTrampolineActivity` 的"令牌校验 + 前台启动服务 + finish"结构高度相似，可抽公共基类。
 - **占位通知写法重复**：`ui/sign/SignService` 与 `ui/unlock/UnlockService` 各自手写"启动前台服务前先贴一条占位通知"的逻辑，可抽公共工具。
-- **备份格式版本**：`CURRENT_SCHEMA_VERSION` 已提升到 2（移除了"打卡对象"字段），因备份功能尚未上线，未提供版本迁移逻辑。
+- **备份格式版本**：`CURRENT_SCHEMA_VERSION` 为 2；备份功能尚未上线，暂不提供版本迁移逻辑。
 - **孤儿偏好键**：旧版本写入的 `record_object` 键可能仍残留在 DataStore 中（代码已无引用），无害但未清理。
 
 ## 说明

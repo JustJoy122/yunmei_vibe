@@ -166,7 +166,7 @@ private fun SignLocationDialog(
                         icon = Icons.Rounded.History,
                         iconPlaceholder = false,
                         title = stringResource(R.string.unlock_sign_use_last),
-                        description = stringResource(R.string.sign_choose_location),
+                        description = stringResource(R.string.sign_location_desc_last),
                         onClick = { onChoice(SignService.SignSubMode.USE_LAST) },
                     )
                 },
@@ -175,7 +175,7 @@ private fun SignLocationDialog(
                         icon = Icons.Rounded.LocationOn,
                         iconPlaceholder = false,
                         title = stringResource(R.string.unlock_sign_locate),
-                        description = stringResource(R.string.sign_choose_location),
+                        description = stringResource(R.string.sign_location_desc_locate),
                         onClick = { onChoice(SignService.SignSubMode.LOCATE_ONLY) },
                     )
                 },
@@ -184,7 +184,7 @@ private fun SignLocationDialog(
                         icon = Icons.Rounded.Save,
                         iconPlaceholder = false,
                         title = stringResource(R.string.unlock_sign_relocate),
-                        description = stringResource(R.string.sign_choose_location),
+                        description = stringResource(R.string.sign_location_desc_relocate),
                         onClick = { onChoice(SignService.SignSubMode.LOCATE_SAVE) },
                     )
                 },

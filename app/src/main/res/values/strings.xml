@@ -299,4 +299,6 @@
     <string name="permission_request_bluetooth">正在请求开启蓝牙</string>
     <string name="sign_start_failed">无法在后台启动打卡，请打开 App 后重试</string>
     <string name="notification_short_text_pending">待处理</string>
+    <string name="unlock_permission_rationale">开门需要蓝牙权限，请在接下来的系统弹窗中允许</string>
+    <string name="unlock_permission_go_settings">蓝牙权限已被拒绝，请到系统设置中为本应用开启</string>
 </resources>

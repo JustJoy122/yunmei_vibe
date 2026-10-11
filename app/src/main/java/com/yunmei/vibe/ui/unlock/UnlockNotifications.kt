@@ -257,7 +257,10 @@ object UnlockNotifications {
                 MiIslandNotification.extras(context, title, text, percent = null, inProgress = false)
             )
         }
-        return builder.build()
+        val notification = builder.build()
+        // 结束态同样请求"保持实况提升"，避免从流体云回落为普通通知（对齐 InstallerX createBaseBuilder）
+        notification.extras.putBoolean(NotificationCompat.EXTRA_REQUEST_PROMOTED_ONGOING, true)
+        return notification
     }
 
     /** 用固定 ID 更新同一条通知；通知被系统关闭时静默跳过。 */

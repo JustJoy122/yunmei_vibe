@@ -185,7 +185,7 @@ object SignNotifications {
         val accent = ThemeColors.accent(context)
         // 结束态也留在 LIVE 渠道：切渠道会让系统把"同 ID 换渠道"当成新通知，
         // 实况（流体云）随即消失。终态改为 setOngoing(false)+setAutoCancel(true) 由用户手动清除。
-        return NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
+        val notification = NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(
                 context.getString(if (success) R.string.unlock_sign_success else R.string.unlock_sign_failed)
@@ -198,6 +198,14 @@ object SignNotifications {
             .setOnlyAlertOnce(false)
             .setSilent(false)
             .build()
+        // 结束态同样请求"保持实况提升"，否则系统会立刻把流体云降级为普通通知。
+        // 对齐 InstallerX ModernNotificationBuilder: createBaseBuilder 里所有状态共用
+        // `.setRequestPromotedOngoing(true)`（:59-60），结束分支 onInstallSuccess 也带着它（:103）。
+        // androidx 的 NotificationCompat.Builder 在本项目解析不到 setRequestPromotedOngoing，
+        // 因此沿用本项目既有等价写法：直接写 EXTRA_REQUEST_PROMOTED_ONGOING。
+        // 仍保持 setOngoing(false) + setAutoCancel(true)，让用户可手动清除终态通知。
+        notification.extras.putBoolean(NotificationCompat.EXTRA_REQUEST_PROMOTED_ONGOING, true)
+        return notification
     }
 
     /** 用固定 ID 原地更新同一条通知。 */

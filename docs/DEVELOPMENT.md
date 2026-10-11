@@ -11,7 +11,7 @@
 | UI | Material 3 | 1.5.0-alpha26 |
 | UI | Miuix（`top.yukonga.miuix.kmp`） | 0.9.3 |
 | 取色 | materialKolor（Monet 动态取色） | 5.0.0 |
-| 导航 | Navigation3 / NavigationEvent | 1.1.2 / 1.1.1 |
+| 导航 | miuix-nav（`top.yukonga.miuix.kmp:miuix-nav-android`） / NavigationEvent | 0.9.4-103b737b-SNAPSHOT / 1.1.2 |
 | 架构组件 | AndroidX Lifecycle / Activity Compose / Core KTX | 2.10.0 / 1.13.0 / 1.16.0 |
 
 ### 数据与网络
@@ -94,12 +94,37 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 版本基线：**AGP 9.3.2 / Kotlin 2.4.10 / compileSdk 37 / minSdk 26**。
 
 UI 依赖组合（compose-bom 2026.08.00 → Compose 1.12.0 稳定版、material3 1.5.0-alpha26、
-miuix 0.9.3、materialKolor 5.0.0、navigation3 1.1.2）为设备实测可用组合，模板组件零修改编译。
+miuix 0.9.4-103b737b-SNAPSHOT、materialKolor 5.0.0、NavigationEvent 1.1.2）为设备实测可用组合，模板组件零修改编译。
 
 > [!WARNING] 警告
 > 不要回退到 compose-bom 2026.05.01：其解析出的 Compose 1.12.0-alpha03 预发布版与 miuix 存在二进制不兼容，会导致启动白屏闪退
 
 ## Git 与 CI 工作流
+### GitHub Packages 令牌
+
+官方 Miuix 组件（`top.yukonga.miuix.kmp:*`：`miuix-ui` / `miuix-icons` / `miuix-blur` / `miuix-preference` / `miuix-nav`）从 GitHub Packages 拉取，仓库声明见 `settings.gradle.kts` 的 `GitHubPackagesMiuix`（`https://maven.pkg.github.com/compose-miuix-ui/miuix`）。
+
+凭据取值顺序：
+
+1. Gradle 属性 `gpr.user` / `gpr.key`，建议写入本机 `%USERPROFILE%\.gradle\gradle.properties`，不要写进项目；
+2. 环境变量 `GITHUB_ACTOR` / `GITHUB_TOKEN`，供 CI 使用；令牌需具备 `read:packages` 权限。
+
+令牌失效时的表现：
+
+- `Received status code 401 from server: Unauthorized`：凭据缺失、拼写错误或令牌已过期/被撤销；
+- `Received status code 403 from server: Forbidden`：令牌有效但缺少 `read:packages` 权限，或账号无权访问该包；
+- 伴随 `Could not resolve top.yukonga.miuix.kmp:...:0.9.4-103b737b-SNAPSHOT`；
+- 本机 Gradle 缓存完整时可能暂时构建成功，清理缓存后必然复现；
+- 无状态码的 `Could not find ...-SNAPSHOT` 属于快照在服务端被替换或清理，与令牌无关。
+
+重新配置步骤：
+
+1. 新建具备 `read:packages` 的令牌；
+2. 本机写入 `gpr.user` / `gpr.key`；
+3. CI 注入 `GITHUB_TOKEN`，`release.yml` 已声明 `permissions: packages: read`；
+4. 持续报错时执行 `./gradlew --refresh-dependencies :app:assembleDebug`，必要时清理 `~/.gradle/caches/modules-2/files-2.1/top.yukonga.miuix.kmp` 与对应 `metadata-*` 目录；
+5. 用 `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` 或 `:app:assembleRelease` 验证不再出现 401/403。
+
 
 本项目采用「**本地不构建、Push 后由 GitHub Actions 自动构建**」的流程：日常提交由 CI 产出 Debug APK，
 只有**手动打 Tag** 才会触发正式发布。
@@ -155,38 +180,41 @@ git push origin v0.4.3    # 只推单个 tag → 触发 Release 工作流
 
 ```
 app/src/main/java/com/yunmei/vibe/
-├── YunMeiApp.kt             # Application：崩溃兜底 + BleManager 初始化 + AppContainer
-├── core/di/AppContainer.kt  # 手动依赖容器
-├── data/                    # 后端数据层（旧项目 1:1 移植）
-│   ├── network/             #   Retrofit：login / userschool / getuserlock / sign / lockpassword
-│   ├── model/               #   Lock（兼容 |+Base64 分享协议）、登录模型、单位编号表
-│   ├── repository/          #   YunMeiRepository（学校 token 切换、重登取码/打卡）
-│   ├── ble/UnlockManager.kt #   BLE 开门：快速连接→扫描回退→notify→写 0xD0 帧→电量解析
-│   ├── local/               #   SecureStore(EncryptedSharedPreferences)/AccountStore/LockStore
-│   ├── location/            #   LocationManager 单次定位（"经度,纬度"）
-│   ├── qrcode/              #   ZXing 生成二维码（UTF-8/H/margin2，与原项目一致）
-│   ├── preferences/         #   DataStore：quickConnect/autoConnect/autoExit/... 全部功能开关
-│   └── security/Md5.kt      #   小写 32 位 MD5
+├── YunMeiApp.kt             # Application：崩溃捕获、AppContainer、快捷方式同步
+├── core/di/AppContainer.kt  # 轻量手动依赖容器
+├── data/
+│   ├── network/             # Retrofit 接口（login / userschool / getuserlock / sign / lockpassword）
+│   ├── model/               # 数据模型（Lock、登录与打卡相关 DTO）
+│   ├── repository/          # YunMeiRepository：鉴权、会话、业务聚合
+│   ├── ble/UnlockManager.kt # BLE 开门状态机与进度回调
+│   ├── local/               # SecureStore（EncryptedSharedPreferences）/ AccountStore / LockStore
+│   ├── location/            # LocationManager 封装（打卡定位）
+│   ├── qrcode/              # ZXing 二维码编解码
+│   ├── preferences/         # DataStore 偏好与 SharedPreferences 设置
+│   ├── security/Md5.kt      # 与服务端约定一致的 MD5
+│   └── backup/              # 备份与还原（口令加密的备份文件）
 └── ui/
-    ├── MainActivity.kt      # 主壳：3 tab Pager + 悬浮底栏/横屏侧栏 + navigation3 二级页
-    ├── theme/               # 模板主题系统：TemplateTheme 按 UiMode 分派 Material/Miuix
-    ├── component/           # 模板组件（原样复用）：SegmentedList/ExpressiveSwitch/TonalCard/
-    │                        #   SnackBar/DropdownItem/EditText/WarningCard/FloatingBottomBar/
-    │                        #   dialog(rememberConfirmDialog/rememberLoadingDialog) …
-    ├── navigation3/         # 模板导航：Route/Navigator
-    ├── viewmodel/           # MainActivityViewModel（主题热切换）、SettingsViewModel
-    └── screen/
-        ├── home/            # 首页：状态 Banner + 开门/取码/打卡 + 开门相关开关
-        ├── locks/           # 门锁：列表/设默认/删除/扫码添加/登录拉取
-        ├── settings/        # 主设置页：检查更新/账号/界面风格/主题设置/发送日志/关于
-        ├── themesettings/   # 主题设置二级页：样机预览/莫奈/AMOLED/预测性返回/缩放/毛玻璃等
-        ├── login/           # 登录：学校选择→门锁选择→保存账号
-        ├── lockdetail/      # 门锁详情：UUID/分享二维码/复制链接/设默认/删除
-        └── about/           # 关于页（Material / Miuix 两套）
+    ├── MainActivity.kt      # 主导航容器（miuix-nav 返回栈 + tab Pager + 预测性返回过渡）
+    ├── theme/               # TemplateTheme 与 UiMode（Material / Miuix）、语义色
+    ├── component/           # 通用组件（material / miuix / setting / scan / backup / liquid / filter 等）
+    ├── navigation/          # Route 定义（@Serializable）与 Navigator，构建在 miuix-nav 之上
+    ├── animation/           # 预测性返回过渡
+    ├── util/                # 权限、日志、模糊、角标等工具
+    ├── viewmodel/           # MainActivityViewModel、SettingsViewModel 等
+    ├── sign/                # 打卡：快捷方式、跳板、定位方式弹窗、通知、前台服务
+    ├── unlock/              # 开门：快捷方式、令牌校验、通知、前台服务、小米超级岛
+    └── screen/              # 各页面（home / locks / settings / themesettings / login / lockdetail / about / license）
 ```
 
-每个页面遵循模板库的 `Screen → UiState/Actions → Material/Miuix` 分层，
-两个风格变体使用完全相同的 ViewModel 与状态。
+页面遵循 `Screen + UiState/Actions + Material/Miuix 双实现 + ViewModel` 的分层；跨页共享状态由 ViewModel 与 CompositionLocal（`LocalUiMode`、`LocalEnableBlur` 等）承担。
+
+## 架构
+
+- **导航**：使用 `miuix-nav`（`top.yukonga.miuix.kmp:miuix-nav-android`）提供返回栈与预测性返回过渡；路由是 `@Serializable` 的类型安全定义（`ui/navigation/Routes.kt`）。Activity 重建后由 `PendingRouteHolder` 恢复所在页面。
+- **主题**：`UiMode`（Material / Miuix）经 `LocalUiMode` 与 `TemplateTheme` 分派；切换主题会重建 `content` 子树，因此导航器由 `MainActivity` 持有，位于主题之外。
+- **弹窗**：Material 与 Miuix 共用同一份选项行组件 `NavigationItemWidget`（`ui/component/setting/NavigationItemWidget.kt`），外壳按主题分派；打卡定位弹窗是 Compose 原生 `Dialog`（无默认宽度约束）+ 全屏 Box 底部对齐 + 顶部视觉把手。
+- **通知**：开门与打卡各持固定通知 ID（1001 / 1002）与独立渠道；进行中、失败与结束状态统一使用实况渠道；实况短文本用 `setShortCriticalText`，小米超级岛用 `MiIslandNotification.extras(...)` 的短文本槽位。
+- **快捷方式与跳板**：动态快捷方式（开门 / 打卡）与通知动作都经带令牌校验的透明跳板 Activity 启动前台服务，跳板在前台调用 `startForegroundService`。
 
 ## 与 [原项目](https://github.com/zxy19/yunmei_unintelligent) 的兼容性
 

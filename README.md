@@ -41,14 +41,6 @@
 
 二级页面：登录、扫码、门锁详情、主题设置、关于。
 
-## 架构概览
-
-- **导航层**：整体使用 `miuix-nav`（`top.yukonga.miuix.kmp:miuix-nav-android`）提供的返回栈与预测性返回过渡；路由为 `@Serializable` 的类型安全定义（`ui/navigation/Routes.kt`），Activity 重建后由 `PendingRouteHolder` 恢复所在页面。
-- **双主题**：`UiMode`（Material / Miuix）经 `LocalUiMode` + `TemplateTheme` 分派；切换主题时 `content` 子树会重建，因此导航状态刻意放在主题之外（`MainActivity` 持有导航器）。
-- **弹窗**：Material 与 Miuix 共用同一份选项行组件（`NavigationItemWidget`，移植自 InstallerX），外壳按主题分派；打卡定位弹窗为「Compose 原生 `Dialog` + 全屏 Box 底部对齐 + 顶部视觉把手」。
-- **通知实况**：开门与打卡各占一个固定通知 ID（1001 / 1002）与一组独立渠道，**同一通知从进度到失败、结束全程使用同一渠道（LIVE）**，只在终态保持可清除；实况短文本与超级岛文本分别走 `setShortCriticalText` 与 `focus` 参数。
-- **快捷方式与跳板**：动态快捷方式（开门 / 打卡）经带令牌校验的透明跳板 Activity 进入；通知上的动作按钮同样使用 `PendingIntent.getActivity` 打开跳板，由跳板在前台启动前台服务，以绕开 Android 12+ 的后台启动前台服务限制。
-
 ## 已知限制
 
 - 在部分设备或系统版本上，通知的「实况 / 流体云」形态可能显示不完整（例如只显示百分比、或某些阶段没有文字）。

@@ -28,7 +28,7 @@
 对应到 Gradle（`app/build.gradle.kts`）：
 
 - `versionName`：语义化版本，如 `0.4.0`。
-- `versionCode`：每次发布严格递增 1 的正整数（当前为 `22`）。
+- `versionCode` 为单调递增整数，当前值为 `29`。
 
 **发布前必须**同步修改 `versionName` 与 `versionCode`，并打上 `v{versionName}` 标签
 （例如 `v0.4.0`），GitHub Actions 会在标签推送后自动构建并发布。
@@ -43,7 +43,7 @@
 说明：
 
 - `debug` 无需任何额外配置即可安装运行。
-- `release` 若未配置签名，产物为 `app-release-unsigned.apk`（未签名，**不可安装**）。
+- `release` 变体在存在 `keystore.properties` 时产出**已签名**的 `app-release.apk`；缺少该文件时产物为未签名包。
   本项目已在 `app/build.gradle.kts` 中支持从 `keystore.properties` 或环境变量读取签名。
 
 ## 3. 签名配置
@@ -85,7 +85,7 @@ keyPassword=你的key密码
 | `RELEASE_KEY_ALIAS` | 别名 |
 | `RELEASE_KEY_PASSWORD` | key 密码 |
 
-GitHub Actions 使用同名 secret 注入（见第 7 节）。
+GitHub Actions 侧需要 4 个 secret，见第 7.2 节；本地开发不需要配置它们。
 
 ## 4. 构建命令
 
@@ -188,6 +188,8 @@ base64 -w0 release.keystore
 4. 构建 `assembleDebug` 与 `assembleRelease`；
 5. 按命名规则重命名两个 APK，并生成 `SHA256SUMS.txt`；
 6. 通过 `softprops/action-gh-release` 创建 Release 并上传产物。
+7. 从 `CHANGELOG.md` 按 `versionName` 提取本版条目，并在 Release 说明开头写入北京时间（GMT+8）的发布时间。
+8. 工作流声明 `permissions: contents: write` 与 `packages: read`，并通过 `GITHUB_TOKEN` 读取 GitHub Packages 上的 Miuix 依赖。
 
 > 推送标签前请确认 `versionName` 已与标签一致，且签名相关 secret 已配置完成。
 

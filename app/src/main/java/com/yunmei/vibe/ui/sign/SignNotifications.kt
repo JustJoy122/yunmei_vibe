@@ -147,7 +147,10 @@ object SignNotifications {
         // 低版本：经典进度条 + 主题色（无分段能力，失败靠文案与颜色区分）。
         // 低版本没有实况样式，失败时切到结果渠道（与 InstallerX 旧式实现一致：进行中用低优先级进度渠道，
         // 进入需要关注/结果状态时切到高优先级渠道）；实况路径则全程不切渠道。
-        val channelId = if (failedStage != null) RESULT_CHANNEL_ID else PROGRESS_CHANNEL_ID
+        // 关键：**进行中全程使用 LIVE 渠道**。此前进度阶段用 PROGRESS_CHANNEL_ID、
+        // 而 Android 16+ 实况路径用 LIVE_CHANNEL_ID，"同一通知 ID 中途换渠道"会被系统视为新通知，
+        // 导致已提升的实况（流体云）掉回普通通知。仅在流程结束时才切到 RESULT 渠道。
+        val channelId = if (failedStage != null) RESULT_CHANNEL_ID else LIVE_CHANNEL_ID
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_sign))

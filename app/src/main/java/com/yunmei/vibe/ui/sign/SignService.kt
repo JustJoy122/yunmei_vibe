@@ -174,7 +174,7 @@ class SignService : Service() {
      * 因此这里用一个占位通知顶替同 ID 的失败通知，随后立即移除。
      */
     private fun finishAndDismiss() {
-        val placeholder = android.app.Notification.Builder(this, SignNotifications.PROGRESS_CHANNEL_ID)
+        val placeholder = android.app.Notification.Builder(this, SignNotifications.LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_shortcut_check_in)
             .setContentTitle(getString(R.string.unlock_sign))
             .build()

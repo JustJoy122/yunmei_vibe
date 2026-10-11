@@ -58,22 +58,16 @@ class SignShortcutActivity : ComponentActivity() {
     }
 
     /** 读设置里的定位方式；"使用上次位置"不需要定位权限，其余两种需要。 */
+    /**
+     * 权限请求延后：进跳板时**只**确保通知权限（上面已处理），随后直接启动 [SignService]。
+     *
+     * 定位权限与定位总开关都不在这里检查——用户可能选择「使用上次位置」，那条路径不需要定位权限。
+     * 真正需要定位时（用户在通知/弹窗里选了「本次定位」或「定位并保存」），
+     * 由 [SignTrampolineActivity] 在前台请求定位权限，拒绝则发失败通知并结束。
+     */
     private fun resolveModeAndProceed() {
-        lifecycleScope.launch {
-            val mode = runCatching {
-                YunMeiApp.app.container.appPreferences.settings.first().signLocationMode
-            }.getOrDefault(SignLocationMode.DEFAULT.value)
-            val needsLocation = SignLocationMode.fromValue(mode) != SignLocationMode.LAST
-            if (needsLocation && !hasLocationPermission()) {
-                permissionRequester.request(
-                    permissions = LOCATION_PERMISSIONS,
-                    onGranted = { checkLocationEnabled() },
-                    onDenied = { startServiceWithDenied() },
-                )
-            } else {
-                checkLocationEnabled()
-            }
-        }
+        startSignService()
+        finish()
     }
 
     private fun checkLocationEnabled() {

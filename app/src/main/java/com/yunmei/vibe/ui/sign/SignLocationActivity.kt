@@ -1,5 +1,17 @@
 package com.yunmei.vibe.ui.sign
 
+import androidx.compose.ui.window.Dialog
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.basic.TextButton
+import com.yunmei.vibe.ui.component.setting.NavigationItemWidget
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import androidx.compose.ui.unit.dp
@@ -121,60 +133,111 @@ class SignLocationActivity : ComponentActivity() {
 /**
  * 打卡「选择定位方式」弹窗。
  *
- * 结构对齐 InstallerX 的选项弹窗：标题 + 说明条 + 一组「主标题 + 右箭头」选项 + 取消按钮；
- * 选项区使用 InstallerX 移植过来的 `SegmentedColumn`（`ui/component/setting/SegmentedColumn.kt`）。
+ * 结构对齐 InstallerX 的选项弹窗（截图）：顶部标题、说明条、若干「图标 + 主标题 + 副标题 + 右箭头」选项。
+ * 选项行使用 InstallerX 原版移植组件 [NavigationItemWidget]
+ * （`ui/component/setting/NavigationItemWidget.kt`，文件头注明 "Reused verbatim from InstallerX Revived"），
+ * 两套主题共用同一份选项定义。
  *
- * **两套主题统一走同一个 `AlertDialog` 外壳**，原因（有实测依据）：
- *  - Material 侧原本就是 `AlertDialog + SegmentedColumn`，用户实测**点击正常**；
- *  - Miuix 侧原本走我方移植的 `ActionMenuDialog`（内部是 Miuix `OverlayDialog` + `ArrowPreference`），
- *    用户实测**弹窗能打开但点击选项无响应**；
- *  - 因此这里不再按主题分派两套外壳，统一采用已被验证可点击的那一套，
- *    避免再出现"只有 Miuix 点不动"的问题。
+ * 外壳按主题分派：
+ *  - Miuix：Compose 原生 [Dialog]（`androidx.compose.ui.window.Dialog`），
+ *    背景/文字沿用 MiuixTheme 语义色（`colorScheme.surface` / `onSurface` 等），字体沿用 Miuix 文本样式；
+ *  - Material：`AlertDialog`（沿用已验证可点击的实现）。
  *
- * 点击后的业务逻辑保持不变：[SignLocationActivity.choose]（先关闭、再启动打卡；
- * 需要跳系统定位设置时不关闭）。
+ * 点击后的业务逻辑不变：[SignLocationActivity.choose]（先关闭、再启动打卡；需跳系统定位设置时不关闭）。
  */
 @Composable
 private fun SignLocationDialog(
     onChoice: (SignService.SignSubMode) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val uiMode = LocalUiMode.current
+    val title = stringResource(R.string.unlock_sign_ask_title)
+    val summary = stringResource(R.string.sign_choose_location)
+
+    // 两套主题共用同一份选项定义（InstallerX 的 NavigationItemWidget：图标 + 主标题 + 副标题 + 右箭头）
+    val optionRows: @Composable () -> Unit = {
+        SegmentedColumn(
+            content = listOf(
+                {
+                    NavigationItemWidget(
+                        icon = Icons.Rounded.History,
+                        iconPlaceholder = false,
+                        title = stringResource(R.string.unlock_sign_use_last),
+                        description = stringResource(R.string.sign_choose_location),
+                        onClick = { onChoice(SignService.SignSubMode.USE_LAST) },
+                    )
+                },
+                {
+                    NavigationItemWidget(
+                        icon = Icons.Rounded.LocationOn,
+                        iconPlaceholder = false,
+                        title = stringResource(R.string.unlock_sign_locate),
+                        description = stringResource(R.string.sign_choose_location),
+                        onClick = { onChoice(SignService.SignSubMode.LOCATE_ONLY) },
+                    )
+                },
+                {
+                    NavigationItemWidget(
+                        icon = Icons.Rounded.Save,
+                        iconPlaceholder = false,
+                        title = stringResource(R.string.unlock_sign_relocate),
+                        description = stringResource(R.string.sign_choose_location),
+                        onClick = { onChoice(SignService.SignSubMode.LOCATE_SAVE) },
+                    )
+                },
+            )
+        )
+    }
+
+    // Miuix：Compose 原生 Dialog 外壳；内容/颜色/字体与之前完全一致，只换外层承载
+    if (uiMode == UiMode.Miuix) {
+        Dialog(onDismissRequest = onDismiss) {
+            Surface(
+                shape = RoundedCornerShape(28.dp),
+                color = colorScheme.surface,
+                contentColor = colorScheme.onSurface,
+            ) {
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 8.dp),
+                        text = title,
+                        fontSize = MiuixTheme.textStyles.title4.fontSize,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        color = colorScheme.onSurface,
+                    )
+                    Text(
+                        modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
+                        text = summary,
+                        fontSize = MiuixTheme.textStyles.body2.fontSize,
+                        textAlign = TextAlign.Center,
+                        color = colorScheme.onSurfaceVariantSummary,
+                    )
+                    optionRows()
+                    TextButton(
+                        text = stringResource(android.R.string.cancel),
+                        onClick = onDismiss,
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).padding(horizontal = 24.dp),
+                    )
+                }
+            }
+        }
+        return
+    }
+
+    // Material：已验证可点击的 AlertDialog 外壳
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.unlock_sign_ask_title)) },
+        title = { Text(title) },
         text = {
             Column {
                 Text(
-                    text = stringResource(R.string.sign_choose_location),
+                    text = summary,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.outline,
                 )
                 Spacer(Modifier.height(12.dp))
-                SegmentedColumn(
-                    content = listOf(
-                        {
-                            SegmentedListItem(
-                                onClick = { onChoice(SignService.SignSubMode.USE_LAST) },
-                                headlineContent = { Text(stringResource(R.string.unlock_sign_use_last)) },
-                                leadingContent = { Icon(Icons.Rounded.History, null) },
-                            )
-                        },
-                        {
-                            SegmentedListItem(
-                                onClick = { onChoice(SignService.SignSubMode.LOCATE_ONLY) },
-                                headlineContent = { Text(stringResource(R.string.unlock_sign_locate)) },
-                                leadingContent = { Icon(Icons.Rounded.LocationOn, null) },
-                            )
-                        },
-                        {
-                            SegmentedListItem(
-                                onClick = { onChoice(SignService.SignSubMode.LOCATE_SAVE) },
-                                headlineContent = { Text(stringResource(R.string.unlock_sign_relocate)) },
-                                leadingContent = { Icon(Icons.Rounded.Save, null) },
-                            )
-                        },
-                    )
-                )
+                optionRows()
             }
         },
         confirmButton = {

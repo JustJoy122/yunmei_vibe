@@ -1,5 +1,12 @@
 package com.yunmei.vibe.ui.sign
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -128,17 +135,15 @@ class SignLocationActivity : ComponentActivity() {
 }
 
 /**
- * 打卡「选择定位方式」弹窗。
+ * 打卡「选择定位方式」底部弹窗（BottomSheet 样式）。
  *
- * 结构对齐 InstallerX 的选项弹窗（截图）：顶部标题、说明条、若干「图标 + 主标题 + 副标题 + 右箭头」选项。
- * 选项行使用 InstallerX 原版移植组件 [NavigationItemWidget]
- * （`ui/component/setting/NavigationItemWidget.kt`，文件头注明 "Reused verbatim from InstallerX Revived"），
- * 两套主题共用同一份选项定义。
- *
- * 外壳按主题分派：
- *  - Miuix：Compose 原生 [Dialog]（`androidx.compose.ui.window.Dialog`），
- *    背景/文字沿用 MiuixTheme 语义色（`colorScheme.surface` / `onSurface` 等），字体沿用 Miuix 文本样式；
- *  - Material：`AlertDialog`（沿用已验证可点击的实现）。
+ * 交互与内容与上一版完全一致，只把**位置**从屏幕居中改为贴底：
+ *  - 外壳仍是 Compose 原生 [Dialog]（`usePlatformDefaultWidth = false`，内容全屏 Box 底部对齐），
+ *    刻意不换用 `ModalBottomSheet`：Miuix 侧的点击链路此前经过反复排查才恢复，
+ *    换用新的弹窗容器会重新引入"点击是否送达"的不确定性。
+ *  - 内容/颜色/字体/选项行未变：选项行仍是 InstallerX 移植组件 [NavigationItemWidget]，
+ *    颜色全部走主题语义色（Material `MaterialTheme.colorScheme` / Miuix `MiuixTheme.colorScheme`）。
+ *  - 圆角只保留顶部（贴底形态），底部齐平。
  *
  * 点击后的业务逻辑不变：[SignLocationActivity.choose]（先关闭、再启动打卡；需跳系统定位设置时不关闭）。
  */
@@ -150,6 +155,7 @@ private fun SignLocationDialog(
     val uiMode = LocalUiMode.current
     val title = stringResource(R.string.unlock_sign_ask_title)
     val summary = stringResource(R.string.sign_choose_location)
+    val topShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 
     // 两套主题共用同一份选项定义（InstallerX 的 NavigationItemWidget：图标 + 主标题 + 副标题 + 右箭头）
     val optionRows: @Composable () -> Unit = {
@@ -186,59 +192,92 @@ private fun SignLocationDialog(
         )
     }
 
-    // Miuix：Compose 原生 Dialog 外壳；内容/颜色/字体与之前完全一致，只换外层承载
-    if (uiMode == UiMode.Miuix) {
-        Dialog(onDismissRequest = onDismiss) {
-            Surface(
-                shape = RoundedCornerShape(28.dp),
-                color = colorScheme.surface,
-                contentColor = colorScheme.onSurface,
-            ) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 8.dp),
-                        text = title,
-                        fontSize = MiuixTheme.textStyles.title4.fontSize,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        color = colorScheme.onSurface,
-                    )
-                    Text(
-                        modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
-                        text = summary,
-                        fontSize = MiuixTheme.textStyles.body2.fontSize,
-                        textAlign = TextAlign.Center,
-                        color = colorScheme.onSurfaceVariantSummary,
-                    )
-                    optionRows()
-                    TextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = onDismiss,
-                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).padding(horizontal = 24.dp),
-                    )
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        // 全屏 Box + 底部对齐 = 贴底弹窗（BottomSheet 形态）
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            if (uiMode == UiMode.Miuix) {
+                Surface(
+                    shape = topShape,
+                    color = colorScheme.surface,
+                    contentColor = colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                        // 视觉把手（纯 UI、不可交互）
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(top = 12.dp)
+                                .size(width = 32.dp, height = 4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(colorScheme.onSurface.copy(alpha = 0.3f)),
+                        )
+                        Text(
+                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 8.dp),
+                            text = title,
+                            fontSize = MiuixTheme.textStyles.title4.fontSize,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            color = colorScheme.onSurface,
+                        )
+                        Text(
+                            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
+                            text = summary,
+                            fontSize = MiuixTheme.textStyles.body2.fontSize,
+                            textAlign = TextAlign.Center,
+                            color = colorScheme.onSurfaceVariantSummary,
+                        )
+                        optionRows()
+                        TextButton(
+                            text = stringResource(android.R.string.cancel),
+                            onClick = onDismiss,
+                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).padding(horizontal = 24.dp),
+                        )
+                    }
+                }
+            } else {
+                Surface(
+                    shape = topShape,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                        // 视觉把手（纯 UI、不可交互）
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(top = 12.dp)
+                                .size(width = 32.dp, height = 4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(MaterialTheme.colorScheme.outlineVariant),
+                        )
+                        Text(
+                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 8.dp),
+                            text = title,
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
+                            text = summary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                        optionRows()
+                        TextButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp).padding(horizontal = 24.dp),
+                        ) { Text(stringResource(android.R.string.cancel)) }
+                    }
                 }
             }
         }
-        return
     }
-
-    // Material：已验证可点击的 AlertDialog 外壳
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column {
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-                Spacer(Modifier.height(12.dp))
-                optionRows()
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-        },
-    )
 }

@@ -78,11 +78,14 @@ object MiIslandNotification {
         content: String,
         percent: Int?,
         inProgress: Boolean,
+        shortText: String = "",
     ): Bundle {
         val lightIcon = Icon.createWithResource(context, R.drawable.ic_notification_unlock).setTint(Color.BLACK)
         val darkIcon = Icon.createWithResource(context, R.drawable.ic_notification_unlock).setTint(Color.WHITE)
         val safeContent = content.ifEmpty { " " }
         val progressValue = (percent ?: 0).coerceIn(0, 100)
+        // 超级岛短文本槽位（对齐 InstallerX MiIslandNotificationBuilder: this.title = shortText.ifEmpty { title }）
+        val islandTitle = shortText.ifEmpty { title }
 
         return FocusNotification.buildV3 {
             val lightLogoKey = createPicture("key_logo_light", lightIcon)
@@ -116,7 +119,7 @@ object MiIslandNotification {
                                 this.progress = progressValue
                             }
                             textInfo {
-                                this.title = title
+                                this.title = islandTitle
                                 this.content = safeContent
                             }
                         }
@@ -124,7 +127,7 @@ object MiIslandNotification {
                         imageTextInfoRight {
                             type = 3
                             textInfo {
-                                this.title = title
+                                this.title = islandTitle
                             }
                         }
                     }

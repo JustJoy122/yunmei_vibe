@@ -113,13 +113,18 @@ object UnlockNotifications {
      */
     fun progress(context: Context, text: String, percent: Int?, promptAction: Boolean = false): Notification =
         when {
-            MiIslandNotification.isSupported(context) -> miIslandProgress(context, text, percent)
+            MiIslandNotification.isSupported(context) -> miIslandProgress(context, text, percent, promptAction)
             isModernEligible() -> modernProgress(context, text, percent, promptAction)
             else -> legacyProgress(context, text, percent)
         }
 
     /** 小米超级岛：标准通知 + 岛参数，固定实况渠道，进度用经典进度字段并以主题色着色。 */
-    private fun miIslandProgress(context: Context, text: String, percent: Int?): Notification {
+    private fun miIslandProgress(
+        context: Context,
+        text: String,
+        percent: Int?,
+        promptAction: Boolean = false,
+    ): Notification {
         val title = context.getString(R.string.unlock_open)
         val accent = ThemeColors.accent(context)
         return NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
@@ -132,7 +137,21 @@ object UnlockNotifications {
             .setOnlyAlertOnce(true)
             .setOngoing(true)
             .setProgress(PROGRESS_MAX, percent ?: 0, percent == null)
-            .addExtras(MiIslandNotification.extras(context, title, text, percent, inProgress = true))
+            .addExtras(
+                MiIslandNotification.extras(
+                    context = context,
+                    title = title,
+                    content = text,
+                    percent = percent,
+                    inProgress = true,
+                    // 等待用户操作时超级岛短文本显示"待处理"（与实况路径一致）
+                    shortText = if (promptAction) {
+                        context.getString(R.string.notification_short_text_pending)
+                    } else {
+                        ""
+                    },
+                )
+            )
             .build()
     }
 

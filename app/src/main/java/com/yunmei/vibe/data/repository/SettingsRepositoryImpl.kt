@@ -1,4 +1,5 @@
 package com.yunmei.vibe.data.repository
+import android.os.Build
 import com.yunmei.vibe.data.preferences.SettingsPrefs
 
 import android.content.Context
@@ -65,7 +66,13 @@ class SettingsRepositoryImpl : SettingsRepository {
         set(value) = prefs.edit { putString(SettingsPrefs.PREDICTIVE_BACK_EXIT_DIRECTION, value) }
 
     override var enableBlur: Boolean
-        get() = prefs.getBoolean(SettingsPrefs.ENABLE_BLUR, true)
+        // 与 InstallerX 一致（AppSettingsRepositoryImpl: `useBlur = if (SDK_INT >= TIRAMISU) … else false`）：
+        // 低版本（< API 33）无论历史偏好如何一律返回 false，避免进入 miuix-blur / RenderEffect 路径。
+        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            prefs.getBoolean(SettingsPrefs.ENABLE_BLUR, true)
+        } else {
+            false
+        }
         set(value) = prefs.edit { putBoolean(SettingsPrefs.ENABLE_BLUR, value) }
 
     override var enableFloatingBottomBar: Boolean
@@ -73,7 +80,12 @@ class SettingsRepositoryImpl : SettingsRepository {
         set(value) = prefs.edit { putBoolean("enable_floating_bottom_bar", value) }
 
     override var enableFloatingBottomBarBlur: Boolean
-        get() = prefs.getBoolean("enable_floating_bottom_bar_blur", true)
+        // 同上：玻璃（悬浮底栏模糊）依赖 API 33+，低版本强制关闭。
+        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            prefs.getBoolean("enable_floating_bottom_bar_blur", true)
+        } else {
+            false
+        }
         set(value) = prefs.edit { putBoolean("enable_floating_bottom_bar_blur", value) }
 
     override var pageScale: Float

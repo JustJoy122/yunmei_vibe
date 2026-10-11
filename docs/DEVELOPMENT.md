@@ -200,6 +200,51 @@ app/src/main/java/com/yunmei/vibe/
 - 本地存储：加密文件沿用 `yunmei_secure`（AES256_SIV/GCM），功能开关存 DataStore
   （键语义与原 `storage` SharedPreferences 一致）。
 
+## 开发约定
+
+### 通知实况与渠道纪律
+
+- **同一通知全程使用同一 ID、同一渠道**：开门固定 `UNLOCK_NOTIFICATION_ID = 1001`、打卡固定 `SIGN_NOTIFICATION_ID = 1002`；进行中、失败、结束都留在各自的 `*_live_channel`。
+- **禁止中途换渠道**：渠道是通知身份的一部分，"同 ID 换渠道"会被系统视为另一条通知，已提升的实况（流体云）会随即消失。历史上打卡与开门都因"进度走 progress 渠道、失败/结束切 result 渠道"而掉回普通通知。
+- `*_progress_channel` / `*_result_channel` 目前仅用于 `ensureChannel()` 建渠道，不再用于发送；新增状态时**不要**把它们当作发送渠道。
+- 实况相关属性每帧都要带上：`setOngoing(true)`（进行中与失败态）、`setOnlyAlertOnce(true)`（进行中）、以及 `EXTRA_REQUEST_PROMOTED_ONGOING = true`（androidx 的 `setRequestPromotedOngoing` 在本工程解析不到，统一用 extra 写法）。
+- 等待用户操作时，实况短文本用 `setShortCriticalText(getString(R.string.notification_short_text_pending))`（"待处理"）；超级岛走 `MiIslandNotification.extras(..., shortText = ...)`。
+
+### 跳板 Activity 模式
+
+- 凡是由**通知动作**或**快捷方式**触发的后台动作（开门、打卡、重试、完成），一律用 `PendingIntent.getActivity` 打开一个无 UI 的跳板 Activity，再由跳板在前台 `ContextCompat.startForegroundService(...)`，然后立即 `finish()`。
+- 原因：Android 12+ 禁止应用在后台启动前台服务，`PendingIntent.getForegroundService` 会被系统拒绝且不报错，表现为"点了没反应"。
+- 跳板列表：`ui/sign/SignTrampolineActivity`、`ui/unlock/UnlockTrampolineActivity`；后者与快捷方式跳板一样做令牌校验（`UnlockShortcut.EXTRA_TOKEN`）。
+- 需要运行时权限的动作（如打卡的定位权限、开门的蓝牙权限）在**跳板里**申请：用 `shouldShowRequestPermissionRationale` 区分"可再次请求"与"已被永久拒绝"，后者引导到应用详情设置页；被拒则发失败通知，不启动服务。
+
+### 打卡定位弹窗的取舍
+
+- 当前实现：`ui/sign/SignLocationActivity` 的 `SignLocationDialog` = Compose 原生 `Dialog`（`usePlatformDefaultWidth = false`）+ 全屏 `Box` 底部对齐 + 顶部 32dp×4dp 视觉把手；选项行使用移植自 InstallerX 的 `NavigationItemWidget`。
+- **刻意不使用 `ModalBottomSheet` / `BottomSheetDialog`**：Miuix 侧最初用 `OverlayDialog + ArrowPreference` 时选项点击完全无响应，换成原生 `Dialog` 后才恢复；更换弹窗容器会重新引入"点击事件是否送达"的不确定性，需要一次真机验证才能确认。
+- 因此该弹窗**没有下滑关闭手势**，只支持点击外部或返回键关闭（`onDismissRequest`）。
+
+## 待办与技术债
+
+### 未在真机验证
+
+- **Android 10（API 29）启动稳定性**：已为此加了两处版本守卫（`ui/component/liquid/InnerShadow.kt` 的 `RenderEffect`/`BlurEffect` 仅 API 31+ 使用、`ui/component/liquid/Lens.kt` 改用本机版本判断以避开 minSdk 33 的 `miuix-blur`），但**没有设备验证**是否已彻底解决启动崩溃。
+- **小米超级岛**：`ui/unlock/MiIslandNotification.kt` 的整条路径（设备判定、`miui.focus.param` 渲染、短文本槽位）未在小米机型上验证；打卡侧尚无超级岛路径。
+- **通知实况形态**：Android 16+ 的流体云提升、"待处理"短文本、结束态不回落，均未在真机验证。
+- **开门通知的「重试/完成」**：已改为跳板 Activity 触发，但部分 ROM 会拦截"通知动作启动 Activity"，未验证。
+
+### 已知风险与妥协
+
+- **未使用标准 ModalBottomSheet**：原因见上文「打卡定位弹窗的取舍」；若要换容器，必须安排一次真机点击验证。
+- **`miuix-blur` 在 API < 33 未完全隔离**：`ui/component/miuix/effect/BgEffectBackground.kt`、`ui/screen/about/AboutMiuix.kt`、`ui/component/miuix/effect/BgEffectPainter.kt` 仍直接引用该库（minSdk 33，靠清单 `tools:overrideLibrary` 放行）。仓储层已把 `enableBlur` / `enableFloatingBottomBarBlur` 在低版本强制为 `false`，但彻底方案是把这些调用抽到仅 33+ 加载的独立类。
+- **miuix 快照版依赖的可重现性**：`gradle/libs.versions.toml` 中 `miuix = "0.9.4-103b737b-SNAPSHOT"`，快照可能被服务端替换或清理，导致构建不可复现；且依赖走 GitHub Packages，需要有效令牌（见 `docs/DEPENDENCIES.md`）。建议后续锁定正式版本或落地到本地仓库。
+
+### 技术债
+
+- **跳板 Activity 重复逻辑**：`ui/sign/SignShortcutActivity`、`ui/sign/SignTrampolineActivity`、`ui/unlock/UnlockShortcutActivity`、`ui/unlock/UnlockTrampolineActivity` 的"令牌校验 + 前台启动服务 + finish"结构高度相似，可抽公共基类。
+- **占位通知写法重复**：`ui/sign/SignService` 与 `ui/unlock/UnlockService` 各自手写"启动前台服务前先贴一条占位通知"的逻辑，可抽公共工具。
+- **备份格式版本**：`CURRENT_SCHEMA_VERSION` 已提升到 2（移除了"打卡对象"字段），因备份功能尚未上线，未提供版本迁移逻辑。
+- **孤儿偏好键**：旧版本写入的 `record_object` 键可能仍残留在 DataStore 中（代码已无引用），无害但未清理。
+
 ## 说明
 
 - 门锁/账号存储为 JSON 序列化（旧客户端升级不迁移旧格式数据，分享二维码互通）。

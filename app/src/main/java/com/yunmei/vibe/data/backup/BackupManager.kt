@@ -149,7 +149,6 @@ object BackupManager {
                     hideSign = settings.hideSign,
                     hideCode = settings.hideCode,
                     attemptUpload = settings.attemptUpload,
-                    recordObject = settings.recordObject,
                     signLocationMode = settings.signLocationMode,
                 ),
             ),

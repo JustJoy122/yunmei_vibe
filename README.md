@@ -41,6 +41,21 @@
 
 二级页面：登录、扫码、门锁详情、主题设置、关于。
 
+## 架构概览
+
+- **导航层**：整体使用 `miuix-nav`（`top.yukonga.miuix.kmp:miuix-nav-android`）提供的返回栈与预测性返回过渡；路由为 `@Serializable` 的类型安全定义（`ui/navigation/Routes.kt`），Activity 重建后由 `PendingRouteHolder` 恢复所在页面。
+- **双主题**：`UiMode`（Material / Miuix）经 `LocalUiMode` + `TemplateTheme` 分派；切换主题时 `content` 子树会重建，因此导航状态刻意放在主题之外（`MainActivity` 持有导航器）。
+- **弹窗**：Material 与 Miuix 共用同一份选项行组件（`NavigationItemWidget`，移植自 InstallerX），外壳按主题分派；打卡定位弹窗统一为「Compose 原生 `Dialog` + 全屏 Box 底部对齐 + 顶部视觉把手」。
+- **通知实况**：开门与打卡各占一个固定通知 ID（1001 / 1002）与一组独立渠道，**同一通知从进度到失败、结束全程使用同一渠道（LIVE）**，只在终态保持可清除；实况短文本与超级岛文本分别走 `setShortCriticalText` 与 `focus` 参数。
+- **快捷方式与跳板**：动态快捷方式（开门 / 打卡）经带令牌校验的透明跳板 Activity 进入；通知上的动作按钮同样使用 `PendingIntent.getActivity` 打开跳板，由跳板在前台启动前台服务，以绕开 Android 12+ 的后台启动前台服务限制。
+
+## 已知限制
+
+- 在部分设备或系统版本上，通知的「实况 / 流体云」形态可能显示不完整（例如只显示百分比、或某些阶段没有文字）。
+- 小米手机上的「超级岛」支持尚未经过真机验证，可能显示异常或回落到普通通知。
+- Android 10 及更低版本上，部分外观设置（模糊、玻璃等）不会出现或不可用；应用在该版本上的启动稳定性也尚未经过真机确认。
+- 打卡的「选择定位方式」弹窗目前只能点击空白处或按返回键关闭，暂不支持下滑关闭。
+
 ## 相关文档
 
 - [更新日志](CHANGELOG.md)：v0.1.0-v0.3.9为历史回填，v0.4.0 开始为 git tag

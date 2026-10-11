@@ -23,7 +23,7 @@ data class BackupEnvelope(
 ) {
     companion object {
         /** 当前 App 支持的备份结构版本。 */
-        const val CURRENT_SCHEMA_VERSION = 1
+        const val CURRENT_SCHEMA_VERSION = 2
     }
 }
 
@@ -60,6 +60,5 @@ data class DataStoreSettings(
     val hideSign: Boolean = false,
     val hideCode: Boolean = false,
     val attemptUpload: Boolean = false,
-    val recordObject: String = "",
     val signLocationMode: String = "ask",
 )

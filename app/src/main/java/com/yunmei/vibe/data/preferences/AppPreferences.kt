@@ -25,7 +25,6 @@ data class AppSettings(
     val hideSign: Boolean = false,
     val hideCode: Boolean = false,
     val attemptUpload: Boolean = false,
-    val recordObject: String = "",
     val signLocationMode: String = "ask",
 )
 
@@ -47,7 +46,6 @@ class AppPreferences(private val context: Context, private val secureStore: Secu
             hideSign = prefs[KEY_HIDE_SIGN] ?: false,
             hideCode = prefs[KEY_HIDE_CODE] ?: false,
             attemptUpload = prefs[KEY_ATTEMPT_UPLOAD] ?: false,
-            recordObject = prefs[KEY_RECORD_OBJECT] ?: "",
             signLocationMode = prefs[KEY_SIGN_LOCATION_MODE] ?: "ask",
         )
     }
@@ -88,10 +86,6 @@ class AppPreferences(private val context: Context, private val secureStore: Secu
         context.settingsDataStore.edit { it[KEY_ATTEMPT_UPLOAD] = value }
     }
 
-    suspend fun setRecordObject(value: String) {
-        context.settingsDataStore.edit { it[KEY_RECORD_OBJECT] = value }
-    }
-
     suspend fun setSignLocationMode(value: String) {
         context.settingsDataStore.edit { it[KEY_SIGN_LOCATION_MODE] = value }
     }
@@ -124,7 +118,6 @@ class AppPreferences(private val context: Context, private val secureStore: Secu
         setHideSign(backup.hideSign)
         setHideCode(backup.hideCode)
         setAttemptUpload(backup.attemptUpload)
-        setRecordObject(backup.recordObject)
         setSignLocationMode(backup.signLocationMode)
     }
 
@@ -138,7 +131,6 @@ class AppPreferences(private val context: Context, private val secureStore: Secu
         val KEY_HIDE_SIGN = booleanPreferencesKey("hide_sign")
         val KEY_HIDE_CODE = booleanPreferencesKey("hide_code")
         val KEY_ATTEMPT_UPLOAD = booleanPreferencesKey("attempt_upload")
-        val KEY_RECORD_OBJECT = stringPreferencesKey("record_object")
         val KEY_SIGN_LOCATION_MODE = stringPreferencesKey("sign_location_mode")
         val KEY_LAST_LOCATION = stringPreferencesKey("last_location")
 

@@ -111,10 +111,10 @@ object UnlockNotifications {
      *
      * [percent] 为 null 表示进度未知（不确定进度），否则为 0..100 的确定进度。
      */
-    fun progress(context: Context, text: String, percent: Int?): Notification =
+    fun progress(context: Context, text: String, percent: Int?, promptAction: Boolean = false): Notification =
         when {
             MiIslandNotification.isSupported(context) -> miIslandProgress(context, text, percent)
-            isModernEligible() -> modernProgress(context, text, percent)
+            isModernEligible() -> modernProgress(context, text, percent, promptAction)
             else -> legacyProgress(context, text, percent)
         }
 
@@ -143,7 +143,12 @@ object UnlockNotifications {
      * 分段即进度条的彩色底层（按阶段着色），进度覆盖在其上，因此呈现「深色底 + 分段彩色」的观感，
      * 而不是一条纯白实心条。同时保留经典进度字段作为不渲染该样式时的兜底。
      */
-    private fun modernProgress(context: Context, text: String, percent: Int?): Notification {
+    private fun modernProgress(
+        context: Context,
+        text: String,
+        percent: Int?,
+        promptAction: Boolean = false,
+    ): Notification {
         val accent = ThemeColors.accent(context)
         val segments = listOf(
             Notification.ProgressStyle.Segment(SEGMENT_SCAN).setColor(accent.tertiary),
@@ -173,7 +178,16 @@ object UnlockNotifications {
             .setOngoing(true)
             // ColorOS 实况/胶囊形态只显示 shortCriticalText，必须包含阶段文字，
             // 否则「快速连接」等阶段只会看到一个百分比。
-            .setShortCriticalText(if (percent == null) text else "$text $percent%")
+            // 等待用户操作时显示"待处理"，其余状态保持"阶段文字 + 百分比"
+            .setShortCriticalText(
+                if (promptAction) {
+                    context.getString(R.string.notification_short_text_pending)
+                } else if (percent == null) {
+                    text
+                } else {
+                    "$text $percent%"
+                }
+            )
             .setProgress(PROGRESS_MAX, percent ?: 0, percent == null)
             .setStyle(progressStyle)
             .build()
@@ -185,7 +199,7 @@ object UnlockNotifications {
     /** Android 16 以下：复刻 InstallerX LegacyNotificationBuilder（经典进度条 + 主题色）。 */
     private fun legacyProgress(context: Context, text: String, percent: Int?): Notification {
         val accent = ThemeColors.accent(context)
-        return NotificationCompat.Builder(context, PROGRESS_CHANNEL_ID)
+        return NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_open) + " · " + text)
             .setContentText(text)
@@ -207,7 +221,8 @@ object UnlockNotifications {
         val title = context.getString(if (success) R.string.unlock_success else R.string.unlock_failed)
         val accent = ThemeColors.accent(context)
         val islandSupported = MiIslandNotification.isSupported(context)
-        val channelId = if (islandSupported || isModernEligible()) LIVE_CHANNEL_ID else RESULT_CHANNEL_ID
+        // 全程固定 LIVE 渠道（含结束态），避免"同 ID 中途换渠道"导致实况被撤销
+        val channelId = LIVE_CHANNEL_ID
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(title + " · " + text)
@@ -268,7 +283,7 @@ object UnlockNotifications {
             for (action in actions) builder.addAction(action)
             return builder.build()
         }
-        val builder = NotificationCompat.Builder(context, RESULT_CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_failed))
             .setContentText(text)
@@ -322,6 +337,7 @@ object UnlockNotifications {
             // 失败：保持实况样式与进度条，不退回传统通知；渠道固定实况渠道（不切渠道）。
             // 平台 Builder 没有 setSilent，提醒能力由实况渠道提供，这里只关掉 onlyAlertOnce。
             val builder = Notification.Builder(context, LIVE_CHANNEL_ID)
+            builder.setShortCriticalText(context.getString(R.string.notification_short_text_pending))
                 .setSmallIcon(R.drawable.ic_notification_unlock)
                 .setContentTitle(context.getString(R.string.unlock_failed))
                 .setContentText(text)
@@ -340,7 +356,7 @@ object UnlockNotifications {
             return failed
         }
         // 低版本没有实况样式：保留进度条与错误色；失败切到高优先级结果渠道（InstallerX 旧式实现同样会切）。
-        val builder = NotificationCompat.Builder(context, RESULT_CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_failed))
             .setContentText(text)

@@ -5,14 +5,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.foundation.shape.RoundedCornerShape
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.basic.TextButton
 import com.yunmei.vibe.ui.component.setting.NavigationItemWidget
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
-import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
@@ -47,7 +45,6 @@ import com.yunmei.vibe.R
 import com.yunmei.vibe.data.preferences.SettingsPrefs
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
-import com.yunmei.vibe.ui.component.ActionMenuItem
 import com.yunmei.vibe.ui.component.material.ActionMenuBottomSheet
 import com.yunmei.vibe.ui.component.miuix.ActionMenuDialog
 import com.yunmei.vibe.ui.theme.TemplateTheme

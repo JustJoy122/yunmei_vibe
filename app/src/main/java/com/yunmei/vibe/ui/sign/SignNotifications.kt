@@ -139,6 +139,11 @@ object SignNotifications {
                 builder.setOnlyAlertOnce(true)
             }
             for (action in actions) builder.addAction(action)
+            // 等待用户操作（ASK 模式等待选择定位方式）时，轻量实况显示"待处理"
+            // 与 InstallerX 的 setShortCriticalText(installer_live_channel_short_text_pending) 同机制。
+            if (promptChooser) {
+                builder.setShortCriticalText(context.getString(R.string.notification_short_text_pending))
+            }
             val notification = builder.build()
             notification.extras.putBoolean(NotificationCompat.EXTRA_REQUEST_PROMOTED_ONGOING, true)
             return notification
@@ -150,7 +155,9 @@ object SignNotifications {
         // 关键：**进行中全程使用 LIVE 渠道**。此前进度阶段用 PROGRESS_CHANNEL_ID、
         // 而 Android 16+ 实况路径用 LIVE_CHANNEL_ID，"同一通知 ID 中途换渠道"会被系统视为新通知，
         // 导致已提升的实况（流体云）掉回普通通知。仅在流程结束时才切到 RESULT 渠道。
-        val channelId = if (failedStage != null) RESULT_CHANNEL_ID else LIVE_CHANNEL_ID
+        // 进行中与失败都留在 LIVE 渠道：失败时切 RESULT 会让系统把"同 ID 换渠道"当成新通知，
+        // 已提升的实况随即丢失。只有真正结束的 result() 才切 RESULT 渠道。
+        val channelId = LIVE_CHANNEL_ID
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(context.getString(R.string.unlock_sign))
@@ -176,7 +183,9 @@ object SignNotifications {
     /** 结果通知（使用上次位置 / 重新定位并保存两种静默模式，以及进行中模式的最终结果）。 */
     fun result(context: Context, success: Boolean, text: String): Notification {
         val accent = ThemeColors.accent(context)
-        return NotificationCompat.Builder(context, RESULT_CHANNEL_ID)
+        // 结束态也留在 LIVE 渠道：切渠道会让系统把"同 ID 换渠道"当成新通知，
+        // 实况（流体云）随即消失。终态改为 setOngoing(false)+setAutoCancel(true) 由用户手动清除。
+        return NotificationCompat.Builder(context, LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(
                 context.getString(if (success) R.string.unlock_sign_success else R.string.unlock_sign_failed)

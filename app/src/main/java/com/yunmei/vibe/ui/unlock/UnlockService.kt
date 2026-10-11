@@ -233,7 +233,7 @@ class UnlockService : Service() {
 
     /** 「完成」：用占位通知顶替同 ID 的通知后立即移除，并按规则先完成 startForeground。 */
     private fun dismissAndStop() {
-        val placeholder = android.app.Notification.Builder(this, UnlockNotifications.PROGRESS_CHANNEL_ID)
+        val placeholder = android.app.Notification.Builder(this, UnlockNotifications.LIVE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_unlock)
             .setContentTitle(getString(R.string.unlock_preparing))
             .build()

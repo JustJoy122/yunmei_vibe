@@ -10,13 +10,8 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
-import androidx.lifecycle.lifecycleScope
-import com.yunmei.vibe.YunMeiApp
-import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.ui.util.LOCATION_PERMISSIONS
 import com.yunmei.vibe.ui.util.PermissionRequester
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 /**
  * 「打卡」快捷方式 / 「授予权限」通知动作的入口 Activity：完全无界面。
@@ -70,18 +65,6 @@ class SignShortcutActivity : ComponentActivity() {
         finish()
     }
 
-    private fun checkLocationEnabled() {
-        if (isLocationEnabled()) {
-            startSignService()
-            finish()
-            return
-        }
-        // 定位总开关未开启：直接在流程内跳系统设置页，返回后继续（不再要求先打开 App）。
-        permissionRequester.launchSettings(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) {
-            startSignService()
-            finish()
-        }
-    }
 
     private fun startSignService() {
         runCatching {
@@ -93,25 +76,12 @@ class SignShortcutActivity : ComponentActivity() {
     }
 
     /** 权限被拒绝：不做无声失败，发一条失败通知说明原因后结束。 */
-    private fun startServiceWithDenied() {
-        runCatching {
-            ContextCompat.startForegroundService(
-                this,
-                Intent(this, SignService::class.java)
-                    .setAction(SignService.ACTION_PERMISSION_DENIED),
-            )
-        }
-        finish()
-    }
 
     private fun needNotificationPermission(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
 
-    private fun hasLocationPermission(): Boolean = LOCATION_PERMISSIONS.all { permission ->
-        ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
-    }
 
     private fun isLocationEnabled(): Boolean {
         val lm = getSystemService(LOCATION_SERVICE) as? LocationManager ?: return false

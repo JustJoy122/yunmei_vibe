@@ -1,5 +1,9 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import androidx.compose.material.icons.twotone.Description
+import androidx.compose.material.icons.twotone.ViewCarousel
+import androidx.compose.material.icons.twotone.Swipe
+import androidx.compose.material.icons.twotone.Pin
 import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.material.icons.rounded.Swipe
 import android.annotation.SuppressLint
@@ -321,7 +325,7 @@ fun ThemeSettingsMaterial(
                     content = listOf(
                         {
                             SegmentedSwitchItem(
-                                icon = Icons.TwoTone.Brightness1,
+                                icon = Icons.TwoTone.Pin,
                                 title = stringResource(R.string.settings_amoled),
                                 summary = stringResource(R.string.settings_amoled_summary),
                                 checked = uiState.amoled,
@@ -378,39 +382,6 @@ fun ThemeSettingsMaterial(
                     stringResource(R.string.settings_predictive_back_direction_always_left),
                 )
 
-                SegmentedColumn(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            content = listOf(
-                {
-                    SegmentedSwitchItem(
-                        icon = Icons.Rounded.Swipe,
-                        title = stringResource(id = R.string.settings_enable_swipe_dismiss),
-                        summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
-                        checked = uiState.enableSwipeDismiss,
-                        onCheckedChange = actions.onSetEnableSwipeDismiss,
-                    )
-
-        SegmentedColumn(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            content = listOf(
-                {
-                    SegmentedDropdownItem(
-                        icon = Icons.Rounded.ViewCarousel,
-                        title = stringResource(id = R.string.settings_pager_gesture_mode),
-                        items = listOf(
-                            stringResource(id = R.string.settings_pager_gesture_native),
-                            stringResource(id = R.string.settings_pager_gesture_cross_axis),
-                            stringResource(id = R.string.settings_pager_gesture_ios_like),
-                        ),
-                        selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
-                        onItemSelected = actions.onSetPagerInterceptionMode,
-                    )
-                },
-            )
-        )
-                },
-            )
-        )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     // 开关 + 菜单联动（结构对齐「莫奈取色 → 强调色」）：开关关闭即不启用返回动画，菜单整组收起。
@@ -438,7 +409,7 @@ fun ThemeSettingsMaterial(
                             content = listOf(
                                 {
                                     SegmentedDropdownItem(
-                                        icon = Icons.TwoTone.Animation,
+                                        icon = Icons.TwoTone.AspectRatio,
                                         title = stringResource(R.string.settings_predictive_back_animation),
                                         items = animationItems,
                                         selectedIndex = animations.indexOf(currentAnimation).coerceAtLeast(0),
@@ -464,6 +435,39 @@ fun ThemeSettingsMaterial(
                             )
                         )
                     }
+        SegmentedColumn(
+            modifier = Modifier.padding(top = 4.dp),
+            content = listOf(
+                {
+                    SegmentedSwitchItem(
+                        icon = Icons.TwoTone.Swipe,
+                        title = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                        summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
+                        checked = uiState.enableSwipeDismiss,
+                        onCheckedChange = actions.onSetEnableSwipeDismiss,
+                    )
+                },
+            )
+        )
+
+        SegmentedColumn(
+            modifier = Modifier.padding(top = 4.dp),
+            content = listOf(
+                {
+                    SegmentedDropdownItem(
+                        icon = Icons.TwoTone.ViewCarousel,
+                        title = stringResource(id = R.string.settings_pager_gesture_mode),
+                        items = listOf(
+                            stringResource(id = R.string.settings_pager_gesture_native),
+                            stringResource(id = R.string.settings_pager_gesture_cross_axis),
+                            stringResource(id = R.string.settings_pager_gesture_ios_like),
+                        ),
+                        selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
+                        onItemSelected = actions.onSetPagerInterceptionMode,
+                    )
+                },
+            )
+        )
                 }
 
                 // 按模板逻辑：模糊/悬浮底栏/液态玻璃为 Miuix 主题独占（Material 底栏不使用
@@ -481,7 +485,7 @@ fun ThemeSettingsMaterial(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                Icons.TwoTone.AspectRatio,
+                                Icons.TwoTone.Description,
                                 contentDescription = stringResource(id = R.string.settings_page_scale),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )

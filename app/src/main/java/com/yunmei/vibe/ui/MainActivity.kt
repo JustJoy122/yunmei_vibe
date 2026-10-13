@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui
 
+import top.yukonga.miuix.kmp.utils.PagerFlingTrackerConnection
 import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
 import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
 import androidx.compose.foundation.pager.PagerDefaults
@@ -397,6 +398,9 @@ fun MainScreen(
     val nativePagerConnection = PagerDefaults.pageNestedScrollConnection(mainPagerState.pagerState, Orientation.Horizontal)
     // 跨轴拦截档由 PagerGestureNestedScrollConnection 接管，故关闭 pager 自身的滚动
     val pagerScrollEnabled = userScrollEnabled && !interceptPagerGestures
+    // TapToHalt（iOS 风格）分支要求 flingTracker != null，否则该档等价于不做任何处理：
+    // 这里显式 remember 并传入，避免落到“未传 tracker 的重载”而静默失效。
+    val pagerFlingTracker = remember { PagerFlingTrackerConnection() }
     val uiMode = LocalUiMode.current
     val surfaceColor = when (uiMode) {
         UiMode.Material -> MaterialTheme.colorScheme.surface // Blur is not used in Material, this is just a placeholder
@@ -452,6 +456,7 @@ fun MainScreen(
                         .pagerGestureOverride(
                             pagerState = mainPagerState.pagerState,
                             mode = pagerInterceptionMode,
+                            flingTracker = pagerFlingTracker,
                             enabled = userScrollEnabled,
                         )
                         .then(if (enableFloatingBottomBar && enableFloatingBottomBarBlur) Modifier.layerBackdrop(backdrop) else Modifier),

@@ -1,5 +1,7 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.material.icons.rounded.Swipe
 import android.annotation.SuppressLint
 import android.os.Build
@@ -395,31 +397,6 @@ fun ThemeSettingsMiuix(
                                     actions.onSetEnablePredictiveBack(it)
                                 }
                             )
-                            SwitchPreference(
-                                title = stringResource(id = R.string.settings_enable_swipe_dismiss),
-                                summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
-                                startAction = {
-                                    Icon(
-                                        Icons.Rounded.Swipe,
-                                        modifier = Modifier.padding(end = 6.dp),
-                                        contentDescription = stringResource(id = R.string.settings_enable_swipe_dismiss),
-                                        tint = colorScheme.onBackground,
-                                    )
-                                    OverlayDropdownPreference(
-                                        title = stringResource(id = R.string.settings_pager_gesture_mode),
-                                        items = listOf(
-                                            stringResource(id = R.string.settings_pager_gesture_native),
-                                            stringResource(id = R.string.settings_pager_gesture_cross_axis),
-                                            stringResource(id = R.string.settings_pager_gesture_ios_like),
-                                        ),
-                                        selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
-                                        onSelectedIndexChange = actions.onSetPagerInterceptionMode,
-                                    )
-                                },
-                                checked = uiState.enableSwipeDismiss,
-                                onCheckedChange = actions.onSetEnableSwipeDismiss,
-                            )
-
                             // 开关 + 菜单联动（与上方「莫奈取色 → 强调色」完全同款结构）：
                             // 开关关闭即不启用返回动画，两条菜单整组收起。
                             AnimatedVisibility(visible = uiState.enablePredictiveBack) {
@@ -429,7 +406,7 @@ fun ThemeSettingsMiuix(
                                         items = animationItems,
                                         startAction = {
                                             Icon(
-                                                Icons.Rounded.Animation,
+                                                Icons.Rounded.AspectRatio,
                                                 modifier = Modifier.padding(end = 6.dp),
                                                 contentDescription = stringResource(R.string.settings_predictive_back_animation),
                                                 tint = colorScheme.onBackground
@@ -461,6 +438,39 @@ fun ThemeSettingsMiuix(
                                     }
                                 }
                             }
+                            SwitchPreference(
+                                title = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                                summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
+                                startAction = {
+                                    Icon(
+                                        Icons.Rounded.Swipe,
+                                        modifier = Modifier.padding(end = 6.dp),
+                                        contentDescription = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                                        tint = colorScheme.onBackground,
+                                    )
+                                },
+                                checked = uiState.enableSwipeDismiss,
+                                onCheckedChange = actions.onSetEnableSwipeDismiss,
+                            )
+
+                            OverlayDropdownPreference(
+                                title = stringResource(id = R.string.settings_pager_gesture_mode),
+                                items = listOf(
+                                    stringResource(id = R.string.settings_pager_gesture_native),
+                                    stringResource(id = R.string.settings_pager_gesture_cross_axis),
+                                    stringResource(id = R.string.settings_pager_gesture_ios_like),
+                                ),
+                                startAction = {
+                                    Icon(
+                                        Icons.Rounded.ViewCarousel,
+                                        modifier = Modifier.padding(end = 6.dp),
+                                        contentDescription = stringResource(id = R.string.settings_pager_gesture_mode),
+                                        tint = colorScheme.onBackground,
+                                    )
+                                },
+                                selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
+                                onSelectedIndexChange = actions.onSetPagerInterceptionMode,
+                            )
                         }
 
                         var sliderValue by remember(uiState.pageScale) { mutableFloatStateOf(uiState.pageScale) }
@@ -468,7 +478,7 @@ fun ThemeSettingsMiuix(
                             title = stringResource(id = R.string.settings_page_scale),
                             startAction = {
                                 Icon(
-                                    Icons.Rounded.AspectRatio,
+                                    Icons.Rounded.Description,
                                     modifier = Modifier.padding(end = 6.dp),
                                     contentDescription = stringResource(id = R.string.settings_page_scale),
                                     tint = colorScheme.onBackground

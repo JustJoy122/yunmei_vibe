@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.settings
 
+import androidx.compose.material.icons.twotone.DisplaySettings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -132,7 +133,7 @@ fun SettingPagerMaterial(
                 content = buildList {
                     add {
                         SegmentedDropdownItem(
-                            icon = Icons.TwoTone.Dashboard,
+                            icon = Icons.TwoTone.DisplaySettings,
                             title = stringResource(id = R.string.settings_ui_mode),
                             items = listOf("Miuix", "Material"),
                             selectedIndex = if (state.uiMode == "material") 1 else 0,

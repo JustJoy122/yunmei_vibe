@@ -56,6 +56,7 @@ class SettingsViewModel(
                     colorStyle = repo.colorStyle,
                     colorSpec = repo.colorSpec,
                     enablePredictiveBack = repo.enablePredictiveBack,
+        enableSwipeDismiss = repo.enableSwipeDismiss,
                     predictiveBackAnimation = repo.predictiveBackAnimation,
                     predictiveBackExitDirection = repo.predictiveBackExitDirection,
                     enableBlur = repo.enableBlur,
@@ -154,6 +155,11 @@ class SettingsViewModel(
     fun setColorSpec(spec: String) {
         repo.colorSpec = spec
         _uiState.update { it.copy(colorSpec = spec) }
+    }
+
+    fun setEnableSwipeDismiss(enabled: Boolean) {
+        repo.enableSwipeDismiss = enabled
+        _uiState.update { it.copy(enableSwipeDismiss = enabled) }
     }
 
     fun setEnablePredictiveBack(enabled: Boolean) {

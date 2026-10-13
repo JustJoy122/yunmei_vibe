@@ -105,6 +105,7 @@ class MainActivityViewModel(
             appSettings = ThemeController.getAppSettings(YunMeiApp.app),
             pageScale = settingRepo.pageScale,
             enableBlur = settingRepo.enableBlur,
+        enableSwipeDismiss = settingRepo.enableSwipeDismiss,
             enableFloatingBottomBar = settingRepo.enableFloatingBottomBar,
             enableFloatingBottomBarBlur = settingRepo.enableFloatingBottomBarBlur,
             uiMode = UiMode.fromValue(settingRepo.uiMode),

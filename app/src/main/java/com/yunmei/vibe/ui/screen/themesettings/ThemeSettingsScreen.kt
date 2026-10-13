@@ -96,6 +96,7 @@ fun ThemeSettingsScreen() {
                 }
             }
         },
+        onSetEnableSwipeDismiss = viewModel::setEnableSwipeDismiss,
         onSetPredictiveBackAnimation = viewModel::setPredictiveBackAnimation,
         onSetPredictiveBackExitDirection = viewModel::setPredictiveBackExitDirection,
         onSetPageScale = viewModel::setPageScale,

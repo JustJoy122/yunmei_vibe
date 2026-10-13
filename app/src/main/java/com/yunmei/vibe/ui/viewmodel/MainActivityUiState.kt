@@ -9,6 +9,7 @@ data class MainActivityUiState(
     val appSettings: AppSettings,
     val pageScale: Float,
     val enableBlur: Boolean,
+    val enableSwipeDismiss: Boolean = true,
     val enableFloatingBottomBar: Boolean,
     val enableFloatingBottomBarBlur: Boolean,
     val uiMode: UiMode,

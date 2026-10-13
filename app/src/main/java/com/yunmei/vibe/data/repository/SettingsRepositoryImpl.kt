@@ -53,6 +53,10 @@ class SettingsRepositoryImpl : SettingsRepository {
         get() = prefs.getBoolean(SettingsPrefs.ENABLE_PREDICTIVE_BACK, false)
         set(value) = prefs.edit { putBoolean(SettingsPrefs.ENABLE_PREDICTIVE_BACK, value) }
 
+    override var enableSwipeDismiss: Boolean
+        get() = prefs.getBoolean(SettingsPrefs.ENABLE_SWIPE_DISMISS, true)
+        set(value) = prefs.edit { putBoolean(SettingsPrefs.ENABLE_SWIPE_DISMISS, value) }
+
     /** 返回动画档位；取值与 InstallerX Revived 一致（aosp / miuix / scale / ksu_classic），默认 aosp。 */
     override var predictiveBackAnimation: String
         get() = prefs.getString(SettingsPrefs.PREDICTIVE_BACK_ANIMATION, PredictiveBackAnimation.DEFAULT.value)

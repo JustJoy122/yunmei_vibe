@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import androidx.compose.material.icons.rounded.Swipe
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
@@ -376,7 +377,22 @@ fun ThemeSettingsMaterial(
                     stringResource(R.string.settings_predictive_back_direction_always_left),
                 )
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                SegmentedColumn(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            content = listOf(
+                {
+                    SegmentedSwitchItem(
+                        icon = Icons.Rounded.Swipe,
+                        title = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                        summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
+                        checked = uiState.enableSwipeDismiss,
+                        onCheckedChange = actions.onSetEnableSwipeDismiss,
+                    )
+                },
+            )
+        )
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     // 开关 + 菜单联动（结构对齐「莫奈取色 → 强调色」）：开关关闭即不启用返回动画，菜单整组收起。
                     SegmentedColumn(
                         modifier = Modifier.padding(top = 4.dp),

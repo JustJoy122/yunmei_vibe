@@ -10,6 +10,7 @@ interface SettingsRepository {
     var colorStyle: String
     var colorSpec: String
     var enablePredictiveBack: Boolean
+    var enableSwipeDismiss: Boolean
     var predictiveBackAnimation: String
     var predictiveBackExitDirection: String
     var enableBlur: Boolean

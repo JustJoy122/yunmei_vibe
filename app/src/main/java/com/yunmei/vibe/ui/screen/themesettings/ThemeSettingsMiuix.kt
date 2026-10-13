@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import androidx.compose.material.icons.rounded.Swipe
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
@@ -393,6 +394,20 @@ fun ThemeSettingsMiuix(
                                 onCheckedChange = {
                                     actions.onSetEnablePredictiveBack(it)
                                 }
+                            )
+                            SwitchPreference(
+                                title = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                                summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
+                                startAction = {
+                                    Icon(
+                                        Icons.Rounded.Swipe,
+                                        modifier = Modifier.padding(end = 6.dp),
+                                        contentDescription = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                                        tint = colorScheme.onBackground,
+                                    )
+                                },
+                                checked = uiState.enableSwipeDismiss,
+                                onCheckedChange = actions.onSetEnableSwipeDismiss,
                             )
 
                             // 开关 + 菜单联动（与上方「莫奈取色 → 强调色」完全同款结构）：

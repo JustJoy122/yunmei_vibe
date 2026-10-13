@@ -287,9 +287,15 @@ class MainActivity : ComponentActivity() {
                             blockInputDuringTransition = false,
                         )
                     }
-                    val swipeBackDirection = when (LocalLayoutDirection.current) {
-                        LayoutDirection.Rtl -> NavSwipeDirection.RightToLeft
-                        LayoutDirection.Ltr -> NavSwipeDirection.LeftToRight
+                    // 横移返回手势：由偏好开关门控；手势识别在 miuix-nav 内部完成
+                    // （与 KernelSU 一致：偏好值 → NavSwipeDirection → entry(swipeDismiss = …)）。
+                    val swipeBackDirection = if (uiState.enableSwipeDismiss) {
+                        when (LocalLayoutDirection.current) {
+                            LayoutDirection.Rtl -> NavSwipeDirection.RightToLeft
+                            LayoutDirection.Ltr -> NavSwipeDirection.LeftToRight
+                        }
+                    } else {
+                        NavSwipeDirection.None
                     }
                     val interceptPredictiveBack =
                         predictiveBackAnimation == null && navigator.backStackSize() > 1

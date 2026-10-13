@@ -21,6 +21,7 @@ data class SettingsUiState(
     val colorSpec: String = ColorSpec.SpecVersion.Default.name,
     val enablePredictiveBack: Boolean = false,
     val enableSwipeDismiss: Boolean = true,
+    val pagerInterceptionMode: Int = 1,
     val predictiveBackAnimation: String = PredictiveBackAnimation.DEFAULT.value,
     val predictiveBackExitDirection: String = PredictiveBackExitDirection.DEFAULT.value,
     val enableBlur: Boolean = true,

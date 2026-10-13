@@ -57,6 +57,10 @@ class SettingsRepositoryImpl : SettingsRepository {
         get() = prefs.getBoolean(SettingsPrefs.ENABLE_SWIPE_DISMISS, true)
         set(value) = prefs.edit { putBoolean(SettingsPrefs.ENABLE_SWIPE_DISMISS, value) }
 
+    override var pagerInterceptionMode: Int
+        get() = prefs.getInt(SettingsPrefs.PAGER_INTERCEPTION_MODE, 1)
+        set(value) = prefs.edit { putInt(SettingsPrefs.PAGER_INTERCEPTION_MODE, value.coerceIn(0, 2)) }
+
     /** 返回动画档位；取值与 InstallerX Revived 一致（aosp / miuix / scale / ksu_classic），默认 aosp。 */
     override var predictiveBackAnimation: String
         get() = prefs.getString(SettingsPrefs.PREDICTIVE_BACK_ANIMATION, PredictiveBackAnimation.DEFAULT.value)

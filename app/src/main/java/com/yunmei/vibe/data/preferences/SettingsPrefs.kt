@@ -26,6 +26,7 @@ object SettingsPrefs {
     const val COLOR_SPEC = "color_spec"
     const val ENABLE_PREDICTIVE_BACK = "enable_predictive_back"
     const val ENABLE_SWIPE_DISMISS = "enable_swipe_dismiss"
+    const val PAGER_INTERCEPTION_MODE = "pager_interception_mode"
     const val PREDICTIVE_BACK_ANIMATION = "predictive_back_animation"
     const val PREDICTIVE_BACK_EXIT_DIRECTION = "predictive_back_exit_direction"
     const val ENABLE_BLUR = "enable_blur"

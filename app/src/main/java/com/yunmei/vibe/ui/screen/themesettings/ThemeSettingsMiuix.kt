@@ -405,6 +405,16 @@ fun ThemeSettingsMiuix(
                                         contentDescription = stringResource(id = R.string.settings_enable_swipe_dismiss),
                                         tint = colorScheme.onBackground,
                                     )
+                                    OverlayDropdownPreference(
+                                        title = stringResource(id = R.string.settings_pager_gesture_mode),
+                                        items = listOf(
+                                            stringResource(id = R.string.settings_pager_gesture_native),
+                                            stringResource(id = R.string.settings_pager_gesture_cross_axis),
+                                            stringResource(id = R.string.settings_pager_gesture_ios_like),
+                                        ),
+                                        selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
+                                        onSelectedIndexChange = actions.onSetPagerInterceptionMode,
+                                    )
                                 },
                                 checked = uiState.enableSwipeDismiss,
                                 onCheckedChange = actions.onSetEnableSwipeDismiss,

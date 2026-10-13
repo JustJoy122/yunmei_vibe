@@ -1,5 +1,10 @@
 package com.yunmei.vibe.ui
 
+import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
+import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.gestures.Orientation
+import top.yukonga.miuix.kmp.utils.pagerGestureOverride
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -194,6 +199,7 @@ class MainActivity : ComponentActivity() {
                 val mainScreenEntry = @Composable {
                     MainScreen(
                         initialPage = currentSelectedPage,
+                        pagerInterceptionMode = uiState.pagerInterceptionMode,
                         onPageChanged = viewModel::setSelectedMainPage,
                         onAutoOpenRequested = viewModel::requestAutoOpen,
                         onUpdateCheckRequested = viewModel::checkUpdateOnStartup,
@@ -369,6 +375,7 @@ val LocalMainPagerState = staticCompositionLocalOf<MainPagerState> { error("Loca
 @Composable
 fun MainScreen(
     initialPage: Int = 0,
+    pagerInterceptionMode: Int = 1,
     onPageChanged: (Int) -> Unit = {},
     onAutoOpenRequested: () -> Unit = {},
     onUpdateCheckRequested: () -> Unit = {},
@@ -381,6 +388,15 @@ fun MainScreen(
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { MainPagerConfig.PAGE_COUNT })
     val mainPagerState = rememberMainPagerState(pagerState)
     var userScrollEnabled by remember { mutableStateOf(true) }
+    // 页面切换手势：跨轴拦截（CrossAxisInterceptor）档需要按 miuix 官方示例配套调整 pager
+    // （见 ui-reference/miuix-0.9.4/example/shared/src/commonMain/kotlin/AppContent.kt:758-768）
+    val interceptPagerGestures = PagerInterceptionMode.entries.getOrElse(pagerInterceptionMode) {
+        PagerInterceptionMode.Native
+    } == PagerInterceptionMode.CrossAxisInterceptor
+    // 原生连接：非跨轴档时交回 Compose 默认实现
+    val nativePagerConnection = PagerDefaults.pageNestedScrollConnection(mainPagerState.pagerState, Orientation.Horizontal)
+    // 跨轴拦截档由 PagerGestureNestedScrollConnection 接管，故关闭 pager 自身的滚动
+    val pagerScrollEnabled = userScrollEnabled && !interceptPagerGestures
     val uiMode = LocalUiMode.current
     val surfaceColor = when (uiMode) {
         UiMode.Material -> MaterialTheme.colorScheme.surface // Blur is not used in Material, this is just a placeholder
@@ -430,11 +446,19 @@ fun MainScreen(
         val pagerContent = @Composable { bottomInnerPadding: Dp ->
             Box(modifier = if (blurBackdrop != null) Modifier.layerBackdrop(blurBackdrop) else Modifier) {
                 HorizontalPager(
+                    // 页面切换手势三档：Native / CrossAxisInterceptor / TapToHalt（miuix 的 PagerInterceptionMode）
+                    // 与「横移返回手势」（miuix-nav 的 NavSwipeDirection）及「预测性返回」互不干扰
                     modifier = Modifier
+                        .pagerGestureOverride(
+                            pagerState = mainPagerState.pagerState,
+                            mode = pagerInterceptionMode,
+                            enabled = userScrollEnabled,
+                        )
                         .then(if (enableFloatingBottomBar && enableFloatingBottomBarBlur) Modifier.layerBackdrop(backdrop) else Modifier),
                     state = mainPagerState.pagerState,
                     beyondViewportPageCount = if (contentReady) 1 else 0,
-                    userScrollEnabled = userScrollEnabled,
+                    userScrollEnabled = pagerScrollEnabled,
+                    pageNestedScrollConnection = if (interceptPagerGestures) PagerGestureNestedScrollConnection else nativePagerConnection,
                 ) { page ->
                     val isCurrentPage = page == settledPage
                     when (page) {

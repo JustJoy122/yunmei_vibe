@@ -106,6 +106,7 @@ class MainActivityViewModel(
             pageScale = settingRepo.pageScale,
             enableBlur = settingRepo.enableBlur,
         enableSwipeDismiss = settingRepo.enableSwipeDismiss,
+        pagerInterceptionMode = settingRepo.pagerInterceptionMode,
             enableFloatingBottomBar = settingRepo.enableFloatingBottomBar,
             enableFloatingBottomBarBlur = settingRepo.enableFloatingBottomBarBlur,
             uiMode = UiMode.fromValue(settingRepo.uiMode),

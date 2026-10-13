@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.material.icons.rounded.Swipe
 import android.annotation.SuppressLint
 import android.content.Context
@@ -388,6 +389,25 @@ fun ThemeSettingsMaterial(
                         checked = uiState.enableSwipeDismiss,
                         onCheckedChange = actions.onSetEnableSwipeDismiss,
                     )
+
+        SegmentedColumn(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            content = listOf(
+                {
+                    SegmentedDropdownItem(
+                        icon = Icons.Rounded.ViewCarousel,
+                        title = stringResource(id = R.string.settings_pager_gesture_mode),
+                        items = listOf(
+                            stringResource(id = R.string.settings_pager_gesture_native),
+                            stringResource(id = R.string.settings_pager_gesture_cross_axis),
+                            stringResource(id = R.string.settings_pager_gesture_ios_like),
+                        ),
+                        selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
+                        onItemSelected = actions.onSetPagerInterceptionMode,
+                    )
+                },
+            )
+        )
                 },
             )
         )

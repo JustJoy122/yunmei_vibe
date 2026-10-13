@@ -10,6 +10,7 @@ data class MainActivityUiState(
     val pageScale: Float,
     val enableBlur: Boolean,
     val enableSwipeDismiss: Boolean = true,
+    val pagerInterceptionMode: Int = 1,
     val enableFloatingBottomBar: Boolean,
     val enableFloatingBottomBarBlur: Boolean,
     val uiMode: UiMode,

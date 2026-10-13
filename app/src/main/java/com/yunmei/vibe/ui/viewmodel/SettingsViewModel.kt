@@ -57,6 +57,7 @@ class SettingsViewModel(
                     colorSpec = repo.colorSpec,
                     enablePredictiveBack = repo.enablePredictiveBack,
         enableSwipeDismiss = repo.enableSwipeDismiss,
+        pagerInterceptionMode = repo.pagerInterceptionMode,
                     predictiveBackAnimation = repo.predictiveBackAnimation,
                     predictiveBackExitDirection = repo.predictiveBackExitDirection,
                     enableBlur = repo.enableBlur,
@@ -160,6 +161,11 @@ class SettingsViewModel(
     fun setEnableSwipeDismiss(enabled: Boolean) {
         repo.enableSwipeDismiss = enabled
         _uiState.update { it.copy(enableSwipeDismiss = enabled) }
+    }
+
+    fun setPagerInterceptionMode(mode: Int) {
+        repo.pagerInterceptionMode = mode
+        _uiState.update { it.copy(pagerInterceptionMode = mode.coerceIn(0, 2)) }
     }
 
     fun setEnablePredictiveBack(enabled: Boolean) {

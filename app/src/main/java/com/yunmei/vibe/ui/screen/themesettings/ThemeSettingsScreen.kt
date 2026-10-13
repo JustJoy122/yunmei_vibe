@@ -97,6 +97,7 @@ fun ThemeSettingsScreen() {
             }
         },
         onSetEnableSwipeDismiss = viewModel::setEnableSwipeDismiss,
+        onSetPagerInterceptionMode = viewModel::setPagerInterceptionMode,
         onSetPredictiveBackAnimation = viewModel::setPredictiveBackAnimation,
         onSetPredictiveBackExitDirection = viewModel::setPredictiveBackExitDirection,
         onSetPageScale = viewModel::setPageScale,

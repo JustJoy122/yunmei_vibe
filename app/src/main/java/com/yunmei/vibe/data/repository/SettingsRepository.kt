@@ -11,6 +11,7 @@ interface SettingsRepository {
     var colorSpec: String
     var enablePredictiveBack: Boolean
     var enableSwipeDismiss: Boolean
+    var pagerInterceptionMode: Int
     var predictiveBackAnimation: String
     var predictiveBackExitDirection: String
     var enableBlur: Boolean

@@ -305,7 +305,7 @@
     <string name="sign_location_desc_locate">获取当前位置但不保存</string>
     <string name="sign_location_desc_relocate">获取当前位置并保存为默认</string>
     <string name="settings_enable_swipe_dismiss">横移返回手势</string>
-    <string name="settings_enable_swipe_dismiss_summary">从屏幕边缘横移返回上一页；系统已有侧滑返回时可关闭</string>
+    <string name="settings_enable_swipe_dismiss_summary">系统已有侧滑返回时可关闭</string>
     <string name="settings_pager_gesture_mode">页面切换手势</string>
     <string name="settings_pager_gesture_native">默认</string>
     <string name="settings_pager_gesture_cross_axis">跨轴拦截</string>

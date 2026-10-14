@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import androidx.compose.material.icons.twotone.DarkMode
 import com.yunmei.vibe.ui.component.material.ScaleDialogMaterial
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
@@ -7,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.twotone.Description
 import androidx.compose.material.icons.twotone.ViewCarousel
 import androidx.compose.material.icons.twotone.Swipe
-import androidx.compose.material.icons.twotone.Pin
 import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.material.icons.rounded.Swipe
 import android.annotation.SuppressLint
@@ -329,7 +329,7 @@ fun ThemeSettingsMaterial(
                     content = listOf(
                         {
                             SegmentedSwitchItem(
-                                icon = Icons.TwoTone.Pin,
+                                icon = Icons.TwoTone.DarkMode,
                                 title = stringResource(R.string.settings_amoled),
                                 summary = stringResource(R.string.settings_amoled_summary),
                                 checked = uiState.amoled,

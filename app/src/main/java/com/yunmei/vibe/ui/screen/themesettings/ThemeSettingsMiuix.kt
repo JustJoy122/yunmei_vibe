@@ -406,7 +406,7 @@ fun ThemeSettingsMiuix(
                                         items = animationItems,
                                         startAction = {
                                             Icon(
-                                                Icons.Rounded.AspectRatio,
+                                                Icons.Rounded.Description,
                                                 modifier = Modifier.padding(end = 6.dp),
                                                 contentDescription = stringResource(R.string.settings_predictive_back_animation),
                                                 tint = colorScheme.onBackground
@@ -478,7 +478,7 @@ fun ThemeSettingsMiuix(
                             title = stringResource(id = R.string.settings_page_scale),
                             startAction = {
                                 Icon(
-                                    Icons.Rounded.Description,
+                                    Icons.Rounded.AspectRatio,
                                     modifier = Modifier.padding(end = 6.dp),
                                     contentDescription = stringResource(id = R.string.settings_page_scale),
                                     tint = colorScheme.onBackground

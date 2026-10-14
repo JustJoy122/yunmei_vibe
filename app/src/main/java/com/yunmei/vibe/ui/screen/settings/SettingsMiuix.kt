@@ -1,5 +1,8 @@
 package com.yunmei.vibe.ui.screen.settings
 
+import androidx.compose.ui.unit.dp
+import top.yukonga.miuix.kmp.icon.extended.Info
+import top.yukonga.miuix.kmp.icon.MiuixIcons
 import androidx.compose.material.icons.rounded.DisplaySettings
 import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.LockOpen
@@ -25,7 +28,6 @@ import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.ContactPage
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.DisplaySettings
 import androidx.compose.material.icons.rounded.KeyOff
 import androidx.compose.material.icons.rounded.LocationOff
 import androidx.compose.material.icons.rounded.LocationOn
@@ -41,7 +43,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.data.local.StoredUser
@@ -199,6 +200,8 @@ fun SettingPagerMiuix(
                     }
 
                     // 开锁（二级页入口）
+                    // 门锁行为（开锁 / 取码与打卡 两个二级页入口，合并为一张卡片）
+                    SectionTitle(stringResource(R.string.settings_group_lock_behavior))
                     Card(
                         modifier = Modifier
                             .padding(bottom = 12.dp)
@@ -216,14 +219,6 @@ fun SettingPagerMiuix(
                             },
                             onClick = actions.onOpenUnlockSettings
                         )
-                    }
-
-                    // 取码与打卡（二级页入口）
-                    Card(
-                        modifier = Modifier
-                            .padding(bottom = 12.dp)
-                            .fillMaxWidth(),
-                    ) {
                         ArrowPreference(
                             title = stringResource(R.string.settings_group_code_sign),
                             startAction = {
@@ -271,7 +266,7 @@ fun SettingPagerMiuix(
                             title = about,
                             startAction = {
                                 Icon(
-                                    Icons.Rounded.ContactPage,
+                                    MiuixIcons.Info,
                                     modifier = Modifier.padding(end = 6.dp),
                                     contentDescription = about,
                                     tint = colorScheme.onBackground

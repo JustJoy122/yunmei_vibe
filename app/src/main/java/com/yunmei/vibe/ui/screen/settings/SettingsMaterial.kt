@@ -1,5 +1,7 @@
 package com.yunmei.vibe.ui.screen.settings
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.twotone.Info
 import androidx.compose.material.icons.twotone.Key
 import androidx.compose.material.icons.twotone.LockOpen
 import androidx.compose.material.icons.twotone.DisplaySettings
@@ -47,7 +49,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.data.local.StoredUser
@@ -154,8 +155,10 @@ fun SettingPagerMaterial(
             )
 
             // 开锁（二级页入口）
+            // 门锁行为（开锁 / 取码与打卡 两个二级页入口，合并为一张卡片）
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
+                title = stringResource(R.string.settings_group_lock_behavior),
                 content = listOf(
                     {
                         SegmentedListItem(
@@ -165,13 +168,6 @@ fun SettingPagerMaterial(
                             trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) }
                         )
                     },
-                )
-            )
-
-            // 取码与打卡（二级页入口）
-            SegmentedColumn(
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
-                content = listOf(
                     {
                         SegmentedListItem(
                             onClick = actions.onOpenCodeAndSignSettings,
@@ -212,7 +208,7 @@ fun SettingPagerMaterial(
                             headlineContent = { Text(stringResource(id = R.string.settings_about)) },
                             leadingContent = {
                                 Icon(
-                                    Icons.TwoTone.ContactPage,
+                                    Icons.TwoTone.Info,
                                     stringResource(id = R.string.settings_about)
                                 )
                             },

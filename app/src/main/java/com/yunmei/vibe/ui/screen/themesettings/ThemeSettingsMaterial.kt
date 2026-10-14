@@ -409,7 +409,7 @@ fun ThemeSettingsMaterial(
                             content = listOf(
                                 {
                                     SegmentedDropdownItem(
-                                        icon = Icons.TwoTone.AspectRatio,
+                                        icon = Icons.TwoTone.Description,
                                         title = stringResource(R.string.settings_predictive_back_animation),
                                         items = animationItems,
                                         selectedIndex = animations.indexOf(currentAnimation).coerceAtLeast(0),
@@ -485,7 +485,7 @@ fun ThemeSettingsMaterial(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                Icons.TwoTone.Description,
+                                Icons.TwoTone.AspectRatio,
                                 contentDescription = stringResource(id = R.string.settings_page_scale),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )

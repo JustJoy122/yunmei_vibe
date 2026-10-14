@@ -20,6 +20,7 @@ import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.component.dialog.ConfirmResult
 import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
 import com.yunmei.vibe.ui.navigation.Navigator
+import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.ui.navigation.Route
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.yunmei.vibe.ui.component.scan.ScanAddLockMenu
@@ -64,9 +65,25 @@ fun LocksPager(
 
     val deleteTitle = stringResource(R.string.locks_delete)
     val labelPrefix = stringResource(R.string.lock_detail_label)
+    val removeAccountTitle = stringResource(R.string.settings_remove_account)
+    val confirmText = stringResource(R.string.confirm)
+    val cancelText = stringResource(R.string.cancel)
     val actions = LocksActions(
         onAddScan = { showScanMenu = true },
-        onAddLogin = { navigator.push(Route.Login) },
+        onLogin = { navigator.push(Route.Login) },
+        onRemoveAccount = { user: StoredUser ->
+            scope.launch {
+                val result = confirmDialog.awaitConfirm(
+                    title = removeAccountTitle,
+                    content = user.username,
+                    confirm = confirmText,
+                    dismiss = cancelText,
+                )
+                if (result == ConfirmResult.Confirmed) {
+                    viewModel.removeAccount(user)
+                }
+            }
+        },
         onSetDefault = viewModel::setDefault,
         onDelete = { lock ->
             scope.launch {

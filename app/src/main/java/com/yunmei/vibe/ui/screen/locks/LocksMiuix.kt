@@ -1,5 +1,8 @@
 package com.yunmei.vibe.ui.screen.locks
 
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.automirrored.rounded.Login
+import com.yunmei.vibe.data.local.StoredUser
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -115,6 +118,30 @@ fun LocksPagerMiuix(
                             }
                         }
 
+                        // 账号（登录/切换账号 + 已保存账号；原「设置 → 账号」分组整体迁入）
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column {
+                                BasicComponent(
+                                    title = stringResource(
+                                        if (state.accounts.isEmpty()) R.string.locks_add_login
+                                        else R.string.settings_account_login
+                                    ),
+                                    summary = stringResource(R.string.settings_account_hint),
+                                    startAction = {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Rounded.Login,
+                                            tint = colorScheme.onSurface,
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    onClick = actions.onLogin,
+                                )
+                                state.accounts.forEach { user ->
+                                    AccountRow(user, actions.onRemoveAccount)
+                                }
+                            }
+                        }
+
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column {
                                 BasicComponent(
@@ -128,17 +155,6 @@ fun LocksPagerMiuix(
                                         )
                                     },
                                     onClick = actions.onAddScan,
-                                )
-                                BasicComponent(
-                                    title = stringResource(R.string.locks_add_login),
-                                    startAction = {
-                                        Icon(
-                                            imageVector = Icons.Rounded.PersonAdd,
-                                            tint = colorScheme.onSurface,
-                                            contentDescription = null,
-                                        )
-                                    },
-                                    onClick = actions.onAddLogin,
                                 )
                             }
                         }
@@ -181,5 +197,34 @@ private fun LockRow(
             )
         },
         onClick = { actions.onOpenDetail(lock) },
+    )
+}
+
+
+@Composable
+private fun AccountRow(
+    user: StoredUser,
+    onRemove: (StoredUser) -> Unit,
+) {
+    BasicComponent(
+        title = user.username,
+        summary = stringResource(R.string.settings_saved_accounts),
+        startAction = {
+            Icon(
+                Icons.Rounded.Person,
+                tint = colorScheme.onSurface,
+                contentDescription = user.username,
+            )
+        },
+        endActions = {
+            Icon(
+                Icons.Rounded.Delete,
+                tint = colorScheme.onSurfaceVariantActions,
+                contentDescription = stringResource(R.string.settings_remove_account),
+                modifier = Modifier
+                    .clickable { onRemove(user) }
+                    .padding(8.dp),
+            )
+        },
     )
 }

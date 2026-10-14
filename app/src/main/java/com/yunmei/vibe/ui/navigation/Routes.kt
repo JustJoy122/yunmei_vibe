@@ -32,6 +32,16 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object ThemeSettings : Route
 
+    /** 开锁设置二级页（快速连接 / 自动开门 / 开门后自动退出）。 */
+    @Parcelize
+    @Serializable
+    data object UnlockSettings : Route
+
+    /** 取码与打卡二级页（自动获取密码 / 未保存账号时使用首个账号 / 打卡定位方式）。 */
+    @Parcelize
+    @Serializable
+    data object CodeAndSignSettings : Route
+
     /** 关于页（模板 About 同款）。 */
     @Parcelize
     @Serializable

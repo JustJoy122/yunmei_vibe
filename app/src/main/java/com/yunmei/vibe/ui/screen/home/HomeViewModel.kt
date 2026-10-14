@@ -194,11 +194,6 @@ class HomeViewModel : ViewModel() {
         _uiState.update { it.copy(isOpening = false, progress = 0, statusText = str(R.string.unlock_permission_denied)) }
     }
 
-    fun setAutoConnect(value: Boolean) = setSetting { container.appPreferences.setAutoConnect(value) }
-
-    fun setAutoExit(value: Boolean) = setSetting { container.appPreferences.setAutoExit(value) }
-
-    fun setAutoCode(value: Boolean) = setSetting { container.appPreferences.setAutoCode(value) }
 
     fun getCode() {
         val lock = currentLock ?: return

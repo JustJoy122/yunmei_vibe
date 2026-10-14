@@ -125,7 +125,6 @@ fun HomePagerMiuix(
                         if (state.showCodeButton) {
                             CodeCard(state, actions)
                         }
-                        DoorOptionsCard(state, actions)
                     }
                     Spacer(Modifier.height(bottomInnerPadding))
                 }
@@ -282,42 +281,6 @@ private fun UnlockActionCard(
 }
 
 @Composable
-private fun DoorOptionsCard(
-    state: HomeUiState,
-    actions: HomeActions,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        SwitchPreference(
-            title = stringResource(R.string.settings_auto_connect),
-            summary = stringResource(R.string.settings_auto_connect_summary),
-            startAction = {
-                Icon(
-                    Icons.Rounded.AutoMode,
-                    modifier = Modifier.padding(end = 6.dp),
-                    contentDescription = stringResource(R.string.settings_auto_connect),
-                    tint = colorScheme.onBackground,
-                )
-            },
-            checked = state.settings.autoConnect,
-            onCheckedChange = actions.onSetAutoConnect,
-        )
-        SwitchPreference(
-            title = stringResource(R.string.settings_auto_exit),
-            startAction = {
-                Icon(
-                    Icons.AutoMirrored.Rounded.ExitToApp,
-                    modifier = Modifier.padding(end = 6.dp),
-                    contentDescription = stringResource(R.string.settings_auto_exit),
-                    tint = colorScheme.onBackground,
-                )
-            },
-            checked = state.settings.autoExit,
-            onCheckedChange = actions.onSetAutoExit,
-        )
-    }
-}
-
-@Composable
 private fun SignAskDialog(
     ask: SignAskState,
     onChoice: (SignAskChoice) -> Unit,
@@ -372,21 +335,6 @@ private fun CodeCard(
             },
             enabled = enabled,
             onClick = if (enabled) actions.onGetCode else null,
-        )
-        // 自动获取密码：开关本身不参与禁用逻辑，位置移到按钮下方。
-        SwitchPreference(
-            title = stringResource(R.string.settings_auto_code),
-            summary = stringResource(R.string.settings_auto_code_summary),
-            startAction = {
-                Icon(
-                    Icons.Rounded.Password,
-                    modifier = Modifier.padding(end = 6.dp),
-                    contentDescription = stringResource(R.string.settings_auto_code),
-                    tint = colorScheme.onBackground,
-                )
-            },
-            checked = state.settings.autoCode,
-            onCheckedChange = actions.onSetAutoCode,
         )
     }
 }

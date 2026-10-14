@@ -88,7 +88,6 @@ fun HomePagerMaterial(
             if (state.showCodeButton) {
                 CodeCard(state, actions)
             }
-            DoorOptionsCard(state, actions)
             Spacer(Modifier.height(bottomInnerPadding))
         }
     }
@@ -262,34 +261,6 @@ private fun UnlockActionCard(
 }
 
 @Composable
-private fun DoorOptionsCard(
-    state: HomeUiState,
-    actions: HomeActions,
-) {
-    SegmentedColumn(
-        content = listOf(
-            {
-                SegmentedSwitchItem(
-                    icon = Icons.TwoTone.AutoMode,
-                    title = stringResource(R.string.settings_auto_connect),
-                    summary = stringResource(R.string.settings_auto_connect_summary),
-                    checked = state.settings.autoConnect,
-                    onCheckedChange = actions.onSetAutoConnect,
-                )
-            },
-            {
-                SegmentedSwitchItem(
-                    icon = Icons.AutoMirrored.TwoTone.ExitToApp,
-                    title = stringResource(R.string.settings_auto_exit),
-                    checked = state.settings.autoExit,
-                    onCheckedChange = actions.onSetAutoExit,
-                )
-            },
-        )
-    )
-}
-
-@Composable
 private fun SignAskDialog(
     ask: SignAskState,
     onChoice: (SignAskChoice) -> Unit,
@@ -372,16 +343,6 @@ private fun CodeCard(
                         )
                     },
                     leadingContent = { Icon(Icons.TwoTone.Key, null) },
-                )
-            },
-            // 自动获取密码：开关本身不参与禁用逻辑，位置移到按钮下方。
-            {
-                SegmentedSwitchItem(
-                    icon = Icons.TwoTone.Password,
-                    title = stringResource(R.string.settings_auto_code),
-                    summary = stringResource(R.string.settings_auto_code_summary),
-                    checked = state.settings.autoCode,
-                    onCheckedChange = actions.onSetAutoCode,
                 )
             },
         )

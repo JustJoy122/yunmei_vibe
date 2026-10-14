@@ -50,9 +50,7 @@ data class HomeActions(
     val onOpenDetail: (Lock) -> Unit,
     val onOpenLocks: () -> Unit,
     val onOpenDoor: () -> Unit,
-    val onSetAutoConnect: (Boolean) -> Unit,
-    val onSetAutoExit: (Boolean) -> Unit,
-    val onSetAutoCode: (Boolean) -> Unit,
+
     val onGetCode: () -> Unit,
     val onSign: () -> Unit,
     val onResolveSignAsk: (SignAskChoice) -> Unit,

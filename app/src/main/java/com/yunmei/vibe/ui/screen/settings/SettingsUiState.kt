@@ -3,7 +3,7 @@ package com.yunmei.vibe.ui.screen.settings
 import androidx.compose.runtime.Immutable
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
-import com.yunmei.vibe.data.local.StoredUser
+
 import com.yunmei.vibe.data.preferences.AppSettings
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
@@ -38,7 +38,7 @@ data class SettingsUiState(
 data class SettingsScreenState(
     val uiMode: String = UiMode.DEFAULT_VALUE,
     val checkUpdate: Boolean = true,
-    val accounts: List<StoredUser> = emptyList(),
+
     val settings: AppSettings = AppSettings(),
 )
 
@@ -47,14 +47,11 @@ data class SettingsScreenActions(
     val onSetCheckUpdate: (Boolean) -> Unit,
     val onSetUiModeIndex: (Int) -> Unit,
     val onOpenTheme: () -> Unit,
-    val onLogin: () -> Unit,
-    val onRemoveAccount: (StoredUser) -> Unit,
     val onOpenAbout: () -> Unit,
-    // 业务功能（原项目 storage 偏好）：
-    // 自动开门/自动退出/自动获取密码在首页开门卡片内；快速连接在「通用」分组。
-    val onSetQuickConnect: (Boolean) -> Unit,
-    val onSetAlwaysCode: (Boolean) -> Unit,
+    // 二级页入口：开锁（快速连接/自动开门/开门后自动退出）、取码与打卡（自动获取密码/首个账号/打卡定位）
+    val onOpenUnlockSettings: () -> Unit,
+    val onOpenCodeAndSignSettings: () -> Unit,
+    // 仍留在设置页一级页的「外观与个性化」开关
     val onSetHideSign: (Boolean) -> Unit,
     val onSetHideCode: (Boolean) -> Unit,
-    val onSetSignLocationMode: (Int) -> Unit,
 )

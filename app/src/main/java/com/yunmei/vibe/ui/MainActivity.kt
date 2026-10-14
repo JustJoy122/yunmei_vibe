@@ -80,6 +80,8 @@ import com.yunmei.vibe.ui.screen.locks.LocksPager
 import com.yunmei.vibe.ui.screen.login.LoginScreen
 import com.yunmei.vibe.ui.screen.lockdetail.LockDetailScreen
 import com.yunmei.vibe.ui.screen.settings.SettingPager
+import com.yunmei.vibe.ui.screen.subsettings.CodeAndSignSettingsScreen
+import com.yunmei.vibe.ui.screen.subsettings.UnlockSettingsScreen
 import com.yunmei.vibe.ui.screen.themesettings.ThemeSettingsScreen
 import com.yunmei.vibe.ui.screen.themesettings.prewarmThemePaletteCache
 import com.yunmei.vibe.ui.theme.LocalColorMode
@@ -320,6 +322,12 @@ class MainActivity : ComponentActivity() {
                             }
                             entry<Route.ThemeSettings>(swipeDismiss = swipeBackDirection) {
                                 InstallerNavEntry(interceptPredictiveBack, navOnBack) { ThemeSettingsScreen() }
+                            }
+                            entry<Route.UnlockSettings>(swipeDismiss = swipeBackDirection) {
+                                InstallerNavEntry(interceptPredictiveBack, navOnBack) { UnlockSettingsScreen() }
+                            }
+                            entry<Route.CodeAndSignSettings>(swipeDismiss = swipeBackDirection) {
+                                InstallerNavEntry(interceptPredictiveBack, navOnBack) { CodeAndSignSettingsScreen() }
                             }
                             entry<Route.About>(swipeDismiss = swipeBackDirection) {
                                 InstallerNavEntry(interceptPredictiveBack, navOnBack) { AboutScreen() }

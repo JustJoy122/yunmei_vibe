@@ -211,6 +211,12 @@ class SettingsViewModel(
 
     fun setQuickConnect(value: Boolean) = setSetting { container.appPreferences.setQuickConnect(value) }
 
+    fun setAutoConnect(value: Boolean) = setSetting { container.appPreferences.setAutoConnect(value) }
+
+    fun setAutoExit(value: Boolean) = setSetting { container.appPreferences.setAutoExit(value) }
+
+    fun setAutoCode(value: Boolean) = setSetting { container.appPreferences.setAutoCode(value) }
+
     fun setAlwaysCode(value: Boolean) = setSetting { container.appPreferences.setAlwaysCode(value) }
 
     fun setHideSign(value: Boolean) = setSetting { container.appPreferences.setHideSign(value) }

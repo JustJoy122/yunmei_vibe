@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.data.local.DuplicateLockException
+import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.Lock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,14 +32,26 @@ class LocksViewModel : ViewModel() {
             val data = withContext(Dispatchers.IO) {
                 val locks = container.lockStore.getAll()
                 val defaultLabel = container.lockStore.getDefault()?.label
-                locks to defaultLabel
+                val accounts = container.accountStore.getAll()
+                Triple(locks, defaultLabel, accounts)
             }
             _uiState.update {
                 it.copy(
                     locks = data.first,
                     defaultLabel = data.second,
+                    accounts = data.third,
                 )
             }
+        }
+    }
+
+    /** 移除已保存账号（与设置页原账号区同一实现：按用户名 MD5 删除）。 */
+    fun removeAccount(user: StoredUser) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                container.accountStore.removeByUsernameMd5(user.usernameMd5)
+            }
+            refresh()
         }
     }
 

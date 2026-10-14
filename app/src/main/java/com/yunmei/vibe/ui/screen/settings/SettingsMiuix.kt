@@ -1,5 +1,8 @@
 package com.yunmei.vibe.ui.screen.settings
 
+import androidx.compose.material.icons.rounded.DisplaySettings
+import androidx.compose.material.icons.rounded.Key
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,6 +25,7 @@ import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.ContactPage
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.DisplaySettings
 import androidx.compose.material.icons.rounded.KeyOff
 import androidx.compose.material.icons.rounded.LocationOff
 import androidx.compose.material.icons.rounded.LocationOn
@@ -133,31 +137,8 @@ fun SettingPagerMiuix(
                         )
                     }
 
-                    SectionTitle(stringResource(R.string.settings_group_account))
-                    Card(
-                        modifier = Modifier
-                            .padding(bottom = 12.dp)
-                            .fillMaxWidth(),
-                    ) {
-                        ArrowPreference(
-                            title = stringResource(R.string.settings_account_login),
-                            summary = stringResource(R.string.settings_account_hint),
-                            startAction = {
-                                Icon(
-                                    Icons.AutoMirrored.Rounded.Login,
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    contentDescription = stringResource(R.string.settings_account_login),
-                                    tint = colorScheme.onBackground,
-                                )
-                            },
-                            onClick = actions.onLogin,
-                        )
-                        state.accounts.forEach { user ->
-                            AccountRow(user, actions)
-                        }
-                    }
-
-                    SectionTitle(stringResource(R.string.settings_group_personalization))
+                    // 外观与个性化（界面风格 / 主题设置 / 两个隐藏入口开关）
+                    SectionTitle(stringResource(R.string.settings_group_appearance))
                     Card(
                         modifier = Modifier
                             .padding(bottom = 12.dp)
@@ -168,7 +149,7 @@ fun SettingPagerMiuix(
                             items = listOf("Miuix", "Material"),
                             startAction = {
                                 Icon(
-                                    Icons.Rounded.Dashboard,
+                                    Icons.Rounded.DisplaySettings,
                                     modifier = Modifier.padding(end = 6.dp),
                                     contentDescription = stringResource(id = R.string.settings_ui_mode),
                                     tint = colorScheme.onBackground
@@ -189,68 +170,6 @@ fun SettingPagerMiuix(
                             },
                             onClick = actions.onOpenTheme
                         )
-                    }
-
-                    // 开门行为（快速连接 / 取码 / 打卡；自动开门/自动退出/自动获取密码在首页开门卡片内）
-                    SectionTitle(stringResource(R.string.settings_group_door))
-                    Card(
-                        modifier = Modifier
-                            .padding(bottom = 12.dp)
-                            .fillMaxWidth(),
-                    ) {
-                        // 快速连接：从首页开门卡片迁到设置页，仍写同一个 quick_connect 偏好。
-                        SwitchPreference(
-                            title = stringResource(id = R.string.unlock_quick_connect),
-                            summary = stringResource(id = R.string.unlock_quick_connect_summary),
-                            startAction = {
-                                Icon(
-                                    Icons.Rounded.Bluetooth,
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    contentDescription = stringResource(id = R.string.unlock_quick_connect),
-                                    tint = colorScheme.onBackground
-                                )
-                            },
-                            checked = state.settings.quickConnect,
-                            onCheckedChange = actions.onSetQuickConnect
-                        )
-                        SwitchPreference(
-                            title = stringResource(R.string.settings_always_code),
-                            startAction = {
-                                Icon(
-                                    Icons.Rounded.SupervisorAccount,
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    contentDescription = stringResource(R.string.settings_always_code),
-                                    tint = colorScheme.onBackground,
-                                )
-                            },
-                            checked = state.settings.alwaysCode,
-                            onCheckedChange = actions.onSetAlwaysCode,
-                        )
-                        OverlayDropdownPreference(
-                            title = stringResource(R.string.settings_sign_location_mode),
-                            items = signLocationItems,
-                            startAction = {
-                                Icon(
-                                    Icons.Rounded.LocationOn,
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    contentDescription = stringResource(R.string.settings_sign_location_mode),
-                                    tint = colorScheme.onBackground,
-                                )
-                            },
-                            selectedIndex = SignLocationMode
-                                .fromValue(state.settings.signLocationMode)
-                                .ordinal,
-                            onSelectedIndexChange = actions.onSetSignLocationMode,
-                        )
-                    }
-
-                    // 界面显示
-                    SectionTitle(stringResource(R.string.settings_group_display))
-                    Card(
-                        modifier = Modifier
-                            .padding(bottom = 12.dp)
-                            .fillMaxWidth(),
-                    ) {
                         SwitchPreference(
                             title = stringResource(R.string.settings_hide_sign),
                             startAction = {
@@ -258,7 +177,7 @@ fun SettingPagerMiuix(
                                     Icons.Rounded.LocationOff,
                                     modifier = Modifier.padding(end = 6.dp),
                                     contentDescription = stringResource(R.string.settings_hide_sign),
-                                    tint = colorScheme.onBackground,
+                                    tint = colorScheme.onBackground
                                 )
                             },
                             checked = state.settings.hideSign,
@@ -271,13 +190,54 @@ fun SettingPagerMiuix(
                                     Icons.Rounded.KeyOff,
                                     modifier = Modifier.padding(end = 6.dp),
                                     contentDescription = stringResource(R.string.settings_hide_code),
-                                    tint = colorScheme.onBackground,
+                                    tint = colorScheme.onBackground
                                 )
                             },
                             checked = state.settings.hideCode,
                             onCheckedChange = actions.onSetHideCode,
                         )
                     }
+
+                    // 开锁（二级页入口）
+                    Card(
+                        modifier = Modifier
+                            .padding(bottom = 12.dp)
+                            .fillMaxWidth(),
+                    ) {
+                        ArrowPreference(
+                            title = stringResource(R.string.settings_group_unlock),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.LockOpen,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(R.string.settings_group_unlock),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            onClick = actions.onOpenUnlockSettings
+                        )
+                    }
+
+                    // 取码与打卡（二级页入口）
+                    Card(
+                        modifier = Modifier
+                            .padding(bottom = 12.dp)
+                            .fillMaxWidth(),
+                    ) {
+                        ArrowPreference(
+                            title = stringResource(R.string.settings_group_code_sign),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.Key,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(R.string.settings_group_code_sign),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            onClick = actions.onOpenCodeAndSignSettings
+                        )
+                    }
+
 
                     SectionTitle(stringResource(R.string.settings_group_other))
                     Card(
@@ -325,34 +285,6 @@ fun SettingPagerMiuix(
             }
         }
     }
-}
-
-@Composable
-private fun AccountRow(
-    user: StoredUser,
-    actions: SettingsScreenActions,
-) {
-    BasicComponent(
-        title = user.username,
-        summary = stringResource(R.string.settings_saved_accounts),
-        startAction = {
-            Icon(
-                Icons.Rounded.Person,
-                tint = colorScheme.onSurface,
-                contentDescription = user.username,
-            )
-        },
-        endActions = {
-            Icon(
-                Icons.Rounded.Delete,
-                tint = colorScheme.onSurfaceVariantActions,
-                contentDescription = stringResource(R.string.settings_remove_account),
-                modifier = Modifier
-                    .clickable { actions.onRemoveAccount(user) }
-                    .padding(8.dp),
-            )
-        },
-    )
 }
 
 @Composable

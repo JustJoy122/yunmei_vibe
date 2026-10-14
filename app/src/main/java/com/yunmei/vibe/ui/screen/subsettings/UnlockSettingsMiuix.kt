@@ -1,0 +1,131 @@
+package com.yunmei.vibe.ui.screen.subsettings
+
+import top.yukonga.miuix.kmp.icon.extended.Back
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.add
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.LockOpen
+import androidx.compose.material.icons.rounded.PowerSettingsNew
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import com.yunmei.vibe.R
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.IconButton
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.TopAppBar
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.preference.SwitchPreference
+import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+
+/** 二级设置页「开锁」的 Miuix 实现（骨架与「主题设置」二级页一致）。 */
+@Composable
+fun UnlockSettingsMiuix(
+    state: UnlockSettingsUiState,
+    actions: UnlockSettingsActions,
+) {
+    val scrollBehavior = MiuixScrollBehavior()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                color = colorScheme.surface,
+                title = stringResource(R.string.settings_group_unlock),
+                navigationIcon = {
+                    IconButton(onClick = actions.onBack) {
+                        val layoutDirection = LocalLayoutDirection.current
+                        Icon(
+                            modifier = Modifier.graphicsLayer {
+                                if (layoutDirection == LayoutDirection.Rtl) scaleX = -1f
+                            },
+                            imageVector = MiuixIcons.Back,
+                            contentDescription = null,
+                            tint = colorScheme.onBackground
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+            )
+        },
+        popupHost = { },
+        contentWindowInsets = WindowInsets.systemBars.add(WindowInsets.displayCutout)
+            .only(WindowInsetsSides.Horizontal),
+    ) { innerPadding ->
+        Box {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(horizontal = 12.dp),
+                contentPadding = innerPadding,
+                overscrollEffect = null,
+            ) {
+                item {
+                    Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column {
+                                SwitchPreference(
+                                    title = stringResource(id = R.string.unlock_quick_connect),
+                                    summary = stringResource(id = R.string.unlock_quick_connect_summary),
+                                    startAction = {
+                                        Icon(
+                                            Icons.Rounded.Bluetooth,
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            contentDescription = stringResource(id = R.string.unlock_quick_connect),
+                                            tint = colorScheme.onBackground
+                                        )
+                                    },
+                                    checked = state.settings.quickConnect,
+                                    onCheckedChange = actions.onSetQuickConnect
+                                )
+                                SwitchPreference(
+                                    title = stringResource(id = R.string.settings_auto_connect),
+                                    summary = stringResource(id = R.string.settings_auto_connect_summary),
+                                    startAction = {
+                                        Icon(
+                                            Icons.Rounded.LockOpen,
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            contentDescription = stringResource(id = R.string.settings_auto_connect),
+                                            tint = colorScheme.onBackground
+                                        )
+                                    },
+                                    checked = state.settings.autoConnect,
+                                    onCheckedChange = actions.onSetAutoConnect
+                                )
+                                SwitchPreference(
+                                    title = stringResource(id = R.string.settings_auto_exit),
+                                    startAction = {
+                                        Icon(
+                                            Icons.Rounded.PowerSettingsNew,
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            contentDescription = stringResource(id = R.string.settings_auto_exit),
+                                            tint = colorScheme.onBackground
+                                        )
+                                    },
+                                    checked = state.settings.autoExit,
+                                    onCheckedChange = actions.onSetAutoExit
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

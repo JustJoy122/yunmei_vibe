@@ -1,5 +1,8 @@
 package com.yunmei.vibe.ui.screen.locks
 
+import com.yunmei.vibe.data.local.StoredUser
+import androidx.compose.material.icons.twotone.Person
+import androidx.compose.material.icons.automirrored.twotone.Login
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -104,6 +107,33 @@ fun LocksPagerMaterial(
                 )
             }
 
+            // 账号（登录/切换账号 + 已保存账号；原「设置 → 账号」分组整体迁入）
+            SegmentedColumn(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                content = buildList {
+                    add {
+                        SegmentedListItem(
+                            onClick = actions.onLogin,
+                            headlineContent = {
+                                Text(
+                                    stringResource(
+                                        if (state.accounts.isEmpty()) R.string.locks_add_login
+                                        else R.string.settings_account_login
+                                    )
+                                )
+                            },
+                            supportingContent = { Text(stringResource(R.string.settings_account_hint)) },
+                            leadingContent = { Icon(Icons.AutoMirrored.TwoTone.Login, null) },
+                        )
+                    }
+                    state.accounts.forEach { user ->
+                        add {
+                            AccountRow(user, actions.onRemoveAccount)
+                        }
+                    }
+                }
+            )
+
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 content = listOf(
@@ -113,13 +143,6 @@ fun LocksPagerMaterial(
                             headlineContent = { Text(stringResource(R.string.locks_add_scan)) },
                             supportingContent = { Text(stringResource(R.string.locks_add_scan_hint)) },
                             leadingContent = { Icon(Icons.TwoTone.QrCodeScanner, null) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            onClick = actions.onAddLogin,
-                            headlineContent = { Text(stringResource(R.string.locks_add_login)) },
-                            leadingContent = { Icon(Icons.TwoTone.PersonAdd, null) },
                         )
                     },
                 )
@@ -185,6 +208,29 @@ private fun LockRow(
                     contentDescription = null,
                 )
             }
+        },
+    )
+}
+
+
+@Composable
+private fun AccountRow(
+    user: StoredUser,
+    onRemove: (StoredUser) -> Unit,
+) {
+    SegmentedListItem(
+        headlineContent = { Text(user.username) },
+        supportingContent = { Text(stringResource(R.string.settings_saved_accounts)) },
+        leadingContent = { Icon(Icons.TwoTone.Person, null) },
+        trailingContent = {
+            Icon(
+                imageVector = Icons.TwoTone.Delete,
+                contentDescription = stringResource(R.string.settings_remove_account),
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier
+                    .clickable { onRemove(user) }
+                    .padding(8.dp),
+            )
         },
     )
 }

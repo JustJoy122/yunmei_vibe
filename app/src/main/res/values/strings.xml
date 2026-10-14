@@ -310,4 +310,7 @@
     <string name="settings_pager_gesture_native">默认</string>
     <string name="settings_pager_gesture_cross_axis">跨轴拦截</string>
     <string name="settings_pager_gesture_ios_like">iOS 风格</string>
+    <string name="settings_group_appearance">外观与个性化</string>
+    <string name="settings_group_unlock">开锁</string>
+    <string name="settings_group_code_sign">取码与打卡</string>
 </resources>

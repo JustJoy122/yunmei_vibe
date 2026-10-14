@@ -39,7 +39,7 @@ fun SettingPager(
     val state = SettingsScreenState(
         uiMode = uiState.uiMode,
         checkUpdate = uiState.checkUpdate,
-        accounts = functionalState.accounts,
+
         settings = functionalState.settings,
     )
 
@@ -54,31 +54,11 @@ fun SettingPager(
             viewModel.setUiMode(if (index == 0) UiMode.Miuix.value else UiMode.Material.value)
         },
         onOpenTheme = { navigator.push(Route.ThemeSettings) },
-        onLogin = { navigator.push(Route.Login) },
-        onRemoveAccount = { user ->
-            scope.launch {
-                val result = confirmDialog.awaitConfirm(
-                    title = removeAccountTitle,
-                    content = user.username,
-                    confirm = confirmText,
-                    dismiss = cancelText,
-                )
-                if (result == ConfirmResult.Confirmed) {
-                    viewModel.removeAccount(user)
-                }
-            }
-        },
         onOpenAbout = { navigator.push(Route.About) },
-        onSetQuickConnect = viewModel::setQuickConnect,
-        onSetAlwaysCode = viewModel::setAlwaysCode,
+        onOpenUnlockSettings = { navigator.push(Route.UnlockSettings) },
+        onOpenCodeAndSignSettings = { navigator.push(Route.CodeAndSignSettings) },
         onSetHideSign = viewModel::setHideSign,
         onSetHideCode = viewModel::setHideCode,
-        onSetSignLocationMode = { index ->
-            // 下拉列表顺序由 SignLocationMode.entries 决定，避免 index 与取值各自维护而错位。
-            viewModel.setSignLocationMode(
-                SignLocationMode.entries.getOrElse(index) { SignLocationMode.DEFAULT }.value
-            )
-        },
         )
     }
 

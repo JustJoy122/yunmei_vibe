@@ -124,42 +124,7 @@ fun HomePager(
     }
 
     // 「自动开门」+「开门后自动退出」同时开启：三重危险确认（原项目行为，随开关迁至首页）。
-    val dangerTitle1 = stringResource(R.string.settings_danger_title)
-    val dangerMsg1 = stringResource(R.string.settings_danger_msg)
-    val dangerTitle2 = stringResource(R.string.settings_danger_again_title)
-    val dangerMsg2 = stringResource(R.string.settings_danger_again_msg)
-    val dangerTitle3 = stringResource(R.string.settings_danger_final_title)
-    val dangerMsg3 = stringResource(R.string.settings_danger_final_msg)
-    val dangerConfirm = stringResource(R.string.settings_danger_confirm)
-    val dangerGiveUp = stringResource(R.string.settings_danger_give_up)
 
-    fun requestDangerToggle(apply: () -> Unit) {
-        scope.launch {
-            val r1 = confirmDialog.awaitConfirm(dangerTitle1, dangerMsg1, confirm = dangerConfirm, dismiss = dangerGiveUp)
-            if (r1 != ConfirmResult.Confirmed) return@launch
-            val r2 = confirmDialog.awaitConfirm(dangerTitle2, dangerMsg2, confirm = dangerConfirm, dismiss = dangerGiveUp)
-            if (r2 != ConfirmResult.Confirmed) return@launch
-            val r3 = confirmDialog.awaitConfirm(dangerTitle3, dangerMsg3, confirm = dangerConfirm, dismiss = dangerGiveUp)
-            if (r3 != ConfirmResult.Confirmed) return@launch
-            apply()
-        }
-    }
-
-    fun onSetAutoConnect(value: Boolean) {
-        if (value && uiState.settings.autoExit) {
-            requestDangerToggle { viewModel.setAutoConnect(value) }
-        } else {
-            viewModel.setAutoConnect(value)
-        }
-    }
-
-    fun onSetAutoExit(value: Boolean) {
-        if (value && uiState.settings.autoConnect) {
-            requestDangerToggle { viewModel.setAutoExit(value) }
-        } else {
-            viewModel.setAutoExit(value)
-        }
-    }
 
     val actions = remember(viewModel, uiState, navigator, mainPagerState, bleRequester, locationRequester) {
         HomeActions(
@@ -172,9 +137,7 @@ fun HomePager(
                 bleRequester()
             }
         },
-        onSetAutoConnect = ::onSetAutoConnect,
-        onSetAutoExit = ::onSetAutoExit,
-        onSetAutoCode = viewModel::setAutoCode,
+
         onGetCode = viewModel::getCode,
         onSign = {
             // 使用上次位置不需要定位权限；其他模式需要。

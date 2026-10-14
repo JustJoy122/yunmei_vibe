@@ -1,5 +1,7 @@
 package com.yunmei.vibe.ui.screen.settings
 
+import androidx.compose.material.icons.twotone.Key
+import androidx.compose.material.icons.twotone.LockOpen
 import androidx.compose.material.icons.twotone.DisplaySettings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -105,31 +107,10 @@ fun SettingPagerMaterial(
                 }
             )
 
-            // 账号
+            // 外观与个性化（界面风格 / 主题设置 / 两个隐藏入口开关）
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
-                title = stringResource(R.string.settings_group_account),
-                content = buildList {
-                    add {
-                        SegmentedListItem(
-                            onClick = actions.onLogin,
-                            headlineContent = { Text(stringResource(R.string.settings_account_login)) },
-                            supportingContent = { Text(stringResource(R.string.settings_account_hint)) },
-                            leadingContent = { Icon(Icons.AutoMirrored.TwoTone.Login, null) },
-                        )
-                    }
-                    state.accounts.forEach { user ->
-                        add {
-                            AccountRow(user, actions)
-                        }
-                    }
-                }
-            )
-
-            // 个性化
-            SegmentedColumn(
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
-                title = stringResource(R.string.settings_group_personalization),
+                title = stringResource(R.string.settings_group_appearance),
                 content = buildList {
                     add {
                         SegmentedDropdownItem(
@@ -153,69 +134,55 @@ fun SettingPagerMaterial(
                             }
                         )
                     }
-                }
-            )
-
-            // 开门行为（快速连接 / 取码 / 打卡；自动开门/自动退出/自动获取密码在首页开门卡片内）
-            SegmentedColumn(
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
-                title = stringResource(R.string.settings_group_door),
-                content = buildList {
                     add {
-                        // 快速连接：从首页开门卡片迁到设置页，仍写同一个 quick_connect 偏好。
-                        SegmentedSwitchItem(
-                            icon = Icons.TwoTone.Bluetooth,
-                            title = stringResource(id = R.string.unlock_quick_connect),
-                            summary = stringResource(id = R.string.unlock_quick_connect_summary),
-                            checked = state.settings.quickConnect,
-                            onCheckedChange = actions.onSetQuickConnect
-                        )
-                    }
-                    add {
-                        SegmentedSwitchItem(
-                            icon = Icons.TwoTone.SupervisorAccount,
-                            title = stringResource(R.string.settings_always_code),
-                            checked = state.settings.alwaysCode,
-                            onCheckedChange = actions.onSetAlwaysCode,
-                        )
-                    }
-                    add {
-                        SegmentedDropdownItem(
-                            icon = Icons.TwoTone.LocationOn,
-                            title = stringResource(R.string.settings_sign_location_mode),
-                            items = signLocationItems,
-                            selectedIndex = SignLocationMode
-                                .fromValue(state.settings.signLocationMode)
-                                .ordinal,
-                            onItemSelected = actions.onSetSignLocationMode,
-                        )
-                    }
-                }
-            )
-
-            // 界面显示
-            SegmentedColumn(
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
-                title = stringResource(R.string.settings_group_display),
-                content = listOf(
-                    {
                         SegmentedSwitchItem(
                             icon = Icons.TwoTone.LocationOff,
                             title = stringResource(R.string.settings_hide_sign),
                             checked = state.settings.hideSign,
                             onCheckedChange = actions.onSetHideSign,
                         )
-                    },
-                    {
+                    }
+                    add {
                         SegmentedSwitchItem(
                             icon = Icons.TwoTone.KeyOff,
                             title = stringResource(R.string.settings_hide_code),
                             checked = state.settings.hideCode,
                             onCheckedChange = actions.onSetHideCode,
                         )
+                    }
+                }
+            )
+
+            // 开锁（二级页入口）
+            SegmentedColumn(
+                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
+                content = listOf(
+                    {
+                        SegmentedListItem(
+                            onClick = actions.onOpenUnlockSettings,
+                            headlineContent = { Text(stringResource(R.string.settings_group_unlock)) },
+                            leadingContent = { Icon(Icons.TwoTone.LockOpen, stringResource(R.string.settings_group_unlock)) },
+                            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) }
+                        )
                     },
                 )
             )
+
+            // 取码与打卡（二级页入口）
+            SegmentedColumn(
+                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
+                content = listOf(
+                    {
+                        SegmentedListItem(
+                            onClick = actions.onOpenCodeAndSignSettings,
+                            headlineContent = { Text(stringResource(R.string.settings_group_code_sign)) },
+                            leadingContent = { Icon(Icons.TwoTone.Key, stringResource(R.string.settings_group_code_sign)) },
+                            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) }
+                        )
+                    },
+                )
+            )
+
 
             // 其他
             // 安全存储不可用时的内联提示（方案 A：设置页，不弹阻断式对话框；恢复后自动隐藏）
@@ -278,27 +245,5 @@ private fun TopBar(
         ),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior
-    )
-}
-
-@Composable
-private fun AccountRow(
-    user: StoredUser,
-    actions: SettingsScreenActions,
-) {
-    SegmentedListItem(
-        headlineContent = { Text(user.username) },
-        supportingContent = { Text(stringResource(R.string.settings_saved_accounts)) },
-        leadingContent = { Icon(Icons.TwoTone.Person, null) },
-        trailingContent = {
-            Icon(
-                imageVector = Icons.TwoTone.Delete,
-                contentDescription = stringResource(R.string.settings_remove_account),
-                tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier
-                    .clickable { actions.onRemoveAccount(user) }
-                    .padding(8.dp),
-            )
-        },
     )
 }

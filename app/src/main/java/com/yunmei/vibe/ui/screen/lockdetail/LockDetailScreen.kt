@@ -1,5 +1,7 @@
 package com.yunmei.vibe.ui.screen.lockdetail
 
+import androidx.compose.foundation.layout.PaddingValues
+import top.yukonga.miuix.kmp.basic.SmallTitle
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -286,16 +288,34 @@ private fun LockDetailScreenMaterial(
                 }
             )
 
-            // 「分享二维码」开关行单独成组：二维码紧贴其下方展开（手风琴式），不再出现在按钮上方。
+            // 「分享」分组（组标题：分享）：系统分享 / 复制链接 / 生成二维码。
+            // 生成二维码行必须紧贴下方二维码面板（手风琴式），因此把三行合并到同一组后再放面板。
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                content = listOf {
-                    SegmentedListItem(
-                        onClick = onToggleQr,
-                        headlineContent = { Text(stringResource(R.string.lock_detail_share_qr)) },
-                        leadingContent = { Icon(Icons.TwoTone.QrCode2, null) },
-                    )
-                }
+                title = stringResource(R.string.lock_detail_share_group),
+                content = listOf(
+                    {
+                        SegmentedListItem(
+                            onClick = actions.onShare,
+                            headlineContent = { Text(stringResource(R.string.lock_detail_share)) },
+                            leadingContent = { Icon(Icons.TwoTone.Share, null) },
+                        )
+                    },
+                    {
+                        SegmentedListItem(
+                            onClick = actions.onCopyLink,
+                            headlineContent = { Text(stringResource(R.string.lock_detail_copy_link)) },
+                            leadingContent = { Icon(Icons.TwoTone.ContentCopy, null) },
+                        )
+                    },
+                    {
+                        SegmentedListItem(
+                            onClick = onToggleQr,
+                            headlineContent = { Text(stringResource(R.string.lock_detail_generate_qr)) },
+                            leadingContent = { Icon(Icons.TwoTone.QrCode2, null) },
+                        )
+                    },
+                )
             )
 
             // 展开/折叠动画：复用 InstallerX Revived 各页面通用的手风琴写法
@@ -359,37 +379,22 @@ private fun LockDetailScreenMaterial(
                 }
             }
 
+            // 删除单独置底成组：与分享类操作分隔开，避免误触。
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                content = listOf(
-                    {
-                        SegmentedListItem(
-                            onClick = actions.onShare,
-                            headlineContent = { Text(stringResource(R.string.lock_detail_share)) },
-                            leadingContent = { Icon(Icons.TwoTone.Share, null) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            onClick = actions.onCopyLink,
-                            headlineContent = { Text(stringResource(R.string.lock_detail_copy_link)) },
-                            leadingContent = { Icon(Icons.TwoTone.ContentCopy, null) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            onClick = actions.onDelete,
-                            headlineContent = { Text(stringResource(R.string.locks_delete)) },
-                            leadingContent = {
-                                Icon(
-                                    Icons.TwoTone.Delete,
-                                    null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            },
-                        )
-                    },
-                )
+                content = listOf {
+                    SegmentedListItem(
+                        onClick = actions.onDelete,
+                        headlineContent = { Text(stringResource(R.string.locks_delete)) },
+                        leadingContent = {
+                            Icon(
+                                Icons.TwoTone.Delete,
+                                null,
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        },
+                    )
+                }
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -498,14 +503,40 @@ private fun LockDetailScreenMiuix(
                     )
                 }
 
-                // 「分享二维码」开关行单独成卡：二维码紧贴其下方展开（手风琴式），不再出现在按钮上方。
+                // 「分享」分组小标题（间距规则：标题上 12 / 下 12，与卡片 top=12 的节奏一致）。
+                SmallTitle(
+                    text = stringResource(R.string.lock_detail_share_group),
+                    insideMargin = PaddingValues(start = 16.dp, top = 12.dp, end = 28.dp, bottom = 0.dp),
+                )
                 Card(
                     modifier = Modifier
                         .padding(top = 12.dp)
                         .fillMaxWidth(),
                 ) {
                     BasicComponent(
-                        title = stringResource(R.string.lock_detail_share_qr),
+                        title = stringResource(R.string.lock_detail_share),
+                        startAction = {
+                            MiuixIcon(
+                                imageVector = Icons.Filled.Share,
+                                tint = colorScheme.onSurface,
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = actions.onShare,
+                    )
+                    BasicComponent(
+                        title = stringResource(R.string.lock_detail_copy_link),
+                        startAction = {
+                            MiuixIcon(
+                                imageVector = Icons.Filled.ContentCopy,
+                                tint = colorScheme.onSurface,
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = actions.onCopyLink,
+                    )
+                    BasicComponent(
+                        title = stringResource(R.string.lock_detail_generate_qr),
                         startAction = {
                             MiuixIcon(
                                 imageVector = Icons.Filled.QrCode2,
@@ -579,33 +610,12 @@ private fun LockDetailScreenMiuix(
                     }
                 }
 
+                // 删除单独置底成卡：与分享类操作分隔开，避免误触。
                 Card(
                     modifier = Modifier
                         .padding(top = 12.dp)
                         .fillMaxWidth(),
                 ) {
-                    BasicComponent(
-                        title = stringResource(R.string.lock_detail_share),
-                        startAction = {
-                            MiuixIcon(
-                                imageVector = Icons.Filled.Share,
-                                tint = colorScheme.onSurface,
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = actions.onShare,
-                    )
-                    BasicComponent(
-                        title = stringResource(R.string.lock_detail_copy_link),
-                        startAction = {
-                            MiuixIcon(
-                                imageVector = Icons.Filled.ContentCopy,
-                                tint = colorScheme.onSurface,
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = actions.onCopyLink,
-                    )
                     BasicComponent(
                         title = stringResource(R.string.locks_delete),
                         startAction = {

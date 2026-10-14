@@ -52,7 +52,9 @@
     <string name="lock_detail_account_unsaved">未保存账号</string>
     <string name="lock_detail_share_qr">分享二维码</string>
     <string name="lock_detail_share_qr_hint">对方扫码即可添加此门锁</string>
-    <string name="lock_detail_share">分享</string>
+    <string name="lock_detail_share">系统分享</string>
+    <string name="lock_detail_share_group">分享</string>
+    <string name="lock_detail_generate_qr">生成二维码</string>
     <string name="lock_detail_copy_link">复制链接</string>
     <string name="lock_detail_copied">分享链接已复制</string>
     <string name="lock_detail_back">返回</string>
@@ -144,10 +146,8 @@
 
     <!-- 设置 -->
     <string name="settings_group_general">通用</string>
-    <string name="settings_group_account">账号</string>
-    <string name="settings_group_personalization">个性化</string>
-    <string name="settings_group_door">开门与打卡</string>
-    <string name="settings_group_display">界面显示</string>
+
+
     <string name="settings_group_other">其他</string>
     <string name="settings_check_update">检查更新</string>
     <string name="settings_check_update_summary">启动后自动检查新版本</string>

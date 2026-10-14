@@ -21,7 +21,6 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.twotone.Login
 import androidx.compose.material.icons.twotone.Bluetooth
 import androidx.compose.material.icons.twotone.BugReport
-import androidx.compose.material.icons.twotone.ContactPage
 import androidx.compose.material.icons.twotone.Dashboard
 import androidx.compose.material.icons.twotone.Delete
 import androidx.compose.material.icons.twotone.KeyOff

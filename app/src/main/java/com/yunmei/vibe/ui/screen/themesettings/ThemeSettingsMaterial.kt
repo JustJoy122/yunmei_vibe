@@ -1,5 +1,9 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import com.yunmei.vibe.ui.component.material.ScaleDialogMaterial
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.twotone.Description
 import androidx.compose.material.icons.twotone.ViewCarousel
 import androidx.compose.material.icons.twotone.Swipe
@@ -475,13 +479,15 @@ fun ThemeSettingsMaterial(
 
                 TonalCard(modifier = Modifier.padding(top = 4.dp)) {
                     var sliderValue by remember(uiState.pageScale) { mutableFloatStateOf(uiState.pageScale) }
-
+                    var showScaleDialog by rememberSaveable { mutableStateOf(false) }
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showScaleDialog = true },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -512,6 +518,14 @@ fun ThemeSettingsMaterial(
                             onValueChangeFinished = { actions.onSetPageScale(sliderValue) },
                             valueRange = 0.8f..1.1f,
                             modifier = Modifier.fillMaxWidth()
+                        )
+
+                        // 滑块之外的自定义输入（与 Miuix 侧同一交互：数字校验 / 80-110 夹取 / 确定回写）。
+                        ScaleDialogMaterial(
+                            show = showScaleDialog,
+                            onDismissRequest = { showScaleDialog = false },
+                            volumeState = { uiState.pageScale },
+                            onVolumeChange = { actions.onSetPageScale(it) }
                         )
                     }
                 }

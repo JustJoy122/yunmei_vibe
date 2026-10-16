@@ -1,5 +1,7 @@
 package com.yunmei.vibe.ui.screen.login
 
+import top.yukonga.miuix.kmp.icon.extended.Back
+import top.yukonga.miuix.kmp.icon.MiuixIcons
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -72,7 +74,7 @@ fun LoginScreenMiuix(
                         modifier = Modifier.padding(start = 12.dp),
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            imageVector = MiuixIcons.Back,
                             contentDescription = stringResource(R.string.lock_detail_back),
                             tint = colorScheme.onSurface,
                         )

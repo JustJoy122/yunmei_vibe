@@ -1,5 +1,7 @@
 package com.yunmei.vibe.ui.screen.lockdetail
 
+import top.yukonga.miuix.kmp.icon.extended.Back
+import top.yukonga.miuix.kmp.icon.MiuixIcons
 import androidx.compose.foundation.layout.width
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
@@ -372,7 +374,7 @@ private fun LockDetailScreenMiuix(
                         modifier = Modifier.padding(start = 12.dp),
                     ) {
                         MiuixIcon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = MiuixIcons.Back,
                             contentDescription = stringResource(R.string.lock_detail_back),
                             tint = colorScheme.onSurface,
                         )

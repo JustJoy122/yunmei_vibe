@@ -97,9 +97,9 @@
     <!-- 开门流程运行时文案（原先硬编码在 UnlockManager 中，按代码原措辞资源化，未改文案） -->
     <string name="unlock_lock_unusable_need_login">当前门锁不可用，请先登录或选择其他门锁</string>
     <string name="unlock_bluetooth_disabled">蓝牙未开启</string>
-    <string name="unlock_progress_quick_connect">开始快速连接</string>
-    <string name="unlock_progress_scan_start">开始扫描</string>
-    <string name="unlock_progress_quick_connect_fallback">快速连接失败，使用常规模式尝试</string>
+    <string name="unlock_progress_quick_connect">快速连接</string>
+    <string name="unlock_progress_scan_start">扫描中</string>
+    <string name="unlock_progress_quick_connect_fallback">扫描连接</string>
     <string name="unlock_error_service_uuid">门锁服务 UUID 无效</string>
     <string name="unlock_error_scan_start">扫描启动失败</string>
     <string name="unlock_progress_device_found">设备已找到</string>

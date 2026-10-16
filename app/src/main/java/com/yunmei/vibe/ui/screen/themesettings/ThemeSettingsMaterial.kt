@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.themesettings
 
+import androidx.compose.material.icons.twotone.Check
 import androidx.compose.material.icons.twotone.DarkMode
 import com.yunmei.vibe.ui.component.material.ScaleDialogMaterial
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -53,7 +54,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.twotone.MenuOpen
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.twotone.Animation
 import androidx.compose.material.icons.twotone.AspectRatio
 import androidx.compose.material.icons.twotone.Brightness1
@@ -824,7 +824,7 @@ private fun ColorButtonMaterial(
                                 .background(accentColor, CircleShape)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Check,
+                                imageVector = Icons.TwoTone.Check,
                                 contentDescription = null,
                                 tint = onAccentColor,
                                 modifier = Modifier

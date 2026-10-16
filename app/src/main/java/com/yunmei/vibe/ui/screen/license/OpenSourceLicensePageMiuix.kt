@@ -5,6 +5,8 @@
 // 颜色全部取自 MiuixTheme.colorScheme（自动适配莫奈开/关两套色板）。
 package com.yunmei.vibe.ui.screen.license
 
+import top.yukonga.miuix.kmp.icon.extended.Back
+import top.yukonga.miuix.kmp.icon.MiuixIcons
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -65,7 +67,7 @@ fun MiuixOpenSourceLicensePage() {
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                imageVector = MiuixIcons.Back,
                                 contentDescription = null,
                                 tint = colorScheme.onBackground,
                             )

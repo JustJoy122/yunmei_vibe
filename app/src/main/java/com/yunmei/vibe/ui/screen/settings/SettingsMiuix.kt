@@ -1,8 +1,7 @@
 package com.yunmei.vibe.ui.screen.settings
 
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.ui.unit.dp
-import top.yukonga.miuix.kmp.icon.extended.Info
-import top.yukonga.miuix.kmp.icon.MiuixIcons
 import androidx.compose.material.icons.rounded.DisplaySettings
 import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.LockOpen
@@ -265,7 +264,7 @@ fun SettingPagerMiuix(
                             title = about,
                             startAction = {
                                 Icon(
-                                    MiuixIcons.Info,
+                                    Icons.Rounded.Info,
                                     modifier = Modifier.padding(end = 6.dp),
                                     contentDescription = about,
                                     tint = colorScheme.onBackground

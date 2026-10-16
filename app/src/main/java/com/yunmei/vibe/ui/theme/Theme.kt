@@ -92,17 +92,15 @@ object ThemeController {
         val colorMode = ColorMode.fromValue(colorModeValue)
         val keyColor = prefs.getInt(SettingsPrefs.KEY_COLOR, 0)
         val paletteStyleStr = prefs.getString(SettingsPrefs.COLOR_STYLE, PaletteStyle.TonalSpot.name)
-        val paletteStyle = try {
-            PaletteStyle.valueOf(paletteStyleStr!!)
-        } catch (_: Exception) {
-            PaletteStyle.TonalSpot
-        }
+        // 偏好里可能是旧版本/非法枚举名：用 runCatching 兜底，异常时回落默认值（TonalSpot 同时是偏好默认值）。
+        val paletteStyle = runCatching {
+            PaletteStyle.valueOf(paletteStyleStr ?: PaletteStyle.TonalSpot.name)
+        }.getOrDefault(PaletteStyle.TonalSpot)
         val colorSpecStr = prefs.getString(SettingsPrefs.COLOR_SPEC, ColorSpec.SpecVersion.Default.name)
-        val colorSpec = try {
-            ColorSpec.SpecVersion.valueOf(colorSpecStr!!)
-        } catch (_: Exception) {
-            ColorSpec.SpecVersion.Default
-        }
+        // 同上：默认值取 ColorSpec.SpecVersion.Default（与偏好默认值一致）。
+        val colorSpec = runCatching {
+            ColorSpec.SpecVersion.valueOf(colorSpecStr ?: ColorSpec.SpecVersion.Default.name)
+        }.getOrDefault(ColorSpec.SpecVersion.Default)
         val amoled = prefs.getBoolean(SettingsPrefs.AMOLED, false)
 
         return AppSettings(colorMode, keyColor, paletteStyle, colorSpec, amoled)

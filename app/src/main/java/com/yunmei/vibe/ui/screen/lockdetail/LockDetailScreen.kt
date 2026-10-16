@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.lockdetail
 
+import androidx.compose.runtime.saveable.rememberSaveable
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import androidx.compose.foundation.layout.width
@@ -119,7 +120,7 @@ fun LockDetailScreen(label: String) {
 
     var lock by remember { mutableStateOf(container.lockStore.getAll().firstOrNull { it.label == label }) }
     var isDefault by remember { mutableStateOf(container.lockStore.getDefault()?.label == lock?.label) }
-    var showQr by remember { mutableStateOf(false) }
+    var showQr by rememberSaveable { mutableStateOf(false) }
 
     LifecycleResumeEffect(Unit) {
         lock = container.lockStore.getAll().firstOrNull { it.label == label }

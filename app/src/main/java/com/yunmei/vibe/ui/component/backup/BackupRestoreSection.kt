@@ -354,7 +354,10 @@ private fun runRestore(
         val result = runCatching {
             val input = context.contentResolver.openInputStream(uri)
                 ?: error("无法读取所选文件")
-            BackupManager.restore(context, password.toCharArray(), input).getOrThrow()
+            // use {}：无论还原成功/抛异常都关闭输入流，避免 ContentResolver 的 fd 泄漏。
+            input.use { stream ->
+                BackupManager.restore(context, password.toCharArray(), stream).getOrThrow()
+            }
         }
         done()
         Toast.makeText(

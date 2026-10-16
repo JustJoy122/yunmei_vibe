@@ -15,11 +15,10 @@ data class SystemInfo(
     val appVersion: String,
 )
 
-fun getAppVersion(context: Context): AppVersion {
-    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)!!
-    val versionCode = PackageInfoCompat.getLongVersionCode(packageInfo)
-    return AppVersion(
-        versionName = packageInfo.versionName!!,
-        versionCode = versionCode
+fun getAppVersion(context: Context): AppVersion = runCatching {
+    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    AppVersion(
+        versionName = packageInfo.versionName ?: "",
+        versionCode = PackageInfoCompat.getLongVersionCode(packageInfo),
     )
-}
+}.getOrDefault(AppVersion(versionName = "", versionCode = 0L))

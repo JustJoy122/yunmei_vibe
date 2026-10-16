@@ -143,7 +143,7 @@ fun MiuixLibrariesContainer(modifier: Modifier = Modifier, contentPadding: Paddi
                         if (!library.website.isNullOrBlank()) {
                             TextButton(
                                 modifier = Modifier.weight(1f),
-                                onClick = { uriHandler.openUri(library.website!!) },
+                                onClick = { library.website?.let { url -> uriHandler.openUri(url) } },
                                 text = stringResource(R.string.visit_home_page),
                             )
                         }

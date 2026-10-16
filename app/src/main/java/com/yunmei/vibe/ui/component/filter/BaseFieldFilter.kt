@@ -16,7 +16,6 @@ open class BaseFieldFilter() {
     }
 
     protected open fun computePos(): Int {
-        // TODO
         return 0
     }
 

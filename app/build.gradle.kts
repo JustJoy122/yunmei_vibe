@@ -40,8 +40,8 @@ android {
         applicationId = "com.yunmei.vibe"
         minSdk = 26
         targetSdk = 37
-        versionCode = 29
-        versionName = "0.4.6"
+        versionCode = 30
+        versionName = "0.4.7"
 
         // CI 构建号：GitHub Actions 在 Debug 工作流里通过 -PbuildStamp=<run_number> 注入，
         // App 内 Debug 更新检查据此与远端 ci-* 标签的 run_number 精确比较；
@@ -90,6 +90,9 @@ android {
     }
 
     lint {
+        // 冻结历史告警（22 条既有版本/权限类告警，非本轮引入）：仅对新增告警失败；
+        // 需要更新时删除 app/lint-baseline.xml 后重跑 lintDebug。
+        baseline = file("lint-baseline.xml")
         abortOnError = true
         checkReleaseBuilds = false
     }

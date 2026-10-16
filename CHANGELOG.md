@@ -11,6 +11,10 @@
 ---
 ## [Unreleased]
 
+## [0.4.7] - 2026-10-16
+
+**Full changelog**: [v0.4.6...v0.4.7](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.6...v0.4.7)
+
 ### Changed
 - 设置页重排：「账号」并入门锁页；「开锁」「取码与打卡」两个入口合并为带标题的「门锁行为」分组，并各为二级设置页。
 - 首页移除三个开关（自动开门 / 开门后自动退出 / 自动获取密码），迁入二级设置页；业务逻辑与存储键均未改动。
@@ -546,6 +550,7 @@
 注意：标签需与标题中的 [x.y.z] 完全一致，Markdown 渲染时版本号才可点击。
 -->
 [Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.5...HEAD
+[0.4.7]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.3...v0.4.4

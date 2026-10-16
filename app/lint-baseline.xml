@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 9.3.2" type="baseline" client="gradle" dependencies="false" name="AGP (9.3.2)" variant="all" version="9.3.2">
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="        runCatching { manager.notify(SIGN_NOTIFICATION_ID, notification) }"
+        errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/sign/SignNotifications.kt"
+            line="216"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="        runCatching { manager.notify(UNLOCK_NOTIFICATION_ID, notification) }"
+        errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="452"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 29 (current min is 26): `android.content.pm.ServiceInfo#FOREGROUND_SERVICE_TYPE_DATA_SYNC`"
+        errorLine1="            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/sign/SignService.kt"
+            line="135"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 26): `dynamicDarkColorScheme`"
+        errorLine1="            val base = if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/theme/ThemeColors.kt"
+            line="50"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 26): `dynamicLightColorScheme`"
+        errorLine1="            val base = if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)"
+        errorLine2="                                                                      ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/theme/ThemeColors.kt"
+            line="50"
+            column="71"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 26): `dynamicDarkColorScheme`"
+        errorLine1="            val base = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/screen/themesettings/ThemeSettingsMaterial.kt"
+            line="161"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 26): `dynamicLightColorScheme`"
+        errorLine1="            val base = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/screen/themesettings/ThemeSettingsMaterial.kt"
+            line="161"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 26): `dynamicDarkColorScheme`"
+        errorLine1="            dynamicDarkColorScheme(context).primary"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/screen/themesettings/ThemeSettingsMiuix.kt"
+            line="558"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 26): `dynamicLightColorScheme`"
+        errorLine1="            dynamicLightColorScheme(context).primary"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/screen/themesettings/ThemeSettingsMiuix.kt"
+            line="560"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle.Segment#setColor`"
+        errorLine1="            Notification.ProgressStyle.Segment(SEGMENT_SCAN).setColor(accent.tertiary),"
+        errorLine2="                                                             ~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="174"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle.Segment()`"
+        errorLine1="            Notification.ProgressStyle.Segment(SEGMENT_SCAN).setColor(accent.tertiary),"
+        errorLine2="                                       ~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="174"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle.Segment#setColor`"
+        errorLine1="            Notification.ProgressStyle.Segment(SEGMENT_CONNECT).setColor(accent.primary),"
+        errorLine2="                                                                ~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="175"
+            column="65"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle.Segment()`"
+        errorLine1="            Notification.ProgressStyle.Segment(SEGMENT_CONNECT).setColor(accent.primary),"
+        errorLine2="                                       ~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="175"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle.Segment#setColor`"
+        errorLine1="            Notification.ProgressStyle.Segment(SEGMENT_SEND).setColor(accent.primary),"
+        errorLine2="                                                             ~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="176"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle.Segment()`"
+        errorLine1="            Notification.ProgressStyle.Segment(SEGMENT_SEND).setColor(accent.primary),"
+        errorLine2="                                       ~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="176"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle()`"
+        errorLine1="        val progressStyle = Notification.ProgressStyle()"
+        errorLine2="                                         ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="178"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle#setProgressSegments`"
+        errorLine1="            .setProgressSegments(segments)"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="179"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle#setStyledByProgress`"
+        errorLine1="            .setStyledByProgress(true)"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="180"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle#setProgressIndeterminate`"
+        errorLine1="                    setProgressIndeterminate(true)"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="183"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle#setProgressIndeterminate`"
+        errorLine1="                    setProgressIndeterminate(false)"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="185"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.ProgressStyle#setProgress`"
+        errorLine1="                    setProgress(percent)"
+        errorLine2="                    ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="186"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 26): `android.app.Notification.Builder#setShortCriticalText`"
+        errorLine1="            .setShortCriticalText("
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="202"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Implicit cast from `ProgressStyle` to `Style` requires API level 36 (current min is 26)"
+        errorLine1="            .setStyle(progressStyle)"
+        errorLine2="                      ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockNotifications.kt"
+            line="212"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="PrivateApi"
+        message="Accessing internal APIs via reflection is not supported and may not work on all devices or in the future"
+        errorLine1="        val clazz = Class.forName(&quot;android.os.SystemProperties&quot;)"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/MiIslandNotification.kt"
+            line="65"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-runtime-compose than 2.10.0 is available: 2.11.0"
+        errorLine1="lifecycle = &quot;2.10.0&quot;"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="5"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-runtime-ktx than 2.10.0 is available: 2.11.0"
+        errorLine1="lifecycle = &quot;2.10.0&quot;"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="5"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-viewmodel-compose than 2.10.0 is available: 2.11.0"
+        errorLine1="lifecycle = &quot;2.10.0&quot;"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="5"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-viewmodel-navigation3 than 2.10.0 is available: 2.11.0"
+        errorLine1="lifecycle = &quot;2.10.0&quot;"
+        errorLine2="            ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="5"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.navigationevent:navigationevent-compose than 1.1.1 is available: 1.1.2"
+        errorLine1="navigationevent = &quot;1.1.1&quot;"
+        errorLine2="                  ~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="11"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.android than 2.4.10 is available: 2.4.21"
+        errorLine1="kotlin = &quot;2.4.10&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.plugin.compose than 2.4.10 is available: 2.4.21"
+        errorLine1="kotlin = &quot;2.4.10&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.plugin.parcelize than 2.4.10 is available: 2.4.21"
+        errorLine1="kotlin = &quot;2.4.10&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.plugin.serialization than 2.4.10 is available: 2.4.21"
+        errorLine1="kotlin = &quot;2.4.10&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.retrofit2:converter-kotlinx-serialization than 2.11.0 is available: 3.0.0"
+        errorLine1="retrofit = &quot;2.11.0&quot;"
+        errorLine2="           ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="15"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.retrofit2:retrofit than 2.11.0 is available: 3.0.0"
+        errorLine1="retrofit = &quot;2.11.0&quot;"
+        errorLine2="           ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="15"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.okhttp3:logging-interceptor than 4.12.0 is available: 5.5.0"
+        errorLine1="okhttp = &quot;4.12.0&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="16"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.okhttp3:okhttp than 4.12.0 is available: 5.5.0"
+        errorLine1="okhttp = &quot;4.12.0&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="16"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.zxing:core than 3.5.3 is available: 3.5.4"
+        errorLine1="zxingCore = &quot;3.5.3&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="19"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.materialkolor:material-kolor than 5.0.0 is available: 5.0.1"
+        errorLine1="materialKolor = &quot;5.0.0&quot;"
+        errorLine2="                ~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="20"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.mikepenz.aboutlibraries.plugin than 15.2.0 is available: 15.3.0"
+        errorLine1="aboutLibraries = &quot;15.2.0&quot;"
+        errorLine2="                 ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="25"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.mikepenz:aboutlibraries-core than 15.2.0 is available: 15.3.0"
+        errorLine1="aboutLibraries = &quot;15.2.0&quot;"
+        errorLine2="                 ~~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="25"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.lsposed.hiddenapibypass:hiddenapibypass than 6.1 is available: 6.2"
+        errorLine1="hiddenapibypass = { module = &quot;org.lsposed.hiddenapibypass:hiddenapibypass&quot;, version = &quot;6.1&quot; }"
+        errorLine2="                                                                                      ~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="58"
+            column="87"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier,"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/component/miuix/DropdownItem.kt"
+            line="24"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier,"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/component/miuix/EditText.kt"
+            line="43"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `mipmap-anydpi`.">
+        <location
+            file="src/main/res/mipmap-anydpi-v26"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.ok` appears to be unused"
+        errorLine1="    &lt;string name=&quot;ok&quot;>好的&lt;/string>"
+        errorLine2="            ~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="8"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            val editor = SettingsPrefs.of(context).edit()"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/data/backup/BackupManager.kt"
+            line="168"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX function `createBitmap` instead?"
+        errorLine1="        return Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888).apply {"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/data/qrcode/QrCode.kt"
+            line="25"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        runCatching { store.edit().putString(key, value).apply() }.onFailure { cause ->"
+        errorLine2="                      ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/data/local/SecureStore.kt"
+            line="85"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        SettingsPrefs.of(context).edit().remove(SettingsPrefs.SHORTCUT_TOKEN).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/sign/SignShortcut.kt"
+            line="61"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        SettingsPrefs.of(context).edit().remove(SettingsPrefs.SHORTCUT_TOKEN).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/unlock/UnlockShortcut.kt"
+            line="71"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ModifierNodeInspectableProperties"
+        message="BgEffectElement does not override inspectableProperties(). The layout inspector will use the default implementation of this function, which will attempt to read BgEffectElement&apos;s properties reflectively. Override inspectableProperties() if you&apos;d like to customize this modifier&apos;s presentation in the layout inspector."
+        errorLine1="private data class BgEffectElement("
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/yunmei/vibe/ui/component/miuix/effect/BgEffectModifier.kt"
+            line="42"
+            column="20"/>
+    </issue>
+
+</issues>

@@ -49,6 +49,8 @@ fun SendLogBottomSheet(
     val logSaved = stringResource(R.string.log_saved)
     val sendLog = stringResource(R.string.send_log)
     val saveLog = stringResource(R.string.save_log)
+    // 「分享」动作文案：send_log 与设置页入口行/弹窗标题共用，故单独一个 key。
+    val sendLogDirect = stringResource(R.string.send_log_direct)
     val loadingDialog = rememberLoadingDialog()
     val scope = rememberCoroutineScope()
 
@@ -83,7 +85,7 @@ fun SendLogBottomSheet(
         ActionMenuItem(Icons.TwoTone.Save, saveLog) {
             exportBugreportLauncher.launch(bugreportFileName())
         },
-        ActionMenuItem(Icons.TwoTone.Share, sendLog) {
+        ActionMenuItem(Icons.TwoTone.Share, sendLogDirect) {
             scope.launch {
                 val bugreport = loadingDialog.withLoading {
                     withContext(Dispatchers.IO) {

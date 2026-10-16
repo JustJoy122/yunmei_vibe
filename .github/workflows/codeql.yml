@@ -46,7 +46,7 @@ jobs:
         java-version: "21"
 
     - name: 设置 Gradle 环境
-      uses: gradle/actions/setup-gradle@v4
+      uses: gradle/actions/setup-gradle@v6
 
     - name: 接受 Android SDK 许可
       run: |

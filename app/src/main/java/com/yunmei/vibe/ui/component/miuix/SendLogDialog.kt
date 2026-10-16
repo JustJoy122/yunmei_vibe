@@ -38,6 +38,7 @@ fun SendLogDialog(
     val logSavedText = stringResource(R.string.log_saved)
     val sendLogText = stringResource(R.string.send_log)
     val saveLogText = stringResource(R.string.save_log)
+    val sendLogDirectText = stringResource(R.string.send_log_direct)
     val title = stringResource(R.string.send_log)
 
     val exportBugreportLauncher = rememberLauncherForActivityResult(
@@ -63,7 +64,7 @@ fun SendLogDialog(
             exportBugreportLauncher.launch(bugreportFileName())
             onDismissRequest()
         },
-        ActionMenuItem(Icons.Rounded.Share, sendLogText) {
+        ActionMenuItem(Icons.Rounded.Share, sendLogDirectText) {
             scope.launch {
                 onDismissRequest()
                 val bugreport = loadingDialog.withLoading {

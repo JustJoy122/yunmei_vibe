@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.unlock
 
+import com.yunmei.vibe.ui.util.TrampolineActivity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -30,7 +31,7 @@ import com.yunmei.vibe.ui.util.PermissionRequester
  *
  * 安全：沿用 [UnlockShortcutActivity] 的 token 校验，只有携带正确令牌的 Intent 才会执行。
  */
-class UnlockTrampolineActivity : ComponentActivity() {
+class UnlockTrampolineActivity : TrampolineActivity() {
 
     private val permissionRequester = PermissionRequester(this)
 
@@ -76,27 +77,21 @@ class UnlockTrampolineActivity : ComponentActivity() {
         val serviceIntent = Intent(this, UnlockService::class.java)
             .setAction(action)
             .putExtra(UnlockService.EXTRA_BT_DENIED, true)
-        runCatching { ContextCompat.startForegroundService(this, serviceIntent) }
-        finish()
+        startForegroundServiceAndFinish(serviceIntent)
     }
 
     private fun startUnlockService(action: String) {
         val serviceIntent = Intent(this, UnlockService::class.java).setAction(action)
         // 此时本 Activity 处于前台，startForegroundService 不会被后台启动限制拒绝
-        runCatching { ContextCompat.startForegroundService(this, serviceIntent) }
-        finish()
+        startForegroundServiceAndFinish(serviceIntent)
     }
 
     private fun appDetailsIntent(): Intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
         .setData(Uri.fromParts("package", packageName, null))
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-    private fun hasBlePermissions(): Boolean = BLE_PERMISSIONS.all { permission ->
-        ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
-    }
-
     private fun isLaunchedByOurselves(): Boolean =
-        intent?.getStringExtra(UnlockShortcut.EXTRA_TOKEN) == UnlockShortcut.token(this)
+        hasValidToken(intent?.getStringExtra(UnlockShortcut.EXTRA_TOKEN), UnlockShortcut.token(this))
 
     companion object {
         /** 要转发给 [UnlockService] 的 action（默认 [UnlockService.ACTION_RETRY]）。 */

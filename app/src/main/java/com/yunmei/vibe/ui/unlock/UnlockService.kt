@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.unlock
 
+import com.yunmei.vibe.ui.util.ForegroundPlaceholder
 import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -233,12 +234,13 @@ class UnlockService : Service() {
 
     /** 「完成」：用占位通知顶替同 ID 的通知后立即移除，并按规则先完成 startForeground。 */
     private fun dismissAndStop() {
-        val placeholder = android.app.Notification.Builder(this, UnlockNotifications.LIVE_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification_unlock)
-            .setContentTitle(getString(R.string.unlock_preparing))
-            .build()
-        runCatching { startForeground(UnlockNotifications.UNLOCK_NOTIFICATION_ID, placeholder) }
-        runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
+        ForegroundPlaceholder.startThenRemove(
+            service = this,
+            id = UnlockNotifications.UNLOCK_NOTIFICATION_ID,
+            channelId = UnlockNotifications.LIVE_CHANNEL_ID,
+            smallIcon = R.drawable.ic_notification_unlock,
+            title = getString(R.string.unlock_preparing),
+        )
         stopSelf()
     }
 

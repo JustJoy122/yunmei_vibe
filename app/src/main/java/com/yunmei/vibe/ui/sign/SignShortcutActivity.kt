@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.sign
 
+import com.yunmei.vibe.ui.util.TrampolineActivity
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -27,7 +28,7 @@ import com.yunmei.vibe.ui.util.PermissionRequester
  * 注：本类及 PermissionRequester 均为自行实现。InstallerX 没有快捷方式与蓝牙/定位权限逻辑，
  * 本项目仅在**通知构建**上复用它的实现（渠道、进度样式、失败分段变红、动作按钮）。
  */
-class SignShortcutActivity : ComponentActivity() {
+class SignShortcutActivity : TrampolineActivity() {
 
     private val permissionRequester = PermissionRequester(this)
 
@@ -35,7 +36,7 @@ class SignShortcutActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val launchedByShortcut = intent?.action == SignShortcut.ACTION &&
-            intent?.getStringExtra(SignShortcut.EXTRA_TOKEN) == SignShortcut.token(this)
+            hasValidToken(intent?.getStringExtra(SignShortcut.EXTRA_TOKEN), SignShortcut.token(this))
         if (!launchedByShortcut) {
             finish()
             return
@@ -61,26 +62,14 @@ class SignShortcutActivity : ComponentActivity() {
      * 由 [SignTrampolineActivity] 在前台请求定位权限，拒绝则发失败通知并结束。
      */
     private fun resolveModeAndProceed() {
-        startSignService()
-        finish()
+        startForegroundServiceAndFinish(
+            Intent(this, SignService::class.java).setAction(SignService.ACTION_START)
+        )
     }
 
 
-    private fun startSignService() {
-        runCatching {
-            ContextCompat.startForegroundService(
-                this,
-                Intent(this, SignService::class.java).setAction(SignService.ACTION_START),
-            )
-        }
-    }
 
-    /** 权限被拒绝：不做无声失败，发一条失败通知说明原因后结束。 */
 
-    private fun needNotificationPermission(): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
 
 
     private fun isLocationEnabled(): Boolean {

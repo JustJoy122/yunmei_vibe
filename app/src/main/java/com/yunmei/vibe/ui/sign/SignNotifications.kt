@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.sign
 
+import com.yunmei.vibe.ui.util.requestPromotedOngoing
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
@@ -145,7 +146,7 @@ object SignNotifications {
                 builder.setShortCriticalText(context.getString(R.string.notification_short_text_pending))
             }
             val notification = builder.build()
-            notification.extras.putBoolean(NotificationCompat.EXTRA_REQUEST_PROMOTED_ONGOING, true)
+            notification.requestPromotedOngoing()
             return notification
         }
 
@@ -204,7 +205,7 @@ object SignNotifications {
         // androidx 的 NotificationCompat.Builder 在本项目解析不到 setRequestPromotedOngoing，
         // 因此沿用本项目既有等价写法：直接写 EXTRA_REQUEST_PROMOTED_ONGOING。
         // 仍保持 setOngoing(false) + setAutoCancel(true)，让用户可手动清除终态通知。
-        notification.extras.putBoolean(NotificationCompat.EXTRA_REQUEST_PROMOTED_ONGOING, true)
+        notification.requestPromotedOngoing()
         return notification
     }
 

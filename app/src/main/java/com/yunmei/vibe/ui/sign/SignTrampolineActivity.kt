@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.sign
 
+import com.yunmei.vibe.ui.util.TrampolineActivity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -21,7 +22,7 @@ import com.yunmei.vibe.ui.util.PermissionRequester
  * （`LOCATE_ONLY` / `LOCATE_SAVE`）时才请求定位权限；
  * 选择「使用上次位置」时不会触发任何定位权限请求。被拒绝则发失败通知并结束。
  */
-class SignTrampolineActivity : ComponentActivity() {
+class SignTrampolineActivity : TrampolineActivity() {
 
     private val permissionRequester = PermissionRequester(this)
 
@@ -52,8 +53,7 @@ class SignTrampolineActivity : ComponentActivity() {
             serviceIntent.putExtra(SignService.EXTRA_SUB_MODE, subMode)
         }
         // 此时本 Activity 处于前台，startForegroundService 不会被后台启动限制拒绝
-        runCatching { ContextCompat.startForegroundService(this, serviceIntent) }
-        finish()
+        startForegroundServiceAndFinish(serviceIntent)
     }
 
     /** 用户拒绝定位权限：发一条失败通知，然后结束（不启动服务、不打卡）。 */

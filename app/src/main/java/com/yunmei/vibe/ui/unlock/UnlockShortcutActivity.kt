@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.unlock
 
+import com.yunmei.vibe.ui.util.TrampolineActivity
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
@@ -26,7 +27,7 @@ import com.yunmei.vibe.ui.util.PermissionRequester
  * 通知动作/点击产生的 PendingIntent.getActivity 属于系统认可的用户主动启动路径，
  * 不受 Android 10+ 后台启动 Activity 限制约束。
  */
-class UnlockShortcutActivity : ComponentActivity() {
+class UnlockShortcutActivity : TrampolineActivity() {
 
     private val permissionRequester = PermissionRequester(this)
 
@@ -44,7 +45,7 @@ class UnlockShortcutActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val launchedByShortcut = intent?.action == UnlockShortcut.ACTION &&
-            intent?.getStringExtra(UnlockShortcut.EXTRA_TOKEN) == UnlockShortcut.token(this)
+            hasValidToken(intent?.getStringExtra(UnlockShortcut.EXTRA_TOKEN), UnlockShortcut.token(this))
         if (!launchedByShortcut) {
             finish()
             return
@@ -122,31 +123,16 @@ class UnlockShortcutActivity : ComponentActivity() {
 
     /** 用户拒绝开启蓝牙：交给服务发出失败通知（保留实况与进度条，动作重试/完成）。 */
     private fun startServiceWithBluetoothDenied() {
-        runCatching {
-            ContextCompat.startForegroundService(
-                this,
-                Intent(this, UnlockService::class.java)
-                    .putExtra(UnlockService.EXTRA_BT_DENIED, true),
-            )
-        }
-        finish()
+        startForegroundServiceAndFinish(
+            Intent(this, UnlockService::class.java)
+                .putExtra(UnlockService.EXTRA_BT_DENIED, true)
+        )
     }
 
     private fun startUnlockAndFinish() {
-        runCatching {
-            ContextCompat.startForegroundService(this, Intent(this, UnlockService::class.java))
-        }
-        finish()
+        startForegroundServiceAndFinish(Intent(this, UnlockService::class.java))
     }
 
-    private fun needNotificationPermission(): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-
-    private fun hasBlePermissions(): Boolean = BLE_PERMISSIONS.all { permission ->
-        ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
-    }
 
     private fun isBluetoothEnabled(): Boolean =
         runCatching { BluetoothAdapter.getDefaultAdapter()?.isEnabled == true }.getOrDefault(false)

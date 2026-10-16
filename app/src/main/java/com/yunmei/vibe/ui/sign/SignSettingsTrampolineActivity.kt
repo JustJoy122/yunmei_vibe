@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.sign
 
+import com.yunmei.vibe.ui.util.TrampolineActivity
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -15,14 +16,13 @@ import androidx.activity.ComponentActivity
  *
  * 职责边界：不校验 token、不启动服务、不读写任何状态；仅转发一次跳转后立刻 finish()。
  */
-class SignSettingsTrampolineActivity : ComponentActivity() {
+class SignSettingsTrampolineActivity : TrampolineActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        startActivity(
+        launchAndFinish(
             Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
-        finish()
     }
 }

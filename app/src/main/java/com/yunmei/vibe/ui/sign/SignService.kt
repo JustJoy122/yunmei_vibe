@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.sign
 
+import com.yunmei.vibe.ui.util.ForegroundPlaceholder
 import android.Manifest
 import android.app.Service
 import android.content.Intent
@@ -174,19 +175,14 @@ class SignService : Service() {
      * 因此这里用一个占位通知顶替同 ID 的失败通知，随后立即移除。
      */
     private fun finishAndDismiss() {
-        val placeholder = android.app.Notification.Builder(this, SignNotifications.LIVE_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_shortcut_check_in)
-            .setContentTitle(getString(R.string.unlock_sign))
-            .build()
-        runCatching {
-            ServiceCompat.startForeground(
-                this,
-                SignNotifications.SIGN_NOTIFICATION_ID,
-                placeholder,
-                foregroundServiceType(),
-            )
-        }
-        runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) }
+        ForegroundPlaceholder.startThenRemove(
+            service = this,
+            id = SignNotifications.SIGN_NOTIFICATION_ID,
+            channelId = SignNotifications.LIVE_CHANNEL_ID,
+            smallIcon = R.drawable.ic_shortcut_check_in,
+            title = getString(R.string.unlock_sign),
+            foregroundType = foregroundServiceType(),
+        )
         stopSelf()
     }
 

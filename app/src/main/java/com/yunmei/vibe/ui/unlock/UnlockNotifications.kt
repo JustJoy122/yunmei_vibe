@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.unlock
 
+import com.yunmei.vibe.ui.util.requestPromotedOngoing
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
@@ -211,7 +212,7 @@ object UnlockNotifications {
             .setStyle(progressStyle)
             .build()
         // 与 InstallerX 的 setRequestPromotedOngoing(true) 等价（androidx 就是这么实现的）。
-        notification.extras.putBoolean(NotificationCompat.EXTRA_REQUEST_PROMOTED_ONGOING, true)
+        notification.requestPromotedOngoing()
         return notification
     }
 
@@ -259,7 +260,7 @@ object UnlockNotifications {
         }
         val notification = builder.build()
         // 结束态同样请求"保持实况提升"，避免从流体云回落为普通通知（对齐 InstallerX createBaseBuilder）
-        notification.extras.putBoolean(NotificationCompat.EXTRA_REQUEST_PROMOTED_ONGOING, true)
+        notification.requestPromotedOngoing()
         return notification
     }
 
@@ -374,7 +375,7 @@ object UnlockNotifications {
             val failed = builder.build()
             // 失败同样要保持"实况/流体云"提升：InstallerX 的基础构建器全程 setRequestPromotedOngoing(true)，
             // 失败分支复用同一个 builder；这份之前漏了这个 extra，导致失败即掉出实况。
-            failed.extras.putBoolean(NotificationCompat.EXTRA_REQUEST_PROMOTED_ONGOING, true)
+            failed.requestPromotedOngoing()
             return failed
         }
         // 低版本没有实况样式：保留进度条与错误色；失败切到高优先级结果渠道（InstallerX 旧式实现同样会切）。

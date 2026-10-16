@@ -11,6 +11,25 @@
 ---
 ## [Unreleased]
 
+### Changed
+- 设置页重排：「账号」并入门锁页；「开锁」「取码与打卡」两个入口合并为带标题的「门锁行为」分组，并各为二级设置页。
+- 首页移除三个开关（自动开门 / 开门后自动退出 / 自动获取密码），迁入二级设置页；业务逻辑与存储键均未改动。
+- 「AMOLED 纯黑背景」图标修正为深色模式图标；图标风格对齐 KernelSU 参考（返回动画样式与页面缩放互换、设置页「关于」改填充 Info、主题设置页预览打勾改双色、Miuix 页面返回键统一为 `MiuixIcons.Back`）。
+- 开门通知短文本精简：「开始扫描」→「扫描中」、「开始快速连接」→「快速连接」、「快速连接失败，使用常规模式尝试」→「扫描连接」。
+- Gradle Wrapper 升级到 **9.8.1**（distributionUrl 指向腾讯云镜像）。
+- miuix 依赖由 `0.9.4-103b737b-SNAPSHOT` 改为 **0.9.4 正式版**。
+- 跳板 Activity 抽出公共基类 `ui/util/TrampolineActivity.kt`；「占位通知 + startForeground」抽出 `ui/util/ForegroundNotification.kt`。
+
+### Fixed
+- 打卡「去开启定位」通知动作的隐式 PendingIntent 改为显式跳板 `ui/sign/SignSettingsTrampolineActivity.kt`（显式组件 + `FLAG_IMMUTABLE`，requestCode 与文案不变）。
+- 备份还原的输入流改为 `use {}` 关闭，避免 `ContentResolver` 的文件描述符泄漏。
+- 门锁详情页的数据读取下沉到 `LockDetailViewModel`，组合期不再直接访问 `LockStore` / `AccountStore`。
+- 设置页与其它页面的「安全存储不可用」提示改为消费 `UiState.secureStoreAvailable`，不再在 Composable 中直接读容器。
+- `Theme.kt` 的 `PaletteStyle` / `ColorSpec` 枚举解析改为 `runCatching` + 默认值，去掉 `!!` 与裸 `valueOf`。
+
+### Security
+- Code scanning 告警 **#1（隐式 PendingIntent）已闭合**：通知动作不再用隐式 Intent 构造 PendingIntent。
+
 ## [0.4.6] - 2026-10-11
 
 **Full changelog**: [v0.4.5...v0.4.6](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.5...v0.4.6)

@@ -9,9 +9,9 @@
 | 语言 | Kotlin | 2.4.10 |
 | UI | Jetpack Compose (BOM) | 2026.08.00 |
 | UI | Material 3 | 1.5.0-alpha26 |
-| UI | Miuix（`top.yukonga.miuix.kmp`） | 0.9.3 |
+| UI | Miuix（`top.yukonga.miuix.kmp`） | 0.9.4 |
 | 取色 | materialKolor（Monet 动态取色） | 5.0.0 |
-| 导航 | miuix-nav（`top.yukonga.miuix.kmp:miuix-nav-android`） / NavigationEvent | 0.9.4-103b737b-SNAPSHOT / 1.1.2 |
+| 导航 | miuix-nav（`top.yukonga.miuix.kmp:miuix-nav-android`） / NavigationEvent | 0.9.4 / 1.1.2 |
 | 架构组件 | AndroidX Lifecycle / Activity Compose / Core KTX | 2.10.0 / 1.13.0 / 1.16.0 |
 
 ### 数据与网络
@@ -30,7 +30,7 @@
 
 | 项目 | 版本 |
 | --- | --- |
-| Gradle | 9.7.1 |
+| Gradle | 9.8.1 |
 | Android Gradle Plugin (AGP) | 9.3.2 |
 | JDK | 21 |
 
@@ -94,7 +94,7 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 版本基线：**AGP 9.3.2 / Kotlin 2.4.10 / compileSdk 37 / minSdk 26**。
 
 UI 依赖组合（compose-bom 2026.08.00 → Compose 1.12.0 稳定版、material3 1.5.0-alpha26、
-miuix 0.9.4-103b737b-SNAPSHOT、materialKolor 5.0.0、NavigationEvent 1.1.2）为设备实测可用组合，模板组件零修改编译。
+miuix 0.9.4 正式版、materialKolor 5.0.0、NavigationEvent 1.1.2）为设备实测可用组合，模板组件零修改编译。
 
 > [!WARNING] 警告
 > 不要回退到 compose-bom 2026.05.01：其解析出的 Compose 1.12.0-alpha03 预发布版与 miuix 存在二进制不兼容，会导致启动白屏闪退
@@ -113,9 +113,9 @@ miuix 0.9.4-103b737b-SNAPSHOT、materialKolor 5.0.0、NavigationEvent 1.1.2）�
 
 - `Received status code 401 from server: Unauthorized`：凭据缺失、拼写错误或令牌已过期/被撤销；
 - `Received status code 403 from server: Forbidden`：令牌有效但缺少 `read:packages` 权限，或账号无权访问该包；
-- 伴随 `Could not resolve top.yukonga.miuix.kmp:...:0.9.4-103b737b-SNAPSHOT`；
+- 伴随 `Could not resolve top.yukonga.miuix.kmp:...:0.9.4`（依赖已锁正式版，此处只可能是凭据/网络类问题）；
 - 本机 Gradle 缓存完整时可能暂时构建成功，清理缓存后必然复现；
-- 无状态码的 `Could not find ...-SNAPSHOT` 属于快照在服务端被替换或清理，与令牌无关。
+- 若出现证书类错误（如 `PKIX path building failed`）或连接被拒（`Connection refused`），属于本机网络/代理问题，与令牌无关。
 
 重新配置步骤：
 
@@ -196,14 +196,16 @@ app/src/main/java/com/yunmei/vibe/
 └── ui/
     ├── MainActivity.kt      # 主导航容器（miuix-nav 返回栈 + tab Pager + 预测性返回过渡）
     ├── theme/               # TemplateTheme 与 UiMode（Material / Miuix）、语义色
-    ├── component/           # 通用组件（material / miuix / setting / scan / backup / liquid / filter 等）
+    ├── component/           # 通用组件（dialog/ 对话框、material/ 含 ScaleDialogMaterial.kt、miuix/、liquid/）
     ├── navigation/          # Route 定义（@Serializable）与 Navigator，构建在 miuix-nav 之上
     ├── animation/           # 预测性返回过渡
-    ├── util/                # 权限、日志、模糊、角标等工具
+    ├── util/                # 权限、日志、模糊、角标等工具；跳板基类 TrampolineActivity.kt、前台通知工具 ForegroundNotification.kt
     ├── viewmodel/           # MainActivityViewModel、SettingsViewModel 等
-    ├── sign/                # 打卡：快捷方式、跳板、定位方式弹窗、通知、前台服务
+    ├── sign/                # 打卡：快捷方式、跳板（含 SignSettingsTrampolineActivity.kt）、定位方式弹窗、通知、前台服务
     ├── unlock/              # 开门：快捷方式、令牌校验、通知、前台服务、小米超级岛
-    └── screen/              # 各页面（home / locks / settings / themesettings / login / lockdetail / about / license）
+    └── screen/              # 各页面（home / locks / settings / themesettings / subsettings / login / lockdetail / about / license）
+                             #   · subsettings/ = 二级设置页（开锁 / 取码与打卡）
+                             #   · lockdetail/ = 门锁详情 + LockDetailViewModel.kt
 ```
 
 页面遵循 `Screen + UiState/Actions + Material/Miuix 双实现 + ViewModel` 的分层；跨页共享状态由 ViewModel 与 CompositionLocal（`LocalUiMode`、`LocalEnableBlur` 等）承担。
@@ -267,9 +269,11 @@ app/src/main/java/com/yunmei/vibe/
 ### 已知风险与妥协
 
 
-- **未使用标准 ModalBottomSheet**：原因见上文「打卡定位弹窗的取舍」；若要换容器，必须安排一次真机点击验证。
-- **`miuix-blur` 在 API < 33 未完全隔离**：`ui/component/miuix/effect/BgEffectBackground.kt`、`ui/screen/about/AboutMiuix.kt`、`ui/component/miuix/effect/BgEffectPainter.kt` 仍直接引用该库（minSdk 33，靠清单 `tools:overrideLibrary` 放行）。仓储层已把 `enableBlur` / `enableFloatingBottomBarBlur` 在低版本强制为 `false`，但彻底方案是把这些调用抽到仅 33+ 加载的独立类。
-- **miuix 快照版依赖的可重现性**：`gradle/libs.versions.toml` 中 `miuix = "0.9.4-103b737b-SNAPSHOT"`，快照可能被服务端替换或清理，导致构建不可复现；且依赖走 GitHub Packages，需要有效令牌（见 `docs/DEPENDENCIES.md`）。建议后续锁定正式版本或落地到本地仓库。
+- **打卡定位弹窗未使用标准 ModalBottomSheet**：原因见上文「打卡定位弹窗的取舍」；若要换容器，必须安排一次真机点击验证。（注：项目其它位置已使用 Material3 `ModalBottomSheet`，见 `ui/component/material/ActionMenuBottomSheet.kt`。）
+- **`miuix-blur` 在 API < 33 未做物理隔离（当前为运行时守卫）**：实测全项目共有 **18 个文件、45 条 `top.yukonga.miuix.kmp.blur.*` 引用**，主要分布为 `ui/component/FloatingBottomBar.kt`（10）、`ui/screen/about/AboutMiuix.kt`（7）、`ui/util/BlurExt.kt`（5），其余 15 个文件各 1–2 条（含每次启动必经的 `ui/MainActivity.kt`、`ui/component/miuix/effect/{BgEffectBackground,BgEffectPainter,ColorBlendToken}.kt`、`ui/component/liquid/{Lens,Vibrancy,CombinedBackdrop}.kt`、`ui/component/bottombar/{BottomBar,BottomBarMiuix,NavigationRailMiuix}.kt`、`ui/screen/{home,locks,settings,themesettings,license}` 的 Miuix 实现）。依赖自身清单声明 `minSdkVersion="33"`，本项目以 `app/src/main/AndroidManifest.xml` 的 `<uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur, com.xzakota.hyper.notification.focus" />` 放行。
+  当前安全边界依靠**四层运行时守卫**：`ui/component/miuix/effect/BgEffectBackground.kt` 首行 `if (!isRuntimeShaderSupported())` 直接走无效果分支、`ui/component/liquid/Lens.kt` 的 `if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return`、`ui/util/BlurExt.kt` 的 `fun rememberBlurBackdrop(enableBlur) { if (!enableBlur || !isRenderEffectSupported()) return null }`、以及 `data/repository/SettingsRepositoryImpl.kt` 在 <33 时把 `enableBlur` / `enableFloatingBottomBarBlur` 强制为 `false`。因此**低版本不崩溃、相关代码路径不执行**，但相关类仍会在类加载/校验层被引用（类都在 APK 内，可正常解析）。
+  后续方向：**M1（分阶段抽 gateway）**——新增 `ui/component/miuix/effect/MiuixBlurGateway.kt`，对外只暴露本应用所需能力、内部包在 `@RequiresApi(33)` 的 `private object Impl` 中，先迁移已被 `enableBlur` 守卫的页面调用点（行为不变）；`ui/component/FloatingBottomBar.kt` 与 `ui/component/liquid/*` 因类型本身即 miuix-blur 类型（`Backdrop` / `LayerBackdrop` / `BackdropEffectScope` / `RuntimeShader`）而**无法干净迁移**。**M3（字面隔离）**——把模糊/玻璃能力下沉到 `minSdk = 33` 的独立模块（其余模块 `compileOnly` + 服务接口装配），可达成"低版本不触达该类"的字面目标，属大版本目标。
+- **miuix 依赖与 GitHub Packages 令牌**：依赖已锁定正式版（`gradle/libs.versions.toml` 中 `miuix = "0.9.4"`），**快照不可复现的风险已消除**；仍有效的是"依赖走 GitHub Packages、需要有效令牌"这一条（令牌失效时的表现与配置步骤见上文「GitHub Packages 令牌」，依赖清单见 `docs/DEPENDENCIES.md`）。
 
 ### 技术债
 

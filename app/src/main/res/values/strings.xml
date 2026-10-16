@@ -31,7 +31,11 @@
     <string name="locks_empty_hint">登录拉取或扫码添加，开门时选择默认门锁</string>
     <string name="locks_add_scan">扫码添加门锁</string>
     <string name="locks_add_login">登录并拉取门锁</string>
-    <string name="locks_add_scan_hint">扫描分享二维码（yunmeiui:// 或 yunmeiui.xypp.cc 链接）</string>
+    <string name="locks_add_scan_hint">扫描分享二维码</string>
+<string name="lock_import_confirm_title">添加门锁</string>
+<string name="lock_import_confirm_add">添加</string>
+<string name="lock_import_secret_present">已包含开门密钥</string>
+<string name="lock_import_secret_absent">不含密钥</string>
     <string name="locks_set_default">设为默认</string>
     <string name="locks_delete">删除</string>
     <string name="locks_deleted">%1$s 已删除</string>

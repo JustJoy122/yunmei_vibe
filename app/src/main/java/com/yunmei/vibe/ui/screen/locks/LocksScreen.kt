@@ -63,11 +63,39 @@ fun LocksPager(
         }
     }
 
+
     val deleteTitle = stringResource(R.string.locks_delete)
     val labelPrefix = stringResource(R.string.lock_detail_label)
     val removeAccountTitle = stringResource(R.string.settings_remove_account)
     val confirmText = stringResource(R.string.confirm)
     val cancelText = stringResource(R.string.cancel)
+    // 导入确认框：pendingLock 出现时弹出（两主题共用同一 handle，内容用 Markdown 排版；密钥不回显原文）。
+    val importTitle = stringResource(R.string.lock_import_confirm_title)
+    val importAddText = stringResource(R.string.lock_import_confirm_add)
+    val importSecretPresent = stringResource(R.string.lock_import_secret_present)
+    val importSecretAbsent = stringResource(R.string.lock_import_secret_absent)
+    val importLabelTag = stringResource(R.string.lock_detail_label)
+    val importLockNoTag = stringResource(R.string.lock_detail_lock_no)
+    val importSchoolTag = stringResource(R.string.lock_detail_school)
+    val importMacTag = stringResource(R.string.lock_detail_mac)
+    LaunchedEffect(uiState.pendingLock) {
+        val pending = uiState.pendingLock ?: return@LaunchedEffect
+        val lines = buildList {
+            add("**$importLabelTag**：${pending.label}")
+            if (pending.lockNo.isNotBlank()) add("**$importLockNoTag**：${pending.lockNo}")
+            if (pending.schoolNo.isNotBlank()) add("**$importSchoolTag**：${pending.schoolNo}")
+            if (pending.mac.isNotBlank()) add("**$importMacTag**：${pending.mac}")
+            add(if (pending.secret.isNotBlank()) importSecretPresent else importSecretAbsent)
+        }
+        val result = confirmDialog.awaitConfirm(
+            title = importTitle,
+            content = lines.joinToString("\n\n"),
+            markdown = true,
+            confirm = importAddText,
+            dismiss = cancelText,
+        )
+        if (result == ConfirmResult.Confirmed) viewModel.confirmImport() else viewModel.cancelImport()
+    }
     val actions = LocksActions(
         onAddScan = { showScanMenu = true },
         onLogin = { navigator.push(Route.Login) },
@@ -99,6 +127,8 @@ fun LocksPager(
         },
         onOpenDetail = { lock -> navigator.push(Route.LockDetail(lock.label)) },
         onMessageShown = viewModel::onMessageShown,
+        onConfirmImport = viewModel::confirmImport,
+        onCancelImport = viewModel::cancelImport,
     )
 
     when (LocalUiMode.current) {
@@ -116,11 +146,11 @@ fun LocksPager(
     }
 
     // 扫码添加门锁：复用「设置 → 发送日志」同款弹窗菜单组件；
-    // 相机/相册取图后解码二维码，交给既有的 addLockFromShare 完成解析与添加。
+    // 相机/相册取图后解码二维码，交给 importFrom 解析；随后由确认框等待用户决定是否写库。
     ScanAddLockMenu(
         show = showScanMenu,
         onDismissRequest = { showScanMenu = false },
-        onDecoded = { raw -> viewModel.addLockFromShare(raw) },
+        onDecoded = { raw -> viewModel.importFrom(raw) },
         onError = { message -> viewModel.showMessage(message) },
     )
 }

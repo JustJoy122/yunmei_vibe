@@ -67,8 +67,11 @@ class LocksViewModel : ViewModel() {
         showMessage(str(R.string.locks_deleted, lock.label))
     }
 
-    /** 解析扫码/链接得到的内容并添加门锁（兼容 addlock/、lock_id/、lock_info/、lockInfo/ 前缀）。 */
-    fun addLockFromShare(raw: String) {
+    /**
+     * 解析扫码/链接得到的内容，**只解析不写库**（兼容 addlock/、lock_id/、lock_info/、lockInfo/ 前缀），
+     * 校验通过后把门锁放进 [LocksUiState.pendingLock] 等待用户在确认框里决定。
+     */
+    fun importFrom(raw: String) {
         val lock = Lock.from(raw)
         if (lock == null) {
             showMessage(str(R.string.scan_invalid))
@@ -78,6 +81,13 @@ class LocksViewModel : ViewModel() {
             showMessage(str(R.string.locks_add_incomplete))
             return
         }
+        _uiState.update { it.copy(pendingLock = lock) }
+    }
+
+    /** 用户在确认框点「添加」：写库 → 刷新 → 清空待确认态，并给出成功/重复/失败提示。 */
+    fun confirmImport() {
+        val lock = _uiState.value.pendingLock ?: return
+        _uiState.update { it.copy(pendingLock = null) }
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
@@ -91,6 +101,11 @@ class LocksViewModel : ViewModel() {
                 showMessage(str(R.string.locks_add_failed))
             }
         }
+    }
+
+    /** 用户在确认框点「取消」：仅清空待确认态，不写库。 */
+    fun cancelImport() {
+        _uiState.update { it.copy(pendingLock = null) }
     }
 
     fun showMessage(message: String) {

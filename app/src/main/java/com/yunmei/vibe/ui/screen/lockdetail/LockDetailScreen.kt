@@ -1,5 +1,10 @@
 package com.yunmei.vibe.ui.screen.lockdetail
 
+import androidx.compose.foundation.layout.width
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.layout.PaddingValues
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import android.content.ClipData
@@ -321,63 +326,7 @@ private fun LockDetailScreenMaterial(
             // 展开/折叠动画：复用 InstallerX Revived 各页面通用的手风琴写法
             // （fadeIn + expandVertically 自顶向下展开，fadeOut + shrinkVertically 向上收起）。
             // 卡片圆角、底色、内边距仍由主题组件 TonalCard 提供，不硬编码。
-            AnimatedVisibility(
-                visible = showQr,
-                enter = fadeIn(tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing)) +
-                    expandVertically(
-                        animationSpec = tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing),
-                        expandFrom = Alignment.Top,
-                    ),
-                exit = fadeOut(tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing)) +
-                    shrinkVertically(
-                        animationSpec = tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing),
-                        shrinkTowards = Alignment.Top,
-                    ),
-            ) {
-                TonalCard(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.lock_detail_share_qr),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        // 二维码异步生成：外层固定 220dp 容器预留高度，展开动画期间不会二次跳变；
-                        // 图片就绪后淡入。
-                        // 注意：此处隐式接收者是 BoxScope，不能直接用 ColumnScope 版 AnimatedVisibility
-                        // （会报「cannot be called in this context with an implicit receiver」），
-                        // 故用 animateFloatAsState + Modifier.alpha 实现淡入。
-                        val qrImage = rememberShareQrImage(lock)
-                        val qrAlpha by animateFloatAsState(
-                            targetValue = if (qrImage != null) 1f else 0f,
-                            label = "qrFade",
-                        )
-                        Box(
-                            modifier = Modifier.size(220.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            qrImage?.let { image ->
-                                Image(
-                                    bitmap = image,
-                                    contentDescription = stringResource(R.string.lock_detail_share_qr),
-                                    modifier = Modifier
-                                        .size(220.dp)
-                                        .alpha(qrAlpha),
-                                )
-                            }
-                        }
-                        Text(
-                            text = stringResource(R.string.lock_detail_share_qr_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline,
-                        )
-                    }
-                }
-            }
+            QrDialogMaterial(show = showQr, lock = lock, onToggle = onToggleQr, onShare = actions.onShare, onCopyLink = actions.onCopyLink)
 
             // 删除单独置底成组：与分享类操作分隔开，避免误触。
             SegmentedColumn(
@@ -549,66 +498,7 @@ private fun LockDetailScreenMiuix(
                 }
 
                 // 与 Material 分支完全相同的展开/折叠动画；卡片圆角、底色、内边距由 Miuix 主题 Card 提供。
-                AnimatedVisibility(
-                    visible = showQr,
-                    enter = fadeIn(tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing)) +
-                        expandVertically(
-                            animationSpec = tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing),
-                            expandFrom = Alignment.Top,
-                        ),
-                    exit = fadeOut(tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing)) +
-                        shrinkVertically(
-                            animationSpec = tween(QR_ANIM_DURATION_MS, easing = FastOutSlowInEasing),
-                            shrinkTowards = Alignment.Top,
-                        ),
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .padding(top = 12.dp)
-                            .fillMaxWidth(),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            MiuixText(
-                                text = stringResource(R.string.lock_detail_share_qr),
-                                color = colorScheme.onSurface,
-                            )
-                            // 二维码异步生成：外层固定 220dp 容器预留高度，展开动画期间不会二次跳变；
-                            // 图片就绪后淡入。
-                            // 注意：此处隐式接收者是 BoxScope，不能直接用 ColumnScope 版 AnimatedVisibility
-                            // （会报「cannot be called in this context with an implicit receiver」），
-                            // 故用 animateFloatAsState + Modifier.alpha 实现淡入。
-                            val qrImage = rememberShareQrImage(lock)
-                            val qrAlpha by animateFloatAsState(
-                                targetValue = if (qrImage != null) 1f else 0f,
-                                label = "qrFade",
-                            )
-                            Box(
-                                modifier = Modifier.size(220.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                qrImage?.let { image ->
-                                    Image(
-                                        bitmap = image,
-                                        contentDescription = stringResource(R.string.lock_detail_share_qr),
-                                        modifier = Modifier
-                                            .size(220.dp)
-                                            .alpha(qrAlpha),
-                                    )
-                                }
-                            }
-                            MiuixText(
-                                text = stringResource(R.string.lock_detail_share_qr_hint),
-                                color = colorScheme.onSurfaceVariantSummary,
-                            )
-                        }
-                    }
-                }
+                QrDialogMiuix(show = showQr, lock = lock, onToggle = onToggleQr, onShare = actions.onShare, onCopyLink = actions.onCopyLink)
 
                 // 删除单独置底成卡：与分享类操作分隔开，避免误触。
                 Card(
@@ -658,6 +548,120 @@ private fun rememberAccountSaved(usernameMd5: String): Boolean {
  * `remember(lock) { QrCode.bitmap(lock.toShareUrl()) }` 会在首次展开二维码卡片时阻塞主线程。
  * 这里用 produceState 放到 Default 线程计算，并按 lock 缓存结果。
  */
+@Composable
+private fun QrDialogMaterial(
+    show: Boolean,
+    lock: Lock,
+    onToggle: () -> Unit,
+    onShare: () -> Unit,
+    onCopyLink: () -> Unit,
+) {
+    if (!show) return
+    val qrImage = rememberShareQrImage(lock)
+    val qrAlpha by animateFloatAsState(
+        targetValue = if (qrImage != null) 1f else 0f,
+        label = "qrFade",
+    )
+    AlertDialog(
+        onDismissRequest = onToggle,
+        title = { Text(stringResource(R.string.lock_detail_share_qr)) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Box(
+                    modifier = Modifier.size(220.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    qrImage?.let { image ->
+                        Image(
+                            bitmap = image,
+                            contentDescription = stringResource(R.string.lock_detail_share_qr),
+                            modifier = Modifier
+                                .size(220.dp)
+                                .alpha(qrAlpha),
+                        )
+                    }
+                }
+                Text(
+                    text = stringResource(R.string.lock_detail_share_qr_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onShare(); onToggle() }) {
+                Text(stringResource(R.string.lock_detail_share))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onCopyLink(); onToggle() }) {
+                Text(stringResource(R.string.lock_detail_copy_link))
+            }
+        },
+    )
+}
+
+@Composable
+private fun QrDialogMiuix(
+    show: Boolean,
+    lock: Lock,
+    onToggle: () -> Unit,
+    onShare: () -> Unit,
+    onCopyLink: () -> Unit,
+) {
+    if (!show) return
+    val qrImage = rememberShareQrImage(lock)
+    val qrAlpha by animateFloatAsState(
+        targetValue = if (qrImage != null) 1f else 0f,
+        label = "qrFade",
+    )
+    OverlayDialog(
+        show = show,
+        title = stringResource(R.string.lock_detail_share_qr),
+        summary = stringResource(R.string.lock_detail_share_qr_hint),
+        onDismissRequest = onToggle,
+        content = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    modifier = Modifier.size(220.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    qrImage?.let { image ->
+                        Image(
+                            bitmap = image,
+                            contentDescription = stringResource(R.string.lock_detail_share_qr),
+                            modifier = Modifier
+                                .size(220.dp)
+                                .alpha(qrAlpha),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                    MiuixTextButton(
+                        text = stringResource(R.string.lock_detail_share),
+                        onClick = { onShare(); onToggle() },
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(20.dp))
+                    MiuixTextButton(
+                        text = stringResource(R.string.lock_detail_copy_link),
+                        onClick = { onCopyLink(); onToggle() },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        },
+    )
+}
+
 @Composable
 private fun rememberShareQrImage(lock: Lock): ImageBitmap? {
     val image by produceState<ImageBitmap?>(initialValue = null, key1 = lock) {

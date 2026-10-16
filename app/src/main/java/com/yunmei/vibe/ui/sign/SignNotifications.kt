@@ -300,7 +300,7 @@ object SignNotifications {
         PendingIntent.getActivity(
             context,
             3,
-            Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            Intent(context, SignSettingsTrampolineActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )

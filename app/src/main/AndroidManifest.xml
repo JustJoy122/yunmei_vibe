@@ -98,6 +98,14 @@
             android:taskAffinity=""
             android:theme="@style/Theme.YunmeiVibe.Dialog" />
 
+        <!-- 定位设置跳板：由失败通知的「去开启定位」按钮打开（显式 PendingIntent，替代原隐式 Intent） -->
+        <activity
+            android:name=".ui.sign.SignSettingsTrampolineActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.YunmeiVibe.Dialog" />
+
         <!-- 开门跳板：由失败通知的「重试/完成」按钮打开，带 token 校验 -->
         <activity
             android:name=".ui.unlock.UnlockTrampolineActivity"

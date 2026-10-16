@@ -4,7 +4,6 @@ import com.yunmei.vibe.ui.util.TrampolineActivity
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
-import androidx.activity.ComponentActivity
 
 /**
  * 「去开启定位」的**前台跳板** Activity：不显示任何 UI（透明主题 + excludeFromRecents）。

@@ -55,7 +55,6 @@ import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedDropdownItem
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
-import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.ui.component.backup.BackupRestoreEntry
 import com.yunmei.vibe.ui.component.backup.BackupSecureStoreWarning
 import com.yunmei.vibe.ui.component.material.SendLogBottomSheet

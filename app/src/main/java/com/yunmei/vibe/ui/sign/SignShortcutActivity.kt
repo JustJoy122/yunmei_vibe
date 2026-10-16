@@ -3,15 +3,7 @@ package com.yunmei.vibe.ui.sign
 import com.yunmei.vibe.ui.util.TrampolineActivity
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.LocationManager
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
-import androidx.activity.ComponentActivity
-import androidx.core.content.ContextCompat
-import androidx.core.location.LocationManagerCompat
-import com.yunmei.vibe.ui.util.LOCATION_PERMISSIONS
 import com.yunmei.vibe.ui.util.PermissionRequester
 
 /**
@@ -72,8 +64,5 @@ class SignShortcutActivity : TrampolineActivity() {
 
 
 
-    private fun isLocationEnabled(): Boolean {
-        val lm = getSystemService(LOCATION_SERVICE) as? LocationManager ?: return false
-        return runCatching { LocationManagerCompat.isLocationEnabled(lm) }.getOrDefault(false)
-    }
+
 }

@@ -277,8 +277,8 @@ app/src/main/java/com/yunmei/vibe/
 
 ### 技术债
 
-- **跳板 Activity 重复逻辑**：`ui/sign/SignShortcutActivity`、`ui/sign/SignTrampolineActivity`、`ui/unlock/UnlockShortcutActivity`、`ui/unlock/UnlockTrampolineActivity` 的"令牌校验 + 前台启动服务 + finish"结构高度相似，可抽公共基类。
-- **占位通知写法重复**：`ui/sign/SignService` 与 `ui/unlock/UnlockService` 各自手写"启动前台服务前先贴一条占位通知"的逻辑，可抽公共工具。
+- ~~跳板 Activity 重复逻辑~~ **已完成**：5 个跳板（`ui/sign/SignShortcutActivity`、`ui/sign/SignTrampolineActivity`、`ui/sign/SignSettingsTrampolineActivity`、`ui/unlock/UnlockShortcutActivity`、`ui/unlock/UnlockTrampolineActivity`）已统一继承公共基类 `ui/util/TrampolineActivity.kt`（令牌校验、通知权限判定、蓝牙权限判定、前台启动服务 + finish、启动系统页 + finish）；剩余差异仅各跳板自己的 action 常量与权限补齐流程。
+- ~~占位通知写法重复~~ **已完成**：`ui/sign/SignService` 与 `ui/unlock/UnlockService` 已共用 `ui/util/ForegroundNotification.kt` 的 `ForegroundPlaceholder.startThenRemove(...)`（占位通知 → startForeground → 移除前台通知；`stopSelf` 仍在调用方，时序不变）。
 - **备份格式版本**：`CURRENT_SCHEMA_VERSION` 为 2；备份功能尚未上线，暂不提供版本迁移逻辑。
 - **孤儿偏好键**：旧版本写入的 `record_object` 键可能仍残留在 DataStore 中（代码已无引用），无害但未清理。
 

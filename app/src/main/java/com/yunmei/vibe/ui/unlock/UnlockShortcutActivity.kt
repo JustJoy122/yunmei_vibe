@@ -4,12 +4,8 @@ import com.yunmei.vibe.ui.util.TrampolineActivity
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.util.BLE_PERMISSIONS
 import com.yunmei.vibe.ui.util.PermissionNotice

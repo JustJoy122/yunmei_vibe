@@ -45,7 +45,6 @@ import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.ui.component.dialog.rememberLoadingDialog
-import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.ui.component.backup.BackupRestoreEntry
 import com.yunmei.vibe.ui.component.backup.BackupSecureStoreWarning
 import com.yunmei.vibe.ui.component.miuix.SendLogDialog

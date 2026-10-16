@@ -1,5 +1,7 @@
 package com.yunmei.vibe.ui
 
+import androidx.compose.runtime.mutableIntStateOf
+import com.yunmei.vibe.ui.navigation.PendingLockImport
 import top.yukonga.miuix.kmp.utils.PagerFlingTrackerConnection
 import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
 import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
@@ -138,6 +140,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel = viewModel<MainActivityViewModel>()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        // 深链导入（yunmeiui://lock_info/…）：冷启动由 onCreate 触发一次，热启动由 onNewIntent 递增计数触发。
+        LaunchedEffect(linkImportTick.intValue) {
+            if (PendingLockImport.raw.value != null) {
+                viewModel.setSelectedMainPage(MainPagerConfig.PAGE_LOCKS)
+            }
+        }
             val selectedMainPage by viewModel.selectedMainPage.collectAsStateWithLifecycle()
             val appSettings = uiState.appSettings
             val uiMode = uiState.uiMode
@@ -355,7 +363,12 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        // 深链已由 AddLockLinkActivity 写入 PendingLockImport：这里只需触发一次重查（切页在组合内完成）。
+        if (PendingLockImport.raw.value != null) linkImportTick.intValue++
     }
+
+    /** 深链导入的"重查触发器"：递增即让组合内的 LaunchedEffect 重新检查 PendingLockImport。 */
+    private val linkImportTick = mutableIntStateOf(0)
 }
 
 /**

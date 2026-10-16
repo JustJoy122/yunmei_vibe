@@ -82,6 +82,21 @@
             「开门」快捷方式入口：无界面 Activity，校验令牌后交由前台服务执行开门，
             不打开主界面；exported 必需（启动器以第三方身份启动），故用随机令牌校验调用方。
         -->
+        <!-- 添加门锁深链入口：由 yunmeiui://lock_info/<Base64>（或 lock_id/）唤起，只做转发 -->
+        <activity
+            android:name=".ui.locks.AddLockLinkActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="yunmeiui" android:host="lock_info" />
+                <data android:scheme="yunmeiui" android:host="lock_id" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".ui.unlock.UnlockShortcutActivity"
             android:exported="true"

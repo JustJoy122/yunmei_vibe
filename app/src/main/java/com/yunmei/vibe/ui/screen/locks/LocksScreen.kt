@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.locks
 
+import com.yunmei.vibe.ui.navigation.PendingLockImport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,6 +70,14 @@ fun LocksPager(
     val removeAccountTitle = stringResource(R.string.settings_remove_account)
     val confirmText = stringResource(R.string.confirm)
     val cancelText = stringResource(R.string.cancel)
+    // 深链导入：观察到 PendingLockImport 里的原文就交给 VM 解析（解析后由下方确认框等待用户决定）。
+    val pendingRaw by PendingLockImport.raw.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingRaw) {
+        val raw = pendingRaw ?: return@LaunchedEffect
+        viewModel.importFrom(raw)
+        PendingLockImport.consume()
+    }
+
     // 导入确认框：pendingLock 出现时弹出（两主题共用同一 handle，内容用 Markdown 排版；密钥不回显原文）。
     val importTitle = stringResource(R.string.lock_import_confirm_title)
     val importAddText = stringResource(R.string.lock_import_confirm_add)

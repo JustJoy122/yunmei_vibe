@@ -264,6 +264,8 @@
     <string name="scan_invalid">无法识别的门锁二维码</string>
     <string name="scan_permission_denied">未授予相机权限</string>
     <string name="scan_camera">相机拍照</string>
+<string name="scan_paste_link">粘贴链接导入</string>
+<string name="scan_clipboard_empty">剪贴板中没有链接</string>
     <string name="scan_gallery">相册选择</string>
     <string name="scan_image_unreadable">无法读取所选图片</string>
     <string name="sign_live_channel_name">打卡实况</string>

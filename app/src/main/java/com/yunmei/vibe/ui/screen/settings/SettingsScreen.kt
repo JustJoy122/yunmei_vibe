@@ -37,6 +37,7 @@ fun SettingPager(
     }
 
     val state = SettingsScreenState(
+        secureStoreAvailable = uiState.secureStoreAvailable,
         uiMode = uiState.uiMode,
         checkUpdate = uiState.checkUpdate,
 

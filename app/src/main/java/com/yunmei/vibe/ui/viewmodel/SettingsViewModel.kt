@@ -6,7 +6,6 @@ import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.preferences.AppSettings
 import com.yunmei.vibe.data.repository.SettingsRepository
-import com.yunmei.vibe.data.repository.SettingsRepositoryImpl
 import com.yunmei.vibe.ui.screen.settings.SettingsUiState
 import com.yunmei.vibe.ui.theme.ColorMode
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +18,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SettingsViewModel(
-    private val repo: SettingsRepository = SettingsRepositoryImpl()
+    // 默认值直接取容器里的接口实例（引用全局对象，不触发「实例初始化前访问 <this>」问题）。
+    private val repo: SettingsRepository = YunMeiApp.app.container.settingsRepository,
 ) : ViewModel() {
 
     private val container get() = YunMeiApp.app.container
@@ -64,6 +64,7 @@ class SettingsViewModel(
                     enableFloatingBottomBar = repo.enableFloatingBottomBar,
                     enableFloatingBottomBarBlur = repo.enableFloatingBottomBarBlur,
                     pageScale = repo.pageScale,
+                    secureStoreAvailable = container.secureStoreAvailable,
                 )
             }
             val (settings, accounts) = functional

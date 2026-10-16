@@ -28,6 +28,8 @@ data class SettingsUiState(
     val enableFloatingBottomBar: Boolean = true,
     val enableFloatingBottomBarBlur: Boolean = true,
     val pageScale: Float = 1.0f,
+    /** 加密存储是否可用（设置页内联提示用，避免 Composable 直接读 AppContainer）。 */
+    val secureStoreAvailable: Boolean = true,
 )
 
 /**
@@ -40,6 +42,8 @@ data class SettingsScreenState(
     val checkUpdate: Boolean = true,
 
     val settings: AppSettings = AppSettings(),
+    /** 加密存储是否可用：由 SettingsViewModel 提供，页面只消费该字段。 */
+    val secureStoreAvailable: Boolean = true,
 )
 
 @Immutable

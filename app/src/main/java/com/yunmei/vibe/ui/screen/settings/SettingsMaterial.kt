@@ -181,7 +181,7 @@ fun SettingPagerMaterial(
 
             // 其他
             // 安全存储不可用时的内联提示（方案 A：设置页，不弹阻断式对话框；恢复后自动隐藏）
-            BackupSecureStoreWarning(show = !YunMeiApp.app.container.secureStoreAvailable)
+            BackupSecureStoreWarning(show = !state.secureStoreAvailable)
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp),
                 title = stringResource(R.string.settings_group_other),

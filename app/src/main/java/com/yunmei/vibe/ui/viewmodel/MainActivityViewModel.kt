@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.data.repository.SettingsRepository
-import com.yunmei.vibe.data.repository.SettingsRepositoryImpl
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.theme.ThemeController
 import com.yunmei.vibe.ui.util.LatestVersionInfo
@@ -29,7 +28,7 @@ class MainActivityViewModel(
 ) : ViewModel() {
 
     private val prefs = SettingsPrefs.of(YunMeiApp.app)
-    private val settingRepo: SettingsRepository = SettingsRepositoryImpl()
+    private val settingRepo: SettingsRepository = YunMeiApp.app.container.settingsRepository
     private val mainPageState = MainPageState(savedStateHandle)
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == null || key in observedKeys) {

@@ -1,5 +1,7 @@
 package com.yunmei.vibe.core.di
 
+import com.yunmei.vibe.data.repository.SettingsRepositoryImpl
+import com.yunmei.vibe.data.repository.SettingsRepository
 import android.content.Context
 import com.yunmei.vibe.data.ble.UnlockManager
 import com.yunmei.vibe.data.local.AccountStore
@@ -51,5 +53,10 @@ class AppContainer(context: Context) {
 
     val locationProvider: LocationProvider by lazy {
         LocationProvider(appContext)
+    }
+
+    /** 设置仓库：以接口类型暴露，ViewModel 只依赖 [SettingsRepository]，不 import 实现类。 */
+    val settingsRepository: SettingsRepository by lazy {
+        SettingsRepositoryImpl()
     }
 }

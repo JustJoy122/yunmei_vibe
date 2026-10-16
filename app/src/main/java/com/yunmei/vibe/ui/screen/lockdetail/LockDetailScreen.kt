@@ -1,5 +1,7 @@
 package com.yunmei.vibe.ui.screen.lockdetail
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.saveable.rememberSaveable
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.MiuixIcons
@@ -80,7 +82,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.yunmei.vibe.R
-import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.data.model.UnitCodes
 import com.yunmei.vibe.data.qrcode.QrCode
@@ -116,15 +117,14 @@ fun LockDetailScreen(label: String) {
     val context = LocalContext.current
     val confirmDialog = rememberConfirmDialog()
     val scope = rememberCoroutineScope()
-    val container = YunMeiApp.app.container
+    // 数据读取全部下沉到 LockDetailViewModel：页面只消费 UiState。
+    val viewModel = viewModel<LockDetailViewModel>()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    var lock by remember { mutableStateOf(container.lockStore.getAll().firstOrNull { it.label == label }) }
-    var isDefault by remember { mutableStateOf(container.lockStore.getDefault()?.label == lock?.label) }
     var showQr by rememberSaveable { mutableStateOf(false) }
 
     LifecycleResumeEffect(Unit) {
-        lock = container.lockStore.getAll().firstOrNull { it.label == label }
-        isDefault = container.lockStore.getDefault()?.label == lock?.label
+        viewModel.refresh(label)
         onPauseOrDispose { }
     }
 
@@ -143,21 +143,20 @@ fun LockDetailScreen(label: String) {
         Toast.makeText(context, R.string.lock_detail_copied, Toast.LENGTH_SHORT).show()
     }
 
-    val current = lock
-    if (current == null) {
+    // 只有「已读取完成且确实找不到该门锁」时才返回，避免首帧误弹。
+    val current = uiState.lock
+    if (uiState.loaded && current == null) {
         navigator.pop()
         return
     }
+    if (current == null) return
 
     val deleteTitle = stringResource(R.string.locks_delete)
     val labelPrefix = stringResource(R.string.lock_detail_label)
     val confirmText = stringResource(R.string.confirm)
     val cancelText = stringResource(R.string.cancel)
     val actions = LockDetailActions(
-        onSetDefault = { value ->
-            container.lockStore.setDefault(if (value) current else null)
-            isDefault = container.lockStore.getDefault()?.label == current.label
-        },
+        onSetDefault = { value -> viewModel.setDefault(value) },
         onDelete = {
             scope.launch {
                 val result = confirmDialog.awaitConfirm(
@@ -167,7 +166,7 @@ fun LockDetailScreen(label: String) {
                     dismiss = cancelText,
                 )
                 if (result == ConfirmResult.Confirmed) {
-                    container.lockStore.remove(current.label)
+                    viewModel.removeLock()
                     navigator.pop()
                 }
             }
@@ -177,8 +176,8 @@ fun LockDetailScreen(label: String) {
     )
 
     when (LocalUiMode.current) {
-        UiMode.Miuix -> LockDetailScreenMiuix(current, isDefault, showQr, onToggleQr = { showQr = !showQr }, actions)
-        UiMode.Material -> LockDetailScreenMaterial(current, isDefault, showQr, onToggleQr = { showQr = !showQr }, actions)
+        UiMode.Miuix -> LockDetailScreenMiuix(current, uiState.isDefault, uiState.accountSaved, showQr, onToggleQr = { showQr = !showQr }, actions)
+        UiMode.Material -> LockDetailScreenMaterial(current, uiState.isDefault, uiState.accountSaved, showQr, onToggleQr = { showQr = !showQr }, actions)
     }
 }
 
@@ -193,6 +192,7 @@ private data class LockDetailActions(
 private fun LockDetailScreenMaterial(
     lock: Lock,
     isDefault: Boolean,
+    accountSaved: Boolean,
     showQr: Boolean,
     onToggleQr: () -> Unit,
     actions: LockDetailActions,
@@ -270,7 +270,7 @@ private fun LockDetailScreenMaterial(
                                             ""
                                         } else {
                                             " · " + stringResource(
-                                                if (rememberAccountSaved(lock.usernameMd5)) {
+                                                if (accountSaved) {
                                                     R.string.lock_detail_account_saved
                                                 } else {
                                                     R.string.lock_detail_account_unsaved
@@ -357,6 +357,7 @@ private fun LockDetailScreenMaterial(
 private fun LockDetailScreenMiuix(
     lock: Lock,
     isDefault: Boolean,
+    accountSaved: Boolean,
     showQr: Boolean,
     onToggleQr: () -> Unit,
     actions: LockDetailActions,
@@ -425,7 +426,7 @@ private fun LockDetailScreenMiuix(
                                 ""
                             } else {
                                 " · " + stringResource(
-                                    if (rememberAccountSaved(lock.usernameMd5)) {
+                                    if (accountSaved) {
                                         R.string.lock_detail_account_saved
                                     } else {
                                         R.string.lock_detail_account_unsaved
@@ -525,23 +526,6 @@ private fun LockDetailScreenMiuix(
             }
         }
     }
-}
-
-/**
- * 该门锁账号是否已保存。
- *
- * 账号存放在加密存储（EncryptedSharedPreferences + JSON 解码）里，属于 IO 操作，
- * 不能在组合期直接读取（原先在组合中同步读取会阻塞主线程、且每次重组都执行一次）。
- * 这里用 produceState 放到 IO 线程计算，并按 usernameMd5 缓存结果。
- */
-@Composable
-private fun rememberAccountSaved(usernameMd5: String): Boolean {
-    val saved by produceState(initialValue = false, key1 = usernameMd5) {
-        value = withContext(Dispatchers.IO) {
-            YunMeiApp.app.container.accountStore.getByUsernameMd5(usernameMd5) != null
-        }
-    }
-    return saved
 }
 
 /**

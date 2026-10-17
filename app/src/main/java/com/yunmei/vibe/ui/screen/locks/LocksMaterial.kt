@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.locks
 
+import androidx.compose.material.icons.twotone.ContentPaste
 import com.yunmei.vibe.data.local.StoredUser
 import androidx.compose.material.icons.twotone.Person
 import androidx.compose.material.icons.automirrored.twotone.Login
@@ -20,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.twotone.Delete
-import androidx.compose.material.icons.twotone.PersonAdd
 import androidx.compose.material.icons.twotone.QrCodeScanner
 import androidx.compose.material.icons.twotone.Star
 import androidx.compose.material.icons.twotone.StarBorder
@@ -143,6 +143,14 @@ fun LocksPagerMaterial(
                             headlineContent = { Text(stringResource(R.string.locks_add_scan)) },
                             supportingContent = { Text(stringResource(R.string.locks_add_scan_hint)) },
                             leadingContent = { Icon(Icons.TwoTone.QrCodeScanner, null) },
+                        )
+                    },
+                    {
+                        SegmentedListItem(
+                            onClick = actions.onPasteLink,
+                            headlineContent = { Text(stringResource(R.string.scan_paste_link)) },
+                            supportingContent = { Text(stringResource(R.string.scan_paste_link_hint)) },
+                            leadingContent = { Icon(Icons.TwoTone.ContentPaste, null) },
                         )
                     },
                 )

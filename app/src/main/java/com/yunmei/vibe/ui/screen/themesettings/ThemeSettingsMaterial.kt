@@ -54,16 +54,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.twotone.MenuOpen
-import androidx.compose.material.icons.twotone.Animation
 import androidx.compose.material.icons.twotone.AspectRatio
-import androidx.compose.material.icons.twotone.Brightness1
 import androidx.compose.material.icons.twotone.Brightness3
 import androidx.compose.material.icons.twotone.Brightness4
 import androidx.compose.material.icons.twotone.Brightness7
 import androidx.compose.material.icons.twotone.DesignServices
-import androidx.compose.material.icons.twotone.Home
-import androidx.compose.material.icons.twotone.Lock
-import androidx.compose.material.icons.twotone.Settings
 import androidx.compose.material.icons.twotone.Style
 import androidx.compose.material.icons.twotone.SwapHoriz
 import androidx.compose.material3.ButtonGroupDefaults
@@ -104,7 +99,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec

@@ -2,7 +2,6 @@ package com.yunmei.vibe.data.repository
 import android.os.Build
 import com.yunmei.vibe.data.preferences.SettingsPrefs
 
-import android.content.Context
 import androidx.core.content.edit
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec

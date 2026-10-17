@@ -46,7 +46,6 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Style
-import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -747,4 +746,3 @@ private fun PreviewBlockMiuix(
             .background(color)
     )
 }
-

@@ -96,7 +96,7 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 UI 依赖组合（compose-bom 2026.08.00 → Compose 1.12.0 稳定版、material3 1.5.0-alpha26、
 miuix 0.9.4 正式版、materialKolor 5.0.0、NavigationEvent 1.1.2）为设备实测可用组合，模板组件零修改编译。
 
-> [!WARNING] 警告
+> [!WARNING]
 > 不要回退到 compose-bom 2026.05.01：其解析出的 Compose 1.12.0-alpha03 预发布版与 miuix 存在二进制不兼容，会导致启动白屏闪退
 
 ## Git 与 CI 工作流
@@ -258,7 +258,7 @@ app/src/main/java/com/yunmei/vibe/
 ### 未在真机验证
 
 - **Android 10（API 29）启动稳定性**：已为此加了两处版本守卫（`ui/component/liquid/InnerShadow.kt` 的 `RenderEffect`/`BlurEffect` 仅 API 31+ 使用、`ui/component/liquid/Lens.kt` 改用本机版本判断以避开 minSdk 33 的 `miuix-blur`），但**没有设备验证**是否已彻底解决启动崩溃。
-- **小米超级岛**：`ui/unlock/MiIslandNotification.kt` 的整条路径（设备判定、`miui.focus.param` 渲染、短文本槽位）未在小米机型上验证；打卡侧尚无超级岛路径。
+- **小米超级岛**：`ui/unlock/MiIslandNotification.kt` 的整条路径（设备判定、`miui.focus.param` 渲染、短文本槽位）未在小米机型上验证；打卡侧的超级岛 extras 已接入（`ui/sign/SignNotifications.kt` 的 progress 分支复用同一套 `MiIslandNotification.extras`），同样待真机验证。
 - **通知实况结束态**：见下方「已知问题」，结束状态仍会回落为普通通知。
 - **开门通知的「重试」**：在部分 ROM 上"通知动作启动 Activity"可能被拦截；「完成」按钮行为正常。
 

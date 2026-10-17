@@ -4,6 +4,7 @@
 // 仅做包名迁移与配色适配（页面底色/顶栏回归 KernelSU Kit 全局主题色，去掉 InstallerX 的模糊与 surfaceContainer 底色）。
 package com.yunmei.vibe.ui.screen.license
 
+import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items

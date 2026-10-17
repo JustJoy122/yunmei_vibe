@@ -33,7 +33,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
-import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.data.backup.BackupManager
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode

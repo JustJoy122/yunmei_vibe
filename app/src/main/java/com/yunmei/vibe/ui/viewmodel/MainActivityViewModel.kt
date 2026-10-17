@@ -1,10 +1,8 @@
 package com.yunmei.vibe.ui.viewmodel
 import com.yunmei.vibe.data.preferences.SettingsPrefs
 
-import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.SavedStateHandle
-import com.yunmei.vibe.ui.navigation.Route
 
 
 import androidx.lifecycle.ViewModel
@@ -162,5 +160,4 @@ object MainPagerConfig {
 
     fun coercePage(page: Int): Int = page.coerceIn(0, LAST_PAGE_INDEX)
 }
-
 

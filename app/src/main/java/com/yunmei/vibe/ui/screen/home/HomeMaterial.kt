@@ -3,7 +3,6 @@ package com.yunmei.vibe.ui.screen.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -16,12 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.twotone.ExitToApp
-import androidx.compose.material.icons.twotone.AutoMode
 import androidx.compose.material.icons.twotone.History
 import androidx.compose.material.icons.twotone.Key
 import androidx.compose.material.icons.twotone.LocationOn
-import androidx.compose.material.icons.twotone.Password
 import androidx.compose.material.icons.twotone.Save
 import androidx.compose.material.icons.twotone.TaskAlt
 import androidx.compose.material.icons.twotone.Warning
@@ -52,10 +48,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.UnitCodes
-import com.yunmei.vibe.ui.component.material.ExpressiveSwitch
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
-import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
 import com.yunmei.vibe.ui.component.material.TonalCard
 import com.yunmei.vibe.ui.component.statustag.StatusTag
 

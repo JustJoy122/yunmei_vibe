@@ -11,14 +11,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.LocalUiMode
-import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.ui.UiMode
-import com.yunmei.vibe.ui.component.dialog.ConfirmResult
 import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
 import com.yunmei.vibe.ui.navigation.Navigator
 import com.yunmei.vibe.ui.navigation.Route
 import com.yunmei.vibe.ui.viewmodel.SettingsViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingPager(

@@ -17,6 +17,8 @@ data class LocksUiState(
 @Immutable
 data class LocksActions(
     val onAddScan: () -> Unit,
+    /** 粘贴剪贴板中的分享链接导入（与扫码同级的一级入口）。 */
+    val onPasteLink: () -> Unit,
     val onLogin: () -> Unit,
     val onRemoveAccount: (StoredUser) -> Unit,
     val onSetDefault: (Lock) -> Unit,

@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.locks
 
+import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.automirrored.rounded.Login
 import com.yunmei.vibe.data.local.StoredUser
@@ -22,7 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
@@ -45,7 +45,6 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
-import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -155,6 +154,18 @@ fun LocksPagerMiuix(
                                         )
                                     },
                                     onClick = actions.onAddScan,
+                                )
+                                BasicComponent(
+                                    title = stringResource(R.string.scan_paste_link),
+                                    summary = stringResource(R.string.scan_paste_link_hint),
+                                    startAction = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.ContentPaste,
+                                            tint = colorScheme.onSurface,
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    onClick = actions.onPasteLink,
                                 )
                             }
                         }

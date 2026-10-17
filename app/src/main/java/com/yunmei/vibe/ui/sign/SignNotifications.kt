@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.sign
 
+import com.yunmei.vibe.ui.unlock.MiIslandNotification
 import com.yunmei.vibe.ui.util.requestPromotedOngoing
 import android.app.Notification
 import android.app.PendingIntent
@@ -140,6 +141,24 @@ object SignNotifications {
                 builder.setOnlyAlertOnce(true)
             }
             for (action in actions) builder.addAction(action)
+            // 超级岛（小米）：与开门侧同一套 extras（设备判定在 MiIslandNotification 内部）；
+            // 短文本槽位：等待用户选择定位方式时显示"待处理"，其余状态留空回落到标题。
+            if (MiIslandNotification.isSupported(context)) {
+                builder.addExtras(
+                    MiIslandNotification.extras(
+                        context = context,
+                        title = context.getString(R.string.unlock_sign),
+                        content = text,
+                        percent = percent,
+                        inProgress = failedStage == null && !completed,
+                        shortText = if (promptChooser) {
+                            context.getString(R.string.notification_short_text_pending)
+                        } else {
+                            ""
+                        },
+                    )
+                )
+            }
             // 等待用户操作（ASK 模式等待选择定位方式）时，轻量实况显示"待处理"
             // 与 InstallerX 的 setShortCriticalText(installer_live_channel_short_text_pending) 同机制。
             if (promptChooser) {

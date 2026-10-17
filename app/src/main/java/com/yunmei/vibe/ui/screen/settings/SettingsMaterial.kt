@@ -5,7 +5,6 @@ import androidx.compose.material.icons.twotone.Info
 import androidx.compose.material.icons.twotone.Key
 import androidx.compose.material.icons.twotone.LockOpen
 import androidx.compose.material.icons.twotone.DisplaySettings
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,17 +17,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.twotone.Login
-import androidx.compose.material.icons.twotone.Bluetooth
 import androidx.compose.material.icons.twotone.BugReport
-import androidx.compose.material.icons.twotone.Dashboard
-import androidx.compose.material.icons.twotone.Delete
 import androidx.compose.material.icons.twotone.KeyOff
 import androidx.compose.material.icons.twotone.LocationOff
-import androidx.compose.material.icons.twotone.LocationOn
 import androidx.compose.material.icons.twotone.Palette
-import androidx.compose.material.icons.twotone.Person
-import androidx.compose.material.icons.twotone.SupervisorAccount
 import androidx.compose.material.icons.twotone.Update
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -50,7 +42,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.SignLocationMode
-import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedDropdownItem
 import com.yunmei.vibe.ui.component.material.SegmentedListItem

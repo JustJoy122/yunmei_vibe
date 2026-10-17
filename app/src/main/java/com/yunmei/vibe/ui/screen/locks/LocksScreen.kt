@@ -1,5 +1,7 @@
 package com.yunmei.vibe.ui.screen.locks
 
+import android.content.Context
+import android.content.ClipboardManager
 import com.yunmei.vibe.ui.navigation.PendingLockImport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,6 +81,7 @@ fun LocksPager(
     }
 
     // 导入确认框：pendingLock 出现时弹出（两主题共用同一 handle，内容用 Markdown 排版；密钥不回显原文）。
+    val clipboardEmptyText = stringResource(R.string.scan_clipboard_empty)
     val importTitle = stringResource(R.string.lock_import_confirm_title)
     val importAddText = stringResource(R.string.lock_import_confirm_add)
     val importSecretPresent = stringResource(R.string.lock_import_secret_present)
@@ -107,6 +110,16 @@ fun LocksPager(
     }
     val actions = LocksActions(
         onAddScan = { showScanMenu = true },
+        onPasteLink = {
+            // 仅在用户点击时读剪贴板（Android 10+ 只允许前台/焦点应用读取），不做后台监听。
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val text = clipboard?.primaryClip
+                ?.takeIf { it.itemCount > 0 }
+                ?.getItemAt(0)
+                ?.coerceToText(context)
+                ?.toString()
+            if (text.isNullOrBlank()) viewModel.showMessage(clipboardEmptyText) else viewModel.importFrom(text)
+        },
         onLogin = { navigator.push(Route.Login) },
         onRemoveAccount = { user: StoredUser ->
             scope.launch {

@@ -5,7 +5,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.rounded.DisplaySettings
 import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.LockOpen
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -21,17 +20,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Login
-import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BugReport
-import androidx.compose.material.icons.rounded.Dashboard
-import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.KeyOff
 import androidx.compose.material.icons.rounded.LocationOff
-import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.SupervisorAccount
 import androidx.compose.material.icons.rounded.Update
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +35,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.SignLocationMode
-import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.ui.component.dialog.rememberLoadingDialog
 import com.yunmei.vibe.ui.component.backup.BackupRestoreEntry
 import com.yunmei.vibe.ui.component.backup.BackupSecureStoreWarning
@@ -51,7 +42,6 @@ import com.yunmei.vibe.ui.component.miuix.SendLogDialog
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
-import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior

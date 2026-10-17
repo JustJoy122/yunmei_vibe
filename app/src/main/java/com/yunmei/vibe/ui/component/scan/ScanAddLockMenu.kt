@@ -1,8 +1,5 @@
 package com.yunmei.vibe.ui.component.scan
 
-import androidx.compose.material.icons.twotone.ContentPaste
-import androidx.compose.material.icons.rounded.ContentPaste
-import android.content.ClipboardManager
 import android.Manifest
 import android.app.Activity
 import android.content.Context
@@ -64,8 +61,7 @@ fun ScanAddLockMenu(
     val cameraLabel = stringResource(R.string.scan_camera)
     val galleryLabel = stringResource(R.string.scan_gallery)
     val invalidQrText = stringResource(R.string.scan_invalid)
-    val pasteLinkLabel = stringResource(R.string.scan_paste_link)
-    val clipboardEmptyText = stringResource(R.string.scan_clipboard_empty)
+
     val unreadableText = stringResource(R.string.scan_image_unreadable)
     val permissionDeniedText = stringResource(R.string.scan_permission_denied)
 
@@ -143,21 +139,7 @@ fun ScanAddLockMenu(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
             )
         },
-        // 第三项：粘贴链接导入。仅在用户点击时读剪贴板（Android 10+ 只允许前台应用读取），
-        // 读到文本就交给同一个 onDecoded 解析；为空/非文本则提示。不做任何后台监听。
-        ActionMenuItem(
-            if (useTwoToneIcons) Icons.TwoTone.ContentPaste else Icons.Rounded.ContentPaste,
-            pasteLinkLabel,
-        ) {
-            onDismissRequest()
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-            val text = clipboard?.primaryClip
-                ?.takeIf { it.itemCount > 0 }
-                ?.getItemAt(0)
-                ?.coerceToText(context)
-                ?.toString()
-            if (text.isNullOrBlank()) onError(clipboardEmptyText) else onDecoded(text)
-        },
+
     )
 
     when (LocalUiMode.current) {

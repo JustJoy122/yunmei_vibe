@@ -287,8 +287,9 @@ class UnlockManager(context: Context) {
         out.write(totalLength)
         out.write(secretBytes)
         out.write(0xA5)
+        // 门锁固件按 ASCII 数字逐位解析（'0'..'9'），直接写 0..9 的裸字节会被当成其它指令位。
         repeat(6) {
-            out.write(password % 10)
+            out.write('0'.code + (password % 10))
             password /= 10
         }
         out.write('I'.code)

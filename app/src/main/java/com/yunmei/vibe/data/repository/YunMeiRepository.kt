@@ -8,6 +8,7 @@ import com.yunmei.vibe.data.model.LoginUser
 import com.yunmei.vibe.data.model.SchoolEntry
 import com.yunmei.vibe.data.network.YunMeiApiClient
 import com.yunmei.vibe.data.security.Md5
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonArray
@@ -154,6 +155,33 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         // 服务器 getuserlock 返回空时，门锁是扫码/手动导入的，不能因为
         // 列表查不到而拒绝打卡（与原版 SignService 行为一致）。
         return sign(school, lock, location)
+    }
+
+    /**
+     * 开门前刷新单把门锁的信息，重点是 lockSecret（服务端会轮换）。
+     *
+     * 本地列表只在添加门锁时写入、同名门锁不会覆盖，所以存下来的 secret 可能还是首次添加时的旧快照；
+     * 开门前重新拉一次 getuserlock，取回新的 secret 由调用方写回 [com.yunmei.vibe.data.local.LockStore]。
+     *
+     * @param account 当前没有登录会话时用于重新登录的已保存账号；null 表示只复用现有会话。
+     * @return 服务端返回且与本地不同的 secret；未登录、无网络、接口失败或 secret 未变化时返回 null，
+     *         调用方据此回退本地旧 secret，保证离线也能开门。
+     */
+    suspend fun refreshLockSecret(lock: Lock, account: StoredUser? = null): String? = runCatching {
+        if (client.token == null) {
+            account ?: return@runCatching null
+            login(account.username, account.passwordMd5)
+        }
+        val school = findSchool(lock.schoolNo)
+        val latest = fetchLocks(school).firstOrNull { candidate ->
+            (lock.lockNo.isNotBlank() && candidate.lockNo == lock.lockNo) || candidate.label == lock.label
+        } ?: return@runCatching null
+        latest.secret.takeIf { it.isNotBlank() && it != lock.secret }
+    }.getOrElse { error ->
+        // 协程取消（含调用方 withTimeout 超时）必须继续向上抛，不能被兜底吞掉；
+        // 其余异常按「刷新失败」处理，交给调用方回退旧 secret。
+        if (error is CancellationException) throw error
+        null
     }
 
     private suspend fun findSchool(schoolNo: String): SchoolEntry {

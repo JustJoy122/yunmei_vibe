@@ -11,6 +11,8 @@ import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.data.ble.UnlockManager
+import com.yunmei.vibe.data.local.StoredUser
+import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.ui.util.BLE_PERMISSIONS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -131,9 +134,15 @@ class UnlockService : Service() {
             finishWithFailure(getString(R.string.unlock_lock_unusable))
             return
         }
-        val quickConnect = withContext(Dispatchers.IO) {
-            container.appPreferences.settings.first().quickConnect
+        // 打开门之前先刷新一次 secret：本地保存的可能是首次添加时的旧快照，服务端会轮换。
+        // 未登录时用已保存账号重新登录；刷新超时 / 离线直接沿用旧 secret，不阻塞开锁。
+        val settings = withContext(Dispatchers.IO) { container.appPreferences.settings.first() }
+        val quickConnect = settings.quickConnect
+        val account = withContext(Dispatchers.IO) {
+            container.accountStore.getByUsernameMd5(lock.usernameMd5)
+                ?: if (settings.alwaysCode) container.accountStore.getAll().firstOrNull() else null
         }
+        val effectiveLock = refreshSecret(lock, account)
 
         // 兜底超时：底层回调偶发不返回时也要给出结果并退出前台服务。
         val timeoutJob = scope.launch {
@@ -141,7 +150,7 @@ class UnlockService : Service() {
             finishWithFailure(getString(R.string.unlock_timeout))
         }
 
-        container.unlockManager.openDoor(lock, quickConnect, object : UnlockManager.Listener {
+        container.unlockManager.openDoor(effectiveLock, quickConnect, object : UnlockManager.Listener {
             override fun onProgress(percent: Int, message: String) {
                 updateProgress(message, percent)
             }
@@ -158,6 +167,16 @@ class UnlockService : Service() {
                 finishWithFailure(message)
             }
         })
+    }
+
+    /** 开门前刷新 secret；拿不到（未登录 / 无网络 / 超时）时原样返回本地门锁，保证离线也能开门。 */
+    private suspend fun refreshSecret(lock: Lock, account: StoredUser?): Lock {
+        val container = YunMeiApp.app.container
+        val refreshed = withTimeoutOrNull(SECRET_REFRESH_TIMEOUT_MS) {
+            container.repository.refreshLockSecret(lock, account)
+        } ?: return lock
+        withContext(Dispatchers.IO) { container.lockStore.setSecret(lock.label, refreshed) }
+        return lock.copy(secret = refreshed)
     }
 
     private fun updateProgress(text: String, percent: Int) {
@@ -261,6 +280,9 @@ class UnlockService : Service() {
     companion object {
         private const val TAG = "UnlockService"
         private const val UNLOCK_TIMEOUT_MS = 45_000L
+
+        /** 开门前刷新 secret 的等待上限：超时直接按旧 secret 开门。 */
+        private const val SECRET_REFRESH_TIMEOUT_MS = 8_000L
 
         /** 失败通知保持实况的最长时间（10 分钟），超时后释放前台服务。 */
         private const val FAILURE_KEEP_MS = 10 * 60 * 1000L

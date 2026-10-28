@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface HomeEvent {
     /** 开门成功且开启「开门后自动退出」。 */
@@ -144,6 +145,23 @@ class HomeViewModel : ViewModel() {
             return
         }
         _uiState.update { it.copy(isOpening = true, progress = 0, battery = null, statusText = str(R.string.unlock_preparing)) }
+        // 开门前先向服务端刷新一次 secret：本地保存的可能是首次添加门锁时的旧快照，服务端会轮换。
+        // 放进协程避免网络阻塞点击响应；刷新超时 / 离线时 withFreshSecret 原样返回旧 secret。
+        viewModelScope.launch {
+            startUnlock(withFreshSecret(lock))
+        }
+    }
+
+    /** 用服务端最新 secret 覆盖本地快照；拿不到（未登录 / 无网络 / 超时）时原样返回。 */
+    private suspend fun withFreshSecret(lock: Lock): Lock {
+        val refreshed = withTimeoutOrNull(SECRET_REFRESH_TIMEOUT_MS) {
+            container.repository.refreshLockSecret(lock, findUser(lock))
+        } ?: return lock
+        withContext(Dispatchers.IO) { container.lockStore.setSecret(lock.label, refreshed) }
+        return lock.copy(secret = refreshed)
+    }
+
+    private fun startUnlock(lock: Lock) {
         container.unlockManager.openDoor(lock, _uiState.value.quickConnect, object : UnlockManager.Listener {
             override fun onProgress(percent: Int, message: String) {
                 _uiState.update { it.copy(progress = percent, statusText = message) }
@@ -308,5 +326,10 @@ class HomeViewModel : ViewModel() {
             block()
             loadLockAndSettings()
         }
+    }
+
+    private companion object {
+        /** 开门前刷新 secret 的等待上限：超时直接按旧 secret 开门，不让网络拖住开锁。 */
+        const val SECRET_REFRESH_TIMEOUT_MS = 8_000L
     }
 }

@@ -80,6 +80,25 @@ class LockStore(private val secureStore: SecureStore) {
         notifyChanged()
     }
 
+    /**
+     * 开门前刷新到的最新 secret 写回（列表与默认门锁同步）。
+     *
+     * 与 [setMac] 不同：secret 没变化时不写盘、不发变更信号，避免每次开门都触发一次首页重载。
+     */
+    fun setSecret(label: String, secret: String) {
+        val all = getAll()
+        val current = all.firstOrNull { it.label == label } ?: return
+        if (current.secret == secret) return
+        val locks = all.map { lock ->
+            if (lock.label == label) lock.copy(secret = secret) else lock
+        }
+        secureStore.putJson(KEY_LOCKS, locks)
+        getDefault()?.let { def ->
+            if (def.label == label) secureStore.putJson(KEY_DEFAULT, def.copy(secret = secret))
+        }
+        notifyChanged()
+    }
+
     private fun clearDefault() {
         secureStore.putString(KEY_DEFAULT, "")
     }

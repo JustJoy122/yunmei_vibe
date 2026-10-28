@@ -16,10 +16,8 @@ import com.clj.fastble.exception.BleException
 import com.clj.fastble.scan.BleScanRuleConfig
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.Lock
-import java.io.ByteArrayOutputStream
 import java.util.UUID
 import kotlin.math.roundToInt
-import kotlin.random.Random
 
 /**
  * BLE 开门逻辑，1:1 复刻 zxy19/yunmei_unintelligent 的 UnlockService：
@@ -280,24 +278,12 @@ class UnlockManager(context: Context) {
 
     private fun buildUnlockFrame(secret: String): ByteArray {
         val secretBytes = secret.toByteArray(Charsets.UTF_8)
-        val totalLength = secretBytes.size + 14
-        var password = Random.nextInt(1_000_000)
-        val out = ByteArrayOutputStream()
-        out.write(0xD0)
-        out.write(totalLength)
-        out.write(secretBytes)
-        out.write(0xA5)
-        // 门锁固件按 ASCII 数字逐位解析（'0'..'9'），直接写 0..9 的裸字节会被当成其它指令位。
-        repeat(6) {
-            out.write('0'.code + (password % 10))
-            password /= 10
-        }
-        out.write('I'.code)
-        out.write('D'.code)
-        out.write('0'.code)
-        out.write('1'.code)
-        out.write(0xA7)
-        return out.toByteArray()
+        val frame = ByteArray(secretBytes.size + 3)
+        frame[0] = 0xD0.toByte()
+        frame[1] = frame.size.toByte()
+        System.arraycopy(secretBytes, 0, frame, 2, secretBytes.size)
+        frame[frame.lastIndex] = 0xA7.toByte()
+        return frame
     }
 
     private fun parseBattery(data: ByteArray): Int? {

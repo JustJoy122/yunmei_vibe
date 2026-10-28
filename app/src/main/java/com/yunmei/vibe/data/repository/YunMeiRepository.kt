@@ -13,7 +13,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -42,6 +44,14 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
     private var username: String? = null
     private var usernameMd5: String? = null
 
+    /**
+     * 登录拿到的基础服务 token。
+     *
+     * [applySchoolAuth] 会把 client.token 换成学校 token，而 locktype/all 走基础服务、
+     * 必须用登录 token，所以这里单独留一份。
+     */
+    private var baseToken: String? = null
+
     suspend fun login(username: String, passwordMd5: String): LoginUser = mutex.withLock {
         val response = client.api(YunMeiApiClient.BASE_URL).login(username, passwordMd5)
         val user = response.o
@@ -58,6 +68,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         this.usernameMd5 = Md5.hex(username)
         client.token = safeUser.token
         client.userId = safeUser.userId
+        baseToken = safeUser.token
         // 安全：不打印 token / userId（会被"发送日志"整包带出）
         safeUser
     }
@@ -81,11 +92,59 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         )
         val element = client.api(serverUrl).getLocks(school.schoolNo.orEmpty(), userId)
         android.util.Log.d("YunMei", "getLocks raw=$element")
-        extractLocksArray(element).mapNotNull { it.toLock(school) }
+        // 型号能力表在基础服务上；取不到只影响 aesSupport（保持 null → 按普通协议处理）。
+        val capabilities = fetchLockTypeCapabilities()
+        extractArray(element).mapNotNull { it.toLock(school, capabilities) }
+    }
+
+    /**
+     * 拉取型号能力表（基础服务 POST locktype/all）。
+     *
+     * [applySchoolAuth] 已把 client.token 换成学校 token，而这个请求要用登录 token，
+     * 所以临时切回 baseToken，结束后恢复，避免影响调用方后续的学校请求。
+     * 返回 id → aesSupport；整体失败时返回空表，门锁 aesSupport 保持 null。
+     */
+    private suspend fun fetchLockTypeCapabilities(): Map<Int, Boolean?> {
+        val loginToken = baseToken ?: return emptyMap()
+        val schoolToken = client.token
+        return try {
+            client.token = loginToken
+            val element = client.api(YunMeiApiClient.BASE_URL).getLockTypes()
+            extractArray(element).mapNotNull { row ->
+                val id = row["id"]?.jsonPrimitive?.contentOrNull?.toIntOrNull()
+                if (id == null) null else id to row.aesSupportOf()
+            }.toMap()
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            // 型号能力表属于增强信息：失败不阻断门锁列表，按普通协议继续。
+            android.util.Log.d("YunMei", "locktype/all failed: " + (error.message ?: ""))
+            emptyMap()
+        } finally {
+            client.token = schoolToken
+        }
+    }
+
+    /**
+     * 解析型号表里的 aesSupport。
+     *
+     * 官方 4.2.2 是用「值 == 1」判断是否 AES，所以字段显式为 JSON null 时等价于 false；
+     * 字段缺失或值无法识别返回 null（未知），开锁时同样按普通协议处理。
+     */
+    private fun JsonObject.aesSupportOf(): Boolean? {
+        if (!containsKey("aesSupport")) return null
+        val primitive = this["aesSupport"]?.jsonPrimitive ?: return null
+        if (primitive is JsonNull) return false
+        primitive.booleanOrNull?.let { return it }
+        return when (primitive.contentOrNull?.trim()?.lowercase()) {
+            "1", "true" -> true
+            "0", "false" -> false
+            else -> null
+        }
     }
 
     /** 兼容旧/新格式：裸数组，或包装在 data/list/result 下的数组。 */
-    private fun extractLocksArray(element: JsonElement): List<JsonObject> {
+    private fun extractArray(element: JsonElement): List<JsonObject> {
         if (element is JsonArray) {
             return element.mapNotNull { it as? JsonObject }
         }
@@ -101,13 +160,15 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         return emptyList()
     }
 
-    private fun JsonObject.toLock(school: SchoolEntry): Lock? {
+    private fun JsonObject.toLock(school: SchoolEntry, capabilities: Map<Int, Boolean?>): Lock? {
         fun str(vararg keys: String): String? =
             keys.firstNotNullOfOrNull { key -> this[key]?.jsonPrimitive?.contentOrNull }
 
         val lockNo = str("lockNo") ?: return null
         val writeUuid = str("lockCharacterUuid", "characteristicUuid") ?: return null
         val serviceUuid = str("lockServiceUuid", "serviceUuid") ?: return null
+        // 型号 id 缺失时保持 null（型号未知）；能力表里没有这个 id 同样是 null。
+        val typeId = str("lockTypeId")?.toIntOrNull()
         return Lock(
             label = (str("buildName") ?: appContext.getString(R.string.lock_label_unknown)) +
                 "-" + (str("dormNo") ?: appContext.getString(R.string.lock_label_unknown)),
@@ -119,6 +180,8 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             usernameMd5 = usernameMd5.orEmpty(),
             schoolNo = school.schoolNo.orEmpty(),
             lockNo = lockNo,
+            lockTypeId = typeId,
+            aesSupport = typeId?.let { capabilities[it] },
         )
     }
 
@@ -158,16 +221,17 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
     }
 
     /**
-     * 开门前刷新单把门锁的信息，重点是 lockSecret（服务端会轮换）。
+     * 开门前刷新单把门锁的信息：secret（服务端会轮换）与型号能力（lockTypeId / aesSupport）。
      *
-     * 本地列表只在添加门锁时写入、同名门锁不会覆盖，所以存下来的 secret 可能还是首次添加时的旧快照；
-     * 开门前重新拉一次 getuserlock，取回新的 secret 由调用方写回 [com.yunmei.vibe.data.local.LockStore]。
+     * 本地列表只在添加门锁时写入、同名门锁不会覆盖，所以存下来的 secret 与型号能力都可能还是
+     * 首次添加时的旧快照；开门前重新拉一次 getuserlock，把服务端的最新值合并进传入的门锁，
+     * 由调用方写回 [com.yunmei.vibe.data.local.LockStore] 并用于本次开门。
      *
      * @param account 当前没有登录会话时用于重新登录的已保存账号；null 表示只复用现有会话。
-     * @return 服务端返回且与本地不同的 secret；未登录、无网络、接口失败或 secret 未变化时返回 null，
-     *         调用方据此回退本地旧 secret，保证离线也能开门。
+     * @return 合并后的门锁；未登录、无网络、接口失败或服务端返回的值与本地一致时返回 null，
+     *         调用方沿用本地门锁，保证离线也能开门。
      */
-    suspend fun refreshLockSecret(lock: Lock, account: StoredUser? = null): String? = runCatching {
+    suspend fun refreshLock(lock: Lock, account: StoredUser? = null): Lock? = runCatching {
         if (client.token == null) {
             account ?: return@runCatching null
             login(account.username, account.passwordMd5)
@@ -176,10 +240,15 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         val latest = fetchLocks(school).firstOrNull { candidate ->
             (lock.lockNo.isNotBlank() && candidate.lockNo == lock.lockNo) || candidate.label == lock.label
         } ?: return@runCatching null
-        latest.secret.takeIf { it.isNotBlank() && it != lock.secret }
+        val merged = lock.copy(
+            secret = latest.secret.ifBlank { lock.secret },
+            lockTypeId = latest.lockTypeId ?: lock.lockTypeId,
+            aesSupport = latest.aesSupport ?: lock.aesSupport,
+        )
+        merged.takeIf { it != lock }
     }.getOrElse { error ->
         // 协程取消（含调用方 withTimeout 超时）必须继续向上抛，不能被兜底吞掉；
-        // 其余异常按「刷新失败」处理，交给调用方回退旧 secret。
+        // 其余异常按「刷新失败」处理，交给调用方沿用本地门锁。
         if (error is CancellationException) throw error
         null
     }

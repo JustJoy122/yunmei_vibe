@@ -146,20 +146,22 @@ class HomeViewModel : ViewModel() {
             return
         }
         _uiState.update { it.copy(isOpening = true, progress = 0, battery = null, statusText = str(R.string.unlock_preparing)) }
-        // 开门前先向服务端刷新一次 secret：本地保存的可能是首次添加门锁时的旧快照，服务端会轮换。
-        // 放进协程避免网络阻塞点击响应；刷新超时 / 离线时 withFreshSecret 原样返回旧 secret。
+        // 开门前先向服务端刷新一次门锁信息（secret 会被轮换，型号能力也会更新）。
+        // 放进协程避免网络阻塞点击响应；刷新超时 / 离线时沿用本地门锁。
+        // AES 型号的拦截由 UnlockManager.openDoor 依据刷新后的 aesSupport 判断，
+        // 即使本地是首次添加时的旧快照也能在开门前被识别出来。
         viewModelScope.launch {
-            startUnlock(withFreshSecret(lock))
+            startUnlock(withFreshLock(lock))
         }
     }
 
-    /** 用服务端最新 secret 覆盖本地快照；拿不到（未登录 / 无网络 / 超时）时原样返回。 */
-    private suspend fun withFreshSecret(lock: Lock): Lock {
+    /** 用服务端最新信息覆盖本地快照；拿不到（未登录 / 无网络 / 超时）时原样返回。 */
+    private suspend fun withFreshLock(lock: Lock): Lock {
         val refreshed = withTimeoutOrNull(SECRET_REFRESH_TIMEOUT_MS) {
-            container.repository.refreshLockSecret(lock, findUser(lock))
+            container.repository.refreshLock(lock, findUser(lock))
         } ?: return lock
-        withContext(Dispatchers.IO) { container.lockStore.setSecret(lock.label, refreshed) }
-        return lock.copy(secret = refreshed)
+        withContext(Dispatchers.IO) { container.lockStore.updateFromServer(refreshed) }
+        return refreshed
     }
 
     private fun startUnlock(lock: Lock) {

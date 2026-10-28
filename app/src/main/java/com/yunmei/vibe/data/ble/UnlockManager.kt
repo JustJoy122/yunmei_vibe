@@ -139,6 +139,13 @@ class UnlockManager(context: Context) {
     }
 
     fun openDoor(lock: Lock, quickConnect: Boolean, listener: Listener) {
+
+        // AES 型号门锁在官方客户端里会再套一层 D2D3 加密帧，当前版本尚未实现：
+        // 直接拦截，避免把明文 OPEN 帧发给需要加密的门锁造成无响应或误动作。
+        if (lock.aesSupport == true) {
+            listener.onFailure(appContext.getString(R.string.unlock_aes_unsupported))
+            return
+        }
         if (!lock.isUsable) {
             listener.onFailure(appContext.getString(R.string.unlock_lock_unusable_need_login))
             return

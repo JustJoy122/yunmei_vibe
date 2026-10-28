@@ -144,7 +144,7 @@ class UnlockService : Service() {
             container.accountStore.getByUsernameMd5(lock.usernameMd5)
                 ?: if (settings.alwaysCode) container.accountStore.getAll().firstOrNull() else null
         }
-        val effectiveLock = refreshSecret(lock, account)
+        val effectiveLock = refreshLockInfo(lock, account)
 
         // 兜底超时：底层回调偶发不返回时也要给出结果并退出前台服务。
         val timeoutJob = scope.launch {
@@ -171,14 +171,17 @@ class UnlockService : Service() {
         })
     }
 
-    /** 开门前刷新 secret；拿不到（未登录 / 无网络 / 超时）时原样返回本地门锁，保证离线也能开门。 */
-    private suspend fun refreshSecret(lock: Lock, account: StoredUser?): Lock {
+    /**
+     * 开门前刷新门锁信息（secret 与型号能力）；拿不到（未登录 / 无网络 / 超时）时原样返回本地门锁，
+     * 保证离线也能开门。AES 型号的拦截在 UnlockManager.openDoor 里按刷新后的 aesSupport 判断。
+     */
+    private suspend fun refreshLockInfo(lock: Lock, account: StoredUser?): Lock {
         val container = YunMeiApp.app.container
         val refreshed = withTimeoutOrNull(SECRET_REFRESH_TIMEOUT_MS) {
-            container.repository.refreshLockSecret(lock, account)
+            container.repository.refreshLock(lock, account)
         } ?: return lock
-        withContext(Dispatchers.IO) { container.lockStore.setSecret(lock.label, refreshed) }
-        return lock.copy(secret = refreshed)
+        withContext(Dispatchers.IO) { container.lockStore.updateFromServer(refreshed) }
+        return refreshed
     }
 
     private fun updateProgress(text: String, percent: Int) {

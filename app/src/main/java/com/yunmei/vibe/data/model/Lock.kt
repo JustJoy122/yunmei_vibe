@@ -24,6 +24,14 @@ data class Lock(
     val usernameMd5: String = "",
     val schoolNo: String = "",
     val lockNo: String = "",
+    /** 服务端门锁型号 id（getuserlock 返回的 lockTypeId）；null 表示服务端没有给出。 */
+    val lockTypeId: Int? = null,
+    /**
+     * 该型号是否要求 AES 加密协议，由 locktype/all 的 aesSupport 按 lockTypeId 匹配得到。
+     * true = 官方客户端会再套一层 AES，当前版本未实现，开锁前直接拦截；
+     * false / null = 继续走普通 OPEN 帧（null 表示型号未知或型号能力表没取到）。
+     */
+    val aesSupport: Boolean? = null,
 ) {
 
     val isUsable: Boolean

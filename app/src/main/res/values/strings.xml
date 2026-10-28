@@ -326,4 +326,5 @@
     <string name="settings_group_unlock">开锁</string>
     <string name="settings_group_code_sign">取码与打卡</string>
     <string name="settings_group_lock_behavior">门锁行为</string>
+    <string name="unlock_aes_unsupported">暂不支持该加密型号门锁，请在 GitHub 反馈</string>
 </resources>

@@ -41,6 +41,10 @@ interface YunMeiApi {
         @Field("location") location: String,
     ): ApiMessage
 
+    /** 门锁型号能力表（基础服务）：返回 [{ id, aesSupport }, ...]，不需要额外请求参数。 */
+    @FormUrlEncoded
+    @POST("locktype/all")
+    suspend fun getLockTypes(): JsonElement
     @FormUrlEncoded
     @POST("lockpassword/getlockpwdbylockno")
     suspend fun getLockPassword(@Field("lockNo") lockNo: String): LockPasswordResponse

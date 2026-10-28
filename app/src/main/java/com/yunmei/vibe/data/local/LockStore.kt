@@ -81,20 +81,23 @@ class LockStore(private val secureStore: SecureStore) {
     }
 
     /**
-     * 开门前刷新到的最新 secret 写回（列表与默认门锁同步）。
+     * 开门前从服务端刷新到的门锁信息写回（列表与默认门锁同步）。
      *
-     * 与 [setMac] 不同：secret 没变化时不写盘、不发变更信号，避免每次开门都触发一次首页重载。
+     * 只合并 secret 与型号能力，不动 MAC 等本地学习到的字段。
+     * 与 [setMac] 不同：值没变化时不写盘、不发变更信号，避免每次开门都触发一次首页重载。
      */
-    fun setSecret(label: String, secret: String) {
+    fun updateFromServer(fresh: Lock) {
         val all = getAll()
-        val current = all.firstOrNull { it.label == label } ?: return
-        if (current.secret == secret) return
-        val locks = all.map { lock ->
-            if (lock.label == label) lock.copy(secret = secret) else lock
-        }
-        secureStore.putJson(KEY_LOCKS, locks)
+        val current = all.firstOrNull { it.label == fresh.label } ?: return
+        val merged = current.copy(
+            secret = fresh.secret.ifBlank { current.secret },
+            lockTypeId = fresh.lockTypeId ?: current.lockTypeId,
+            aesSupport = fresh.aesSupport ?: current.aesSupport,
+        )
+        if (merged == current) return
+        secureStore.putJson(KEY_LOCKS, all.map { lock -> if (lock.label == fresh.label) merged else lock })
         getDefault()?.let { def ->
-            if (def.label == label) secureStore.putJson(KEY_DEFAULT, def.copy(secret = secret))
+            if (def.label == fresh.label) secureStore.putJson(KEY_DEFAULT, merged)
         }
         notifyChanged()
     }

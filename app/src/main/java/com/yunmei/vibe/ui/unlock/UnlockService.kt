@@ -2,6 +2,8 @@ package com.yunmei.vibe.ui.unlock
 
 import com.yunmei.vibe.ui.util.ForegroundPlaceholder
 import android.app.Service
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
@@ -263,9 +265,10 @@ class UnlockService : Service() {
         stopSelf()
     }
 
-    private fun isBluetoothEnabled(): Boolean =
-        runCatching { android.bluetooth.BluetoothAdapter.getDefaultAdapter()?.isEnabled == true }
-            .getOrDefault(false)
+    private fun isBluetoothEnabled(): Boolean = runCatching {
+        val manager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        manager?.adapter?.isEnabled == true
+    }.getOrDefault(false)
 
     private fun stopSelfSafely() {
         // 结果通知保留在通知栏，只撤掉前台服务身份。

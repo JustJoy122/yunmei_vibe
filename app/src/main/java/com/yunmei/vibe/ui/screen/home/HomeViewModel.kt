@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
-import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import com.yunmei.vibe.data.ble.UnlockManager
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.Lock
@@ -205,8 +206,10 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    private fun isBluetoothEnabled(): Boolean =
-        runCatching { BluetoothAdapter.getDefaultAdapter()?.isEnabled == true }.getOrDefault(false)
+    private fun isBluetoothEnabled(): Boolean = runCatching {
+        val manager = YunMeiApp.app.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        manager?.adapter?.isEnabled == true
+    }.getOrDefault(false)
 
     fun openDoorDenied() {
         _uiState.update { it.copy(isOpening = false, progress = 0, statusText = str(R.string.unlock_permission_denied)) }

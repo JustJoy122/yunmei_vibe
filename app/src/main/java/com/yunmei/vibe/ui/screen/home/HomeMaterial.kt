@@ -138,7 +138,7 @@ private fun LockStatusCard(
                 stringResource(R.string.home_status_no_default_title)
             }
         val statusSummary =
-            if (ready && default != null) {
+            if (ready) {
                 UnitCodes.name(default.schoolNo) ?: default.schoolNo
             } else if (state.lockCount == 0) {
                 stringResource(R.string.home_status_add_action)
@@ -146,7 +146,7 @@ private fun LockStatusCard(
                 stringResource(R.string.home_status_set_default_action)
             }
 
-        val statusTrailing: (@Composable () -> Unit)? = if (ready && default != null) {
+        val statusTrailing: (@Composable () -> Unit)? = if (ready) {
             {
                 StatusTag(
                     label = default.label.ifBlank { default.mac },

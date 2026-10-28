@@ -1,8 +1,8 @@
 package com.yunmei.vibe.data.ble
 
 import android.app.Application
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -16,6 +16,7 @@ import com.clj.fastble.exception.BleException
 import com.clj.fastble.scan.BleScanRuleConfig
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.Lock
+import java.io.ByteArrayOutputStream
 import java.util.UUID
 import kotlin.math.roundToInt
 
@@ -32,7 +33,8 @@ private object UnlockProgress {
     const val CONNECTING = 35
     const val SUBSCRIBED = 50
     const val SENDING = 75
-    const val DONE = 100
+    const val SENT = 80
+    const val ACK = 95
 }
 class UnlockManager(context: Context) {
 
@@ -57,8 +59,19 @@ class UnlockManager(context: Context) {
             setOperateTimeout(OPERATE_TIMEOUT_MS.toInt())
         }
     }
+
     private var connectedDevice: BleDevice? = null
     private var scanMode = false
+    // ── 分片写入与上行帧重组 ─────────────────────────────────────────────────
+
+    // 官方客户端的三条纪律：订阅成功后才允许写、按 20 字节分片限速、用门锁回传的
+    // A7 动作帧判定成功（写回调只代表数据交给了蓝牙栈）。
+    private var writeLock: Lock? = null
+    private var writeDevice: BleDevice? = null
+    private var pendingFrame: ByteArray = ByteArray(0)
+    private var pendingOffset = 0
+    private val rxBuffer = ByteArrayOutputStream()
+    private var responseTimer: Runnable? = null
 
     // ── 看门狗 ───────────────────────────────────────────────────────────────
     // 卡在某个百分比（最常见是 20%）的本质是「该阶段之后再也没有回调」：蓝牙连接回调丢失、
@@ -86,6 +99,7 @@ class UnlockManager(context: Context) {
             if (completed) return
             completed = true
             cancelWatchdog()
+            cancelResponseTimer()
             releaseBle()
             delegate.onSuccess()
         }
@@ -94,6 +108,7 @@ class UnlockManager(context: Context) {
             if (completed) return
             completed = true
             cancelWatchdog()
+            cancelResponseTimer()
             releaseBle()
             delegate.onFailure(message)
         }
@@ -128,7 +143,8 @@ class UnlockManager(context: Context) {
             listener.onFailure(appContext.getString(R.string.unlock_lock_unusable_need_login))
             return
         }
-        val adapter = BluetoothAdapter.getDefaultAdapter()
+        val bluetoothManager = appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        val adapter = bluetoothManager?.adapter
         if (adapter == null) {
             listener.onFailure(appContext.getString(R.string.unlock_bt_unsupported))
             return
@@ -140,6 +156,7 @@ class UnlockManager(context: Context) {
         }
 
         completed = false
+        resetIoState()
         val guarded = GuardedListener(listener)
         activeGuarded = guarded
         // 起点即计时：即使第一个回调就丢，也不会永久停在 20%。
@@ -249,31 +266,146 @@ class UnlockManager(context: Context) {
 
             override fun onCharacteristicChanged(data: ByteArray) {
                 parseBattery(data)?.let { listener.onBattery(it) }
+                handleIncoming(data, listener)
             }
         })
     }
 
     private fun sendMessage(lock: Lock, device: BleDevice, listener: Listener) {
-        bleManager.write(device, lock.serviceUuid, lock.writeUuid, buildUnlockFrame(lock.secret), object : BleWriteCallback() {
+        writeLock = lock
+        writeDevice = device
+        pendingFrame = buildUnlockFrame(lock.secret)
+        pendingOffset = 0
+        listener.onProgress(UnlockProgress.SENDING, appContext.getString(R.string.unlock_sending))
+        sendNextChunk(listener)
+    }
+
+    /**
+     * 逐包发送：每包最多 [WRITE_CHUNK_BYTES] 字节，等上一包的写入回调之后再间隔
+     * [WRITE_INTERVAL_MS] 发下一包。官方客户端同样是 20 字节 + 100ms 的节奏，
+     * 一次性把整帧推给 GATT 容易被门锁丢弃。
+     */
+    private fun sendNextChunk(listener: Listener) {
+        if (completed) return
+        val device = writeDevice ?: return
+        val lock = writeLock ?: return
+        if (pendingOffset >= pendingFrame.size) {
+            // 最后一包发出去只说明数据到了门锁，动作是否执行由回传帧决定。
+            listener.onProgress(UnlockProgress.SENT, appContext.getString(R.string.unlock_progress_sent))
+            armResponseTimer(listener)
+            return
+        }
+        val end = minOf(pendingOffset + WRITE_CHUNK_BYTES, pendingFrame.size)
+        val chunk = pendingFrame.copyOfRange(pendingOffset, end)
+        bleManager.write(device, lock.serviceUuid, lock.writeUuid, chunk, object : BleWriteCallback() {
             override fun onWriteSuccess(current: Int, total: Int, justWrite: ByteArray) {
-                if (current == total) {
-                    // 扫描模式开门成功后把学到的真实 MAC 写回（原项目行为），下次即可快速连接。
-                    if (scanMode) {
-                        connectedDevice?.let { device ->
-                            onMacDiscovered?.invoke(lock, device.mac)
-                        }
-                    }
-                    listener.onProgress(UnlockProgress.DONE, appContext.getString(R.string.unlock_progress_done))
-                    listener.onSuccess()
-                } else {
-                    listener.onProgress(UnlockProgress.SENDING, appContext.getString(R.string.unlock_sending))
-                }
+                if (completed) return
+                pendingOffset = end
+                handler.postDelayed({ sendNextChunk(listener) }, WRITE_INTERVAL_MS)
             }
 
             override fun onWriteFailure(exception: BleException) {
+                if (completed) return
                 listener.onFailure(appContext.getString(R.string.unlock_failed))
             }
         })
+    }
+
+    /** 发完数据后的等待窗口：窗口内没有 A7 / 密钥错误帧，就按开锁超时收尾。 */
+    private fun armResponseTimer(listener: Listener) {
+        cancelResponseTimer()
+        val task = Runnable {
+            responseTimer = null
+            if (completed) return@Runnable
+            listener.onFailure(appContext.getString(R.string.unlock_timeout))
+        }
+        responseTimer = task
+        handler.postDelayed(task, RESPONSE_TIMEOUT_MS)
+    }
+
+    private fun cancelResponseTimer() {
+        responseTimer?.let { handler.removeCallbacks(it) }
+        responseTimer = null
+    }
+
+    /** 每次开门前清空上一轮的分片状态与重组缓冲，避免迟到的数据混进本轮。 */
+    private fun resetIoState() {
+        pendingFrame = ByteArray(0)
+        pendingOffset = 0
+        writeLock = null
+        writeDevice = null
+        rxBuffer.reset()
+        cancelResponseTimer()
+    }
+
+    /**
+     * 上行数据按帧头累积重组：一帧可能跨多包到达，收齐帧头声明的长度后才分发。
+     * 支持 D0（普通帧）与 D2D3（AES 外层）两种帧头，长度位都包含帧头自身。
+     */
+    private fun handleIncoming(data: ByteArray, listener: Listener) {
+        if (completed) return
+        rxBuffer.write(data)
+        val bytes = rxBuffer.toByteArray()
+        var consumed = 0
+        while (consumed < bytes.size) {
+            val first = bytes[consumed]
+            val headerSize: Int
+            val frameLength: Int
+            if (first == 0xD0.toByte()) {
+                if (bytes.size - consumed < 2) break
+                headerSize = 2
+                frameLength = bytes[consumed + 1].toInt() and 0xFF
+            } else if (first == 0xD2.toByte()) {
+                if (bytes.size - consumed < 3) break
+                if (bytes[consumed + 1] != 0xD3.toByte()) {
+                    consumed++
+                    continue
+                }
+                headerSize = 3
+                frameLength = bytes[consumed + 2].toInt() and 0xFF
+            } else {
+                // 不是帧头：丢掉一个字节后继续找下一帧起点。
+                consumed++
+                continue
+            }
+            if (frameLength <= headerSize) {
+                consumed++
+                continue
+            }
+            if (bytes.size - consumed < frameLength) break
+            dispatchFrame(bytes.copyOfRange(consumed, consumed + frameLength), listener)
+            consumed += frameLength
+        }
+        rxBuffer.reset()
+        if (consumed < bytes.size) rxBuffer.write(bytes, consumed, bytes.size - consumed)
+    }
+
+    /** 解析一帧完整回传：只有 A7 动作确认与密钥失效是可识别的明确结果。 */
+    private fun dispatchFrame(frame: ByteArray, listener: Listener) {
+        if (completed) return
+        if ((frame[0].toInt() and 0xFF) != 0xD0) {
+            // 只发普通帧却收到加密响应，说明这次开门的能力判断与实际不符。
+            listener.onFailure(appContext.getString(R.string.unlock_error_encrypted_response))
+            return
+        }
+        val action = frame[2].toInt() and 0xFF
+        val payload = String(frame, 3, frame.size - 3, Charsets.US_ASCII)
+        when {
+            payload == "SECRET_KEY_FAIL" || payload == "SECRET_KEY_FAI" ->
+                listener.onFailure(appContext.getString(R.string.unlock_secret_invalid))
+
+            action == 0xA7 -> {
+                // 扫描模式开门成功后把学到的真实 MAC 写回（原项目行为），下次即可快速连接。
+                val device = writeDevice
+                val opened = writeLock
+                if (scanMode && device != null && opened != null) {
+                    onMacDiscovered?.invoke(opened, device.mac)
+                }
+                listener.onProgress(UnlockProgress.ACK, appContext.getString(R.string.unlock_progress_ack))
+                listener.onSuccess()
+            }
+            // A5 是密码新增回应，其它未知动作都不算开门结果，继续等待。
+        }
     }
 
     private fun buildUnlockFrame(secret: String): ByteArray {
@@ -323,5 +455,14 @@ class UnlockManager(context: Context) {
 
         /** 读写/订阅操作超时（FastBle setOperateTimeout）。 */
         const val OPERATE_TIMEOUT_MS = 10_000L
+
+        /** 单包写入字节数：官方客户端按 20 字节分片。 */
+        const val WRITE_CHUNK_BYTES = 20
+
+        /** 相邻两包之间的间隔：官方客户端为 100ms。 */
+        const val WRITE_INTERVAL_MS = 100L
+
+        /** 数据发完后等待门锁回传的时间窗口。 */
+        const val RESPONSE_TIMEOUT_MS = 5_000L
     }
 }

@@ -164,7 +164,7 @@ private fun LockStatusCardMiuix(
         val default = state.defaultLock
 
         when {
-ready && default != null -> {
+            ready -> {
                 MiuixStatusCard(
                     title = stringResource(R.string.home_status_ready_title),
                     subtitle = UnitCodes.name(default.schoolNo) ?: default.schoolNo,

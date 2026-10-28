@@ -3,6 +3,8 @@ package com.yunmei.vibe.ui.unlock
 import com.yunmei.vibe.ui.util.TrampolineActivity
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
@@ -130,6 +132,8 @@ class UnlockShortcutActivity : TrampolineActivity() {
     }
 
 
-    private fun isBluetoothEnabled(): Boolean =
-        runCatching { BluetoothAdapter.getDefaultAdapter()?.isEnabled == true }.getOrDefault(false)
+    private fun isBluetoothEnabled(): Boolean = runCatching {
+        val manager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        manager?.adapter?.isEnabled == true
+    }.getOrDefault(false)
 }

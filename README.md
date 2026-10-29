@@ -56,6 +56,7 @@
 
 ## 致谢
 - 感谢原项目 [yunmei_unintelligent](https://github.com/zxy19/yunmei_unintelligent) ，本项目不仅受其启发而开发，核心逻辑也全部依赖于此
+- 特别感谢 PhoenixTreeZh 对官方 BLE 通信协议的逆向分析与验证，其提供的核心实现代码与协议解析方案，为云莓氛围的门锁兼容性重构提供了关键支持
 - 感谢 [KernelSU-Style-UI-Kit](https://github.com/chenaizhang/KernelSU-Style-UI-Kit) 、[KernelSU](https://github.com/tiann/KernelSU) 和 [InstallerX-Revived](https://github.com/wxxsfxyzm/InstallerX-Revived) 的前端框架，没有你们本项目的 UI 无以成型
 - 本项目使用了 [这些第三方库和框架](./docs/DEPENDENCIES.md)
 

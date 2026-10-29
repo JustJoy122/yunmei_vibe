@@ -72,14 +72,15 @@ data class Lock(
             }.getOrNull() ?: return null
 
             val parts = decoded.split("|")
-            if (parts.size < 5) return null
 
-            // 旧版 4 段格式：label|mac|write|service|secret，无账号信息。
+            // 旧版 4 段格式（沿用原项目 Lock.java）：mac|writeUuid|serviceUuid|secret，
+            // 没有门锁名和账号信息：补一个固定名称 "account" 后按 5 段处理。
             val fields = if (parts.size == 4) {
                 listOf("account", parts[0], parts[1], parts[2], parts[3])
             } else {
                 parts
             }
+            if (fields.size < 5) return null
             return Lock(
                 label = fields[0],
                 mac = fields.getOrElse(1) { "" },

@@ -198,7 +198,7 @@
     <string name="color_brown">棕色</string>
     <string name="color_blue_grey">灰蓝</string>
     <string name="color_sakura">樱花</string>
-    <string name="settings_account_hint">登录并拉取学校与门锁</string>
+    <string name="settings_account_hint">登录并拉取单位与门锁</string>
     <string name="settings_account_login">登录 / 切换账号</string>
     <string name="settings_saved_accounts">已保存账号</string>
     <string name="settings_remove_account">移除</string>
@@ -251,15 +251,15 @@
     <string name="login_error_response_no_user">登录响应缺少用户信息</string>
     <string name="login_error_response_no_token">登录响应缺少凭证</string>
     <string name="login_error_not_logged_in">尚未登录</string>
-    <string name="school_server_missing">学校服务器地址缺失</string>
-    <string name="school_info_missing">学校信息不存在</string>
+    <string name="school_server_missing">单位服务器地址缺失</string>
+    <string name="school_info_missing">单位信息不存在</string>
     <string name="lock_label_unknown">未知</string>
-    <string name="login_error_no_school">账号不属于任何一所学校，请检查后重新添加</string>
+    <string name="login_error_no_school">账号不属于任何一家单位，请检查后重新添加</string>
     <!-- 登录成功：跨页面提示（返回主界面后由全局提示宿主弹出） -->
     <string name="login_result_no_lock">登录成功，但该账号下暂无门锁，请前往门锁页添加</string>
     <string name="login_result_lock_added">登录成功，已添加门锁</string>
     <string name="login_result_locks_failed">登录成功，但获取门锁失败：%1$s</string>
-    <string name="login_choose_school">选择要添加门锁的学校</string>
+    <string name="login_choose_school">选择要添加门锁的单位</string>
     <string name="login_choose_lock">选择要添加的门锁</string>
 
     <!-- OOBE 开箱向导 -->

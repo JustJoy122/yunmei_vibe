@@ -4,7 +4,8 @@
 # <image src="assets/yunmei-static-transparent.svg" height="28" width="28"/> 云莓氛围
 
 [![Stars](https://img.shields.io/github/stars/JustJoy122/yunmei_vibe?label=Stars)](https://github.com/JustJoy122/yunmei_vibe)
-[![Release](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?style=flat-square&color=%233fb950&label=Release)](https://github.com/JustJoy122/yunmei_vibe/releases/latest)
+[![正式版 Release](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?style=flat-square&color=%233fb950&label=正式版)](https://github.com/JustJoy122/yunmei_vibe/releases/latest)
+[![测试版 Release](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?include_prereleases&style=flat-square&label=测试版)](https://github.com/JustJoy122/yunmei_vibe/releases/)
 [![下载量](https://img.shields.io/github/downloads/JustJoy122/yunmei_vibe/total?style=social&label=下载量&logo=github)](https://github.com/JustJoy122/yunmei_vibe/releases/latest)<br/>
 ![GitHub Repo size](https://img.shields.io/github/repo-size/JustJoy122/yunmei_vibe?style=flat-square&color=3cb371)
 [![GitHub Repo Languages](https://img.shields.io/github/languages/top/JustJoy122/yunmei_vibe?style=flat-square)](https://github.com/JustJoy122/yunmei_vibe/search?l=c%23)<br/>
@@ -17,7 +18,7 @@
 - [DeepSeek API](https://platform.deepseek.com) 为燃料
 - [Deepseek 网页端](https://chat.deepseek.com/) 任产品经理
 - [DeepSeek Harness](https://www.deepseek.com/harness/) 掌勺
-- [Miuix](https://github.com/compose-miuix-ui/miuix) / Material 3 Expressive 双 UI 风格摆盘
+- [Miuix](https://github.com/compose-miuix-ui/miuix) / [Material 3 Expressive](https://developer.android.com/develop/ui/compose/designsystems/material3) 双 UI 风格摆盘
 
 的云莓智能第三方 Android 客户端
 
@@ -41,6 +42,31 @@
 
 二级页面：登录、扫码、门锁详情、主题设置、关于。
 
+## 开始使用
+
+### 环境与硬件要求
+- **操作系统**：Android 8.0 (API 26) 及以上版本。
+- **蓝牙 (BLE)**：**必需**。开门功能依赖低功耗蓝牙与门锁通信，请确保手机支持 BLE 并在使用时保持开启。
+- **定位服务**：**必需**。用于蓝牙扫描（Android 11 及以下）以及定位打卡功能。
+- **相机**：*可选*。用于扫描分享二维码添加门锁。
+
+### 网络与访问要求
+- **云莓服务访问**：App 需连接至云莓智能服务端（`yunmeitech.com`）及您所在学校的服务器以完成登录、取码和打卡，请保持网络畅通。
+- **GitHub 访问**：由于本项目的下载渠道和应用内更新检查依赖于 GitHub，部分网络环境下（如中国大陆）可能需要配置网络代理或加速工具才能正常访问 Releases 页面或接收更新提示。
+
+### 下载与安装
+
+- **正式版（推荐日常使用）**：
+    前往 [最新正式版 Release](https://github.com/JustJoy122/yunmei_vibe/releases/latest) 页面，下载带有 `release` 标签的 `YunmeiVibe-vX.Y.Z-release.apk`。
+- **测试版（体验最新功能）**：
+    前往 [所有 Release 列表](https://github.com/JustJoy122/yunmei_vibe/releases) 页面，寻找带有 `Pre-release` 标签的最新版本（如 `ci-XXXXXXXX-XX`），下载对应的 APK。
+- 下载 APK 后，在手机上点击安装（首次安装可能需要允许“安装未知来源应用”）。
+
+### 账号登录与初始化
+- **账号说明**：本软件是基于云莓智能官方平台的第三方客户端，**没有内置独立的账号体系**。您必须拥有所在单位分配的云莓智能账号才能使用。
+- **登录流程**：打开 App 后，进入「门锁」页面的账号区域，输入账号与密码（密码在传输前会自动进行 MD5 加密，不会明文保存），即可登录并自动拉取您名下的门锁列表。
+
+
 ## 已知限制
 
 - 在部分设备或系统版本上，通知的「实况 / 流体云」形态可能显示不完整（例如只显示百分比、或某些阶段没有文字）。
@@ -56,7 +82,7 @@
 
 ## 致谢
 - 感谢原项目 [yunmei_unintelligent](https://github.com/zxy19/yunmei_unintelligent) ，本项目不仅受其启发而开发，核心逻辑也全部依赖于此
-- 特别感谢 PhoenixTreeZh 对官方 BLE 通信协议的逆向分析与验证，其提供的核心实现代码与协议解析方案，为云莓氛围的门锁兼容性重构提供了关键支持
+- 感谢 [@PhoenixTreeZh](https://github.com/PhoenixTreeZh) 对官方 BLE 通信协议的逆向分析与验证，其提供的核心实现代码与协议解析方案，为本项目门锁兼容性重构提供了关键支持
 - 感谢 [KernelSU-Style-UI-Kit](https://github.com/chenaizhang/KernelSU-Style-UI-Kit) 、[KernelSU](https://github.com/tiann/KernelSU) 和 [InstallerX-Revived](https://github.com/wxxsfxyzm/InstallerX-Revived) 的前端框架，没有你们本项目的 UI 无以成型
 - 本项目使用了 [这些第三方库和框架](./docs/DEPENDENCIES.md)
 

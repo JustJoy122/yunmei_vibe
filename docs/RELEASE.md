@@ -28,7 +28,7 @@
 对应到 Gradle（`app/build.gradle.kts`）：
 
 - `versionName`：语义化版本，如 `0.4.0`。
-- `versionCode` 为单调递增整数，当前值为 `30`。
+- `versionCode` 为单调递增整数，当前值为 `31`。
 
 **发布前必须**同步修改 `versionName` 与 `versionCode`，并打上 `v{versionName}` 标签
 （例如 `v0.4.0`），GitHub Actions 会在标签推送后自动构建并发布。

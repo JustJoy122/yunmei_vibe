@@ -11,11 +11,42 @@
 ---
 ## [Unreleased]
 
+## [0.4.8] - 2026-10-29
+
+**Full changelog**: [v0.4.7...v0.4.8](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.7...v0.4.8)
+
+### 添加
+- AES 门锁型号判定与拦截：拉取门锁时同时读取 `locktype/all` 能力表，把 `lockTypeId` 与 `aesSupport` 写进门锁模型；开锁前判定为 AES 型号时直接提示「暂不支持该加密型号门锁，请在 GitHub 反馈」，不再发送无效帧。
+- 深链唤起添加门锁：`yunmeiui://lock_info/<Base64>` 与 `yunmeiui://lock_id/<编号>` 由新入口 `ui/locks/AddLockLinkActivity` 接收，写入待处理槽位后跳转门锁页，解析仍由 `Lock.from` 统一完成。
+- 粘贴链接导入：门锁页新增与「扫码添加门锁」平级的一级入口，点击时读取剪贴板中的分享链接（不做后台监听）。
+- 添加门锁统一确认弹窗：扫码、深链、粘贴三条入口都只解析不写库，弹出确认框展示名称、编号、单位、MAC 与「已包含开门密钥/不含密钥」，确认后才写入。
+- 开门进度新增「已发送，等待门锁响应」与「门锁已确认开锁动作」两个阶段。
+- 打卡通知接入小米超级岛：与开门侧共用同一套 extras，等待选择定位方式时短文本显示「待处理」。
+
+### 更改
+- 开锁协议改为极简 OPEN 帧（`D0 | 长度 | 密钥 | A7`），不再把随机六位密码与 `ID01` 拼进同一帧。
+- 写入改为 20 字节分片、每片间隔 100 ms，并在上一片写入回调返回后才发下一片；订阅 `6E400003` 成功之后才允许写。
+- 开门前向服务端刷新一次门锁信息（密钥会被轮换、型号能力会更新），失败或超过 8 秒时静默回退本地快照，不阻塞开锁。
+- 文案统一：界面中的「学校」改为「单位」（账号提示、服务器地址缺失、单位信息不存在、选择单位等），数据键名不变。
+- 日志动作「保存日志」改为「保存本地」，并新增「直接分享」动作与独立文案 key。
+- 「相机扫描」改为「相机拍照」，门锁页扫码说明精简为「扫描分享二维码」。
+- 维护性更新：`gradle/actions/setup-gradle` v4 → v6、`softprops/action-gh-release` v2 → v3，zxing core 3.5.3 → 3.5.4。
+- 文档：README 新增「开始使用」章节，覆盖环境与硬件要求（Android 8.0 及以上、蓝牙与定位必需、相机可选）、网络与访问要求、正式版/测试版下载与安装，以及账号登录与初始化说明。
+- 文档：README 顶部 Release 徽章拆分为「正式版」「测试版」，补充 Material 3 Expressive 链接，致谢新增门锁 BLE 协议逆向的贡献者，并修正「隐私处理」的错别字。
+
+### 修复
+- 修复 BLE 开锁流程：解析 `6E400003` 上行回传，密钥失效（`SECRET_KEY_FAIL`）时提示「密钥失效，请重新获取」，收到 `D2`/`D3` 加密响应时明确提示当前版本无法解析，5 秒无响应即超时失败；不再以「写入成功」当作开锁成功。
+- 蓝牙开关检测改用 `BluetoothManager`，消除 `BluetoothAdapter.getDefaultAdapter()` 的弃用警告。
+- 移除首页状态卡片中恒真的 `default != null` 判断，消除三条 `Condition is always 'true'` 警告。
+
+### 致谢
+- 感谢 [@PhoenixTreeZh](https://github.com/PhoenixTreeZh) 反馈门锁开锁异常（App 提示成功、门锁却播报「添加成功」），并自行逆向复现、提供可对照的测试客户端与分享链接格式；本版的开锁帧简化、上行回传解析与型号能力表判定均据此完成。
+
 ## [0.4.7] - 2026-10-16
 
 **Full changelog**: [v0.4.6...v0.4.7](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.6...v0.4.7)
 
-### Changed
+### 更改
 - 设置页重排：「账号」并入门锁页；「开锁」「取码与打卡」两个入口合并为带标题的「门锁行为」分组，并各为二级设置页。
 - 首页移除三个开关（自动开门 / 开门后自动退出 / 自动获取密码），迁入二级设置页；业务逻辑与存储键均未改动。
 - 「AMOLED 纯黑背景」图标修正为深色模式图标；图标风格对齐 KernelSU 参考（返回动画样式与页面缩放互换、设置页「关于」改填充 Info、主题设置页预览打勾改双色、Miuix 页面返回键统一为 `MiuixIcons.Back`）。
@@ -24,7 +55,7 @@
 - miuix 依赖由 `0.9.4-103b737b-SNAPSHOT` 改为 **0.9.4 正式版**。
 - 跳板 Activity 抽出公共基类 `ui/util/TrampolineActivity.kt`；「占位通知 + startForeground」抽出 `ui/util/ForegroundNotification.kt`。
 
-### Fixed
+### 修复
 - 打卡「去开启定位」通知动作的隐式 PendingIntent 改为显式跳板 `ui/sign/SignSettingsTrampolineActivity.kt`（显式组件 + `FLAG_IMMUTABLE`，requestCode 与文案不变）。
 - 备份还原的输入流改为 `use {}` 关闭，避免 `ContentResolver` 的文件描述符泄漏。
 - 门锁详情页的数据读取下沉到 `LockDetailViewModel`，组合期不再直接访问 `LockStore` / `AccountStore`。
@@ -550,6 +581,7 @@
 注意：标签需与标题中的 [x.y.z] 完全一致，Markdown 渲染时版本号才可点击。
 -->
 [Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.5...HEAD
+[0.4.8]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.4...v0.4.5

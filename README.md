@@ -32,15 +32,22 @@
 - [x] **双 UI 风格与主题**：Material 3 Expressive / Miuix 实时切换；Monet 动态取色、AMOLED 纯黑、页面缩放、背景毛玻璃、悬浮底栏、液态玻璃等。
 - [x] **兼容旧客户端**：分享二维码 / 链接双向解析。
 
-## 功能分配
+## 软件截图
+左：Miuix（未开启莫奈取色）；右：Material 3 Expressive（已开启莫奈取色）
 
-| 页面 | 功能 |
-| --- | --- |
-| 首页 | 默认门锁状态 Banner；一键开门（进度环 + 电量）；获取开门密码；打卡（定位三模式）；快速连接 / 自动开门 / 自动退出 / 自动获取密码开关 |
-| 门锁 | 门锁列表、设为默认、删除、详情、扫码添加、登录拉取 |
-| 设置 | 检查更新；账号（登录 + 已保存账号管理）；界面风格与主题设置；取码与打卡（无绑定账号用首个账号、打卡定位方式）；界面显示（隐藏打卡 / 密码按钮）；发送日志；关于 |
+### 首页
+![首页截图](assets/index.jpg)
 
-二级页面：登录、扫码、门锁详情、主题设置、关于。
+<details>
+<summary>查看更多软件截图……</summary>
+
+### 门锁
+![门锁截图](assets/locks.jpg)
+
+### 设置
+![设置截图](assets/settings.jpg)
+
+</details>
 
 ## 开始使用
 
@@ -86,6 +93,11 @@
 - 感谢 [KernelSU-Style-UI-Kit](https://github.com/chenaizhang/KernelSU-Style-UI-Kit) 、[KernelSU](https://github.com/tiann/KernelSU) 和 [InstallerX-Revived](https://github.com/wxxsfxyzm/InstallerX-Revived) 的前端框架，没有你们本项目的 UI 无以成型
 - 本项目使用了 [这些第三方库和框架](./docs/DEPENDENCIES.md)
 
+## 相关活跃项目
+
+- [云莓 Lite](https://github.com/PhoenixTreeZh/yunmei-lite) - 由 [@PhoenixTreeZh](https://github.com/PhoenixTreeZh) 独立逆向开发的开源极简客户端。本项目 BLE 通信协议的重构与兼容性修复，得益于其对官方协议的逆向分析与验证。
+- [CloessyHarmony](https://github.com/Hannyueh/CloessyHarmony) - 基于云莓 Lite 核心逻辑开发的鸿蒙原生客户端版本。
+
 ## 隐私处理
 
 我们不会处理您的任何数据。您的个人信息（账号密码，位置等）将直接发送给云莓智能或存储于 SharedPreferences 中
@@ -97,7 +109,7 @@
 </div>
 
 <details>
-<summary>声明</summary>
+<summary>查看声明</summary>
 
 - 本项目基于 [GNU General Public License v3.0](LICENSE.txt) 获得许可，并使用该许可证开源
 - 本项目代码使用人工智能技术辅助生成，根据中华人民共和国[《人工智能生成合成内容标识办法》](https://www.cac.gov.cn/2025-03/14/c_1743654684782215.htm)及 [GB 45438-2025《网络安全技术 人工智能生成合成内容标识方法》](https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=F32EA2A561F1886CD8D606513512D547)的规定，特此进行显式标识，代码内容仅供参考

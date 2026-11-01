@@ -48,8 +48,7 @@ import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Wallpaper
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
+import com.yunmei.vibe.ui.theme.dynamicBaseColorScheme
 import androidx.compose.ui.platform.LocalContext
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackAnimation
 import com.yunmei.vibe.ui.animation.predictiveback.PredictiveBackExitDirection
@@ -553,11 +552,7 @@ private fun ThemePreviewCardMiuix(
     // 同一套参数映射（莫奈/深浅色 → ColorSchemeMode，强调色 → keyColor 种子，色板与色彩标准 → 对应枚举），
     // 不再用 material-kolor 模拟，避免预览色与实际应用色对不齐。
     val previewController = remember(keyColor, isDark, miuixMonet, paletteStyle, colorSpec) {
-        val systemPrimary = if (isDark) {
-            dynamicDarkColorScheme(context).primary
-        } else {
-            dynamicLightColorScheme(context).primary
-        }
+        val systemPrimary = dynamicBaseColorScheme(context, isDark).primary
         ThemeController(
             when {
                 miuixMonet && isDark -> ColorSchemeMode.MonetDark

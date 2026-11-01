@@ -73,8 +73,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
+import com.yunmei.vibe.ui.theme.dynamicBaseColorScheme
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -152,7 +151,7 @@ internal suspend fun prewarmThemePaletteCache(
         val cacheKey = "${target.toArgb()}_${paletteStyle.name}_${colorSpec.name}_$isDark"
         if (colorSchemeCache.containsKey(cacheKey)) return@forEach
         colorSchemeCache[cacheKey] = if (target == Color.Unspecified) {
-            val base = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            val base = dynamicBaseColorScheme(context, isDark)
             dynamicColorScheme(
                 seedColor = Color.Unspecified,
                 isDark = isDark,
@@ -561,7 +560,7 @@ private fun ThemePreviewCard(
         } else {
             val computed = withContext(Dispatchers.Default) {
                 if (dynamicColor) {
-                    val base = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                    val base = dynamicBaseColorScheme(context, isDark)
                     dynamicColorScheme(
                         seedColor = Color.Unspecified,
                         isDark = isDark,
@@ -728,7 +727,7 @@ private fun ColorButtonMaterial(
         } else {
             val computed = withContext(Dispatchers.Default) {
                 if (isDynamicSwatch) {
-                    val base = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                    val base = dynamicBaseColorScheme(context, isDark)
                     dynamicColorScheme(
                         seedColor = Color.Unspecified,
                         isDark = isDark,

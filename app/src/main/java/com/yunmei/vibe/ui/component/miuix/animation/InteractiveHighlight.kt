@@ -2,6 +2,8 @@ package com.yunmei.vibe.ui.component.miuix.animation
 
 import android.annotation.SuppressLint
 import android.graphics.RuntimeShader
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.VisibilityThreshold
@@ -21,6 +23,26 @@ import kotlinx.coroutines.launch
 import com.yunmei.vibe.ui.component.miuix.modifier.inspectDragGestures
 import org.intellij.lang.annotations.Language
 
+/** 按压高光的 AGSL 着色器源码；[RuntimeShader] 只在 API 33+ 存在，低版本不会用到这段。 */
+@Language("AGSL")
+private const val HIGHLIGHT_SHADER = """
+    uniform float2 size;
+    layout(color) uniform half4 color;
+    uniform float radius;
+    uniform float2 position;
+    
+    half4 main(float2 coord) {
+        float dist = distance(coord, position);
+        float intensity = smoothstep(radius, radius * 0.5, dist);
+        return color * intensity;
+    }"""
+
+/**
+ * 悬浮底栏的按压高光：一层 `BlendMode.Plus` 纯色叠加 + 一层 AGSL 径向高光。
+ *
+ * API 33 以下没有 [RuntimeShader]，着色器整段跳过，只保留纯色叠加——
+ * 按压反馈仍在，只是少了那点「聚光」效果。
+ */
 @SuppressLint("NewApi")
 class InteractiveHighlight(
     val animationScope: CoroutineScope,
@@ -40,21 +62,16 @@ class InteractiveHighlight(
     private var startPosition = Offset.Zero
     val offset: Offset get() = positionAnimation.value - startPosition
 
-    @Language("AGSL")
-    private val shader =
-        RuntimeShader(
-            """
-    uniform float2 size;
-    layout(color) uniform half4 color;
-    uniform float radius;
-    uniform float2 position;
-    
-    half4 main(float2 coord) {
-        float dist = distance(coord, position);
-        float intensity = smoothstep(radius, radius * 0.5, dist);
-        return color * intensity;
-    }"""
-        )
+    /**
+     * 高光着色器。延迟到首次绘制才创建，低版本直接返回 null：
+     * 低版本上任何对 [RuntimeShader] 的触碰都会抛 NoClassDefFoundError（启动即闪退）。
+     */
+    private val shader: RuntimeShader? by lazy(LazyThreadSafetyMode.NONE) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) createShader() else null
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun createShader(): RuntimeShader = RuntimeShader(HIGHLIGHT_SHADER)
 
     val modifier: Modifier =
         Modifier.drawWithContent {
@@ -64,21 +81,24 @@ class InteractiveHighlight(
                     Color.White.copy(0.06f * progress),
                     blendMode = BlendMode.Plus
                 )
-                shader.apply {
-                    val position = position(size, positionAnimation.value)
-                    setFloatUniform("size", size.width, size.height)
-                    setColorUniform("color", Color.White.copy(0.12f * progress).toArgb())
-                    setFloatUniform("radius", size.minDimension * 1.2f)
-                    setFloatUniform(
-                        "position",
-                        position.x.fastCoerceIn(0f, size.width),
-                        position.y.fastCoerceIn(0f, size.height)
+                val highlightShader = shader
+                if (highlightShader != null) {
+                    highlightShader.apply {
+                        val position = position(size, positionAnimation.value)
+                        setFloatUniform("size", size.width, size.height)
+                        setColorUniform("color", Color.White.copy(0.12f * progress).toArgb())
+                        setFloatUniform("radius", size.minDimension * 1.2f)
+                        setFloatUniform(
+                            "position",
+                            position.x.fastCoerceIn(0f, size.width),
+                            position.y.fastCoerceIn(0f, size.height)
+                        )
+                    }
+                    drawRect(
+                        ShaderBrush(highlightShader),
+                        blendMode = BlendMode.Plus
                     )
                 }
-                drawRect(
-                    ShaderBrush(shader),
-                    blendMode = BlendMode.Plus
-                )
             }
 
             drawContent()

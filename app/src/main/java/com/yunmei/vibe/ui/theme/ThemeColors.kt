@@ -2,8 +2,6 @@ package com.yunmei.vibe.ui.theme
 
 import android.content.Context
 import android.content.res.Configuration
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.materialkolor.dynamicColorScheme
@@ -47,7 +45,7 @@ object ThemeColors {
         val specVersion = settings.colorSpec.effectiveFor(style)
         val scheme = if (settings.keyColor == 0) {
             // 系统取色（莫奈）：与 MaterialTemplateTheme 一样，用系统方案的关键色作种子。
-            val base = if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            val base = dynamicBaseColorScheme(context, dark)
             dynamicColorScheme(
                 seedColor = Color.Unspecified,
                 isDark = dark,

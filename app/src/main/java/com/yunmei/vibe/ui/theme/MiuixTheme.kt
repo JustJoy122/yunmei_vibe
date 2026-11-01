@@ -3,8 +3,6 @@ package com.yunmei.vibe.ui.theme
 import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -51,10 +49,7 @@ fun MiuixTemplateTheme(
     // KernelSU 本体（manager/ui/theme/MiuixTheme.kt）的做法是改传系统动态取色的 primary 作为种子。
     val resolvedKeyColor: Color? = when {
         appSettings.keyColor != 0 -> Color(appSettings.keyColor)
-        appSettings.colorMode.isMonet ->
-            if (darkTheme) dynamicDarkColorScheme(context).primary
-            else dynamicLightColorScheme(context).primary
-
+        appSettings.colorMode.isMonet -> dynamicBaseColorScheme(context, darkTheme).primary
         else -> null
     }
 
@@ -66,13 +61,17 @@ fun MiuixTemplateTheme(
         miuixColorSpec,
     ) {
         ThemeController(
-            when (appSettings.colorMode) {
-                ColorMode.SYSTEM -> ColorSchemeMode.System
-                ColorMode.LIGHT -> ColorSchemeMode.Light
-                ColorMode.DARK -> ColorSchemeMode.Dark
-                ColorMode.MONET_SYSTEM -> ColorSchemeMode.MonetSystem
-                ColorMode.MONET_LIGHT -> ColorSchemeMode.MonetLight
-                ColorMode.MONET_DARK, ColorMode.DARK_AMOLED -> ColorSchemeMode.MonetDark
+            when {
+                // 莫奈只在 Android 12+ 存在：低版本把莫奈档位降级为对应深浅色，
+                // 避免 Miuix 的 Monet 模式去读不存在的系统动态色资源。
+                !isDynamicColorSupported && appSettings.colorMode.isMonet ->
+                    if (darkTheme) ColorSchemeMode.Dark else ColorSchemeMode.Light
+                appSettings.colorMode == ColorMode.SYSTEM -> ColorSchemeMode.System
+                appSettings.colorMode == ColorMode.LIGHT -> ColorSchemeMode.Light
+                appSettings.colorMode == ColorMode.DARK -> ColorSchemeMode.Dark
+                appSettings.colorMode == ColorMode.MONET_SYSTEM -> ColorSchemeMode.MonetSystem
+                appSettings.colorMode == ColorMode.MONET_LIGHT -> ColorSchemeMode.MonetLight
+                else -> ColorSchemeMode.MonetDark
             },
             keyColor = resolvedKeyColor,
             isDark = darkTheme,

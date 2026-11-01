@@ -5,8 +5,6 @@ import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -32,7 +30,7 @@ fun MaterialTemplateTheme(
     val colorScheme = if (dynamicColor) {
         // 系统取色只需按深浅色读一次：原先每次重组都重读系统取色资源，属无谓开销。
         val baseScheme = remember(context, darkTheme) {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            dynamicBaseColorScheme(context, darkTheme)
         }
         rememberDynamicColorScheme(
             seedColor = Color.Unspecified,

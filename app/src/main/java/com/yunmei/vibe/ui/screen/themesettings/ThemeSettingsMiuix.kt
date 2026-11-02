@@ -193,103 +193,102 @@ fun ThemeSettingsMiuix(
                             .padding(top = 12.dp)
                             .fillMaxWidth(),
                     ) {
-                        SwitchPreference(
-                            title = stringResource(id = R.string.settings_monet),
+                        // 莫奈取色：系统动态取色只有 Android 12+ 才有，低版本直接隐藏这一项。
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            SwitchPreference(
+                                title = stringResource(id = R.string.settings_monet),
+                                startAction = {
+                                    Icon(
+                                        Icons.Rounded.Wallpaper,
+                                        modifier = Modifier.padding(end = 6.dp),
+                                        contentDescription = stringResource(id = R.string.settings_monet),
+                                        tint = colorScheme.onBackground
+                                    )
+                                },
+                                checked = uiState.miuixMonet,
+                                onCheckedChange = {
+                                    actions.onSetMiuixMonet(it)
+                                }
+                            )
+                        }
+
+                        // 强调色：独立设置项，不再挂在「莫奈取色」之下——低版本没有莫奈也必须能选，
+                        // 选中后作为种子色覆盖默认配色（见 MiuixTemplateTheme 的 keyColor 优先级）。
+                        val colorItems = listOf(
+                            stringResource(id = R.string.settings_key_color_default),
+                            stringResource(id = R.string.color_red),
+                            stringResource(id = R.string.color_pink),
+                            stringResource(id = R.string.color_purple),
+                            stringResource(id = R.string.color_deep_purple),
+                            stringResource(id = R.string.color_indigo),
+                            stringResource(id = R.string.color_blue),
+                            stringResource(id = R.string.color_cyan),
+                            stringResource(id = R.string.color_teal),
+                            stringResource(id = R.string.color_green),
+                            stringResource(id = R.string.color_yellow),
+                            stringResource(id = R.string.color_amber),
+                            stringResource(id = R.string.color_orange),
+                            stringResource(id = R.string.color_brown),
+                            stringResource(id = R.string.color_blue_grey),
+                            stringResource(id = R.string.color_sakura),
+                        )
+                        val colorValues = listOf(0) + keyColorOptions
+                        OverlayDropdownPreference(
+                            title = stringResource(id = R.string.settings_key_color),
+                            items = colorItems,
                             startAction = {
                                 Icon(
-                                    Icons.Rounded.Wallpaper,
+                                    Icons.Rounded.Colorize,
                                     modifier = Modifier.padding(end = 6.dp),
-                                    contentDescription = stringResource(id = R.string.settings_monet),
+                                    contentDescription = stringResource(id = R.string.settings_key_color),
                                     tint = colorScheme.onBackground
                                 )
                             },
-                            checked = uiState.miuixMonet,
-                            onCheckedChange = {
-                                actions.onSetMiuixMonet(it)
+                            selectedIndex = colorValues.indexOf(uiState.keyColor).takeIf { it >= 0 } ?: 0,
+                            onSelectedIndexChange = { index ->
+                                actions.onSetKeyColor(colorValues[index])
                             }
                         )
 
                         AnimatedVisibility(
-                            visible = uiState.miuixMonet
+                            visible = uiState.keyColor != 0
                         ) {
                             Column {
-                                val colorItems = listOf(
-                                    stringResource(id = R.string.settings_key_color_default),
-                                    stringResource(id = R.string.color_red),
-                                    stringResource(id = R.string.color_pink),
-                                    stringResource(id = R.string.color_purple),
-                                    stringResource(id = R.string.color_deep_purple),
-                                    stringResource(id = R.string.color_indigo),
-                                    stringResource(id = R.string.color_blue),
-                                    stringResource(id = R.string.color_cyan),
-                                    stringResource(id = R.string.color_teal),
-                                    stringResource(id = R.string.color_green),
-                                    stringResource(id = R.string.color_yellow),
-                                    stringResource(id = R.string.color_amber),
-                                    stringResource(id = R.string.color_orange),
-                                    stringResource(id = R.string.color_brown),
-                                    stringResource(id = R.string.color_blue_grey),
-                                    stringResource(id = R.string.color_sakura),
-                                )
-                                val colorValues = listOf(0) + keyColorOptions
+                                val styles = PaletteStyle.entries
                                 OverlayDropdownPreference(
-                                    title = stringResource(id = R.string.settings_key_color),
-                                    items = colorItems,
+                                    title = stringResource(R.string.settings_color_style),
                                     startAction = {
                                         Icon(
-                                            Icons.Rounded.Colorize,
+                                            Icons.Rounded.Style,
                                             modifier = Modifier.padding(end = 6.dp),
-                                            contentDescription = stringResource(id = R.string.settings_key_color),
+                                            contentDescription = stringResource(id = R.string.settings_color_style),
                                             tint = colorScheme.onBackground
                                         )
                                     },
-                                    selectedIndex = colorValues.indexOf(uiState.keyColor).takeIf { it >= 0 } ?: 0,
+                                    items = styles.map { it.name },
+                                    selectedIndex = styles.indexOfFirst { it.name == uiState.colorStyle }.coerceAtLeast(0),
                                     onSelectedIndexChange = { index ->
-                                        actions.onSetKeyColor(colorValues[index])
+                                        actions.onSetColorStyle(styles[index].name)
                                     }
                                 )
 
-                                AnimatedVisibility(
-                                    visible = uiState.keyColor != 0
-                                ) {
-                                    Column {
-                                        val styles = PaletteStyle.entries
-                                        OverlayDropdownPreference(
-                                            title = stringResource(R.string.settings_color_style),
-                                            startAction = {
-                                                Icon(
-                                                    Icons.Rounded.Style,
-                                                    modifier = Modifier.padding(end = 6.dp),
-                                                    contentDescription = stringResource(id = R.string.settings_color_style),
-                                                    tint = colorScheme.onBackground
-                                                )
-                                            },
-                                            items = styles.map { it.name },
-                                            selectedIndex = styles.indexOfFirst { it.name == uiState.colorStyle }.coerceAtLeast(0),
-                                            onSelectedIndexChange = { index ->
-                                                actions.onSetColorStyle(styles[index].name)
-                                            }
+                                val specs = ColorSpec.SpecVersion.entries
+                                OverlayDropdownPreference(
+                                    title = stringResource(R.string.settings_color_spec),
+                                    startAction = {
+                                        Icon(
+                                            Icons.Rounded.DesignServices,
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            contentDescription = stringResource(id = R.string.settings_color_spec),
+                                            tint = colorScheme.onBackground
                                         )
-
-                                        val specs = ColorSpec.SpecVersion.entries
-                                        OverlayDropdownPreference(
-                                            title = stringResource(R.string.settings_color_spec),
-                                            startAction = {
-                                                Icon(
-                                                    Icons.Rounded.DesignServices,
-                                                    modifier = Modifier.padding(end = 6.dp),
-                                                    contentDescription = stringResource(id = R.string.settings_color_spec),
-                                                    tint = colorScheme.onBackground
-                                                )
-                                            },
-                                            items = specs.map { it.name },
-                                            selectedIndex = specs.indexOfFirst { it.name == uiState.colorSpec }.coerceAtLeast(0),
-                                            onSelectedIndexChange = { index ->
-                                                actions.onSetColorSpec(specs[index].name)
-                                            }
-                                        )
+                                    },
+                                    items = specs.map { it.name },
+                                    selectedIndex = specs.indexOfFirst { it.name == uiState.colorSpec }.coerceAtLeast(0),
+                                    onSelectedIndexChange = { index ->
+                                        actions.onSetColorSpec(specs[index].name)
                                     }
-                                }
+                                )
                             }
                         }
                     }
@@ -379,97 +378,105 @@ fun ThemeSettingsMiuix(
                             .padding(top = 12.dp)
                             .fillMaxWidth(),
                     ) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                            SwitchPreference(
-                                title = stringResource(id = R.string.settings_enable_predictive_back),
-                                startAction = {
-                                    Icon(
-                                        Icons.AutoMirrored.Rounded.MenuOpen,
-                                        modifier = Modifier.padding(end = 6.dp),
-                                        contentDescription = stringResource(id = R.string.settings_enable_predictive_back),
-                                        tint = colorScheme.onBackground
-                                    )
-                                },
-                                checked = uiState.enablePredictiveBack,
-                                onCheckedChange = {
-                                    actions.onSetEnablePredictiveBack(it)
+                        // 预测性返回：全版本显示。Android 14 以下没有系统跟手预览，summary 里说明差异。
+                        SwitchPreference(
+                            title = stringResource(id = R.string.settings_enable_predictive_back),
+                            summary = stringResource(
+                                id = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                    R.string.settings_enable_predictive_back_summary
+                                } else {
+                                    R.string.settings_enable_predictive_back_summary_legacy
                                 }
-                            )
-                            // 开关 + 菜单联动（与上方「莫奈取色 → 强调色」完全同款结构）：
-                            // 开关关闭即不启用返回动画，两条菜单整组收起。
-                            AnimatedVisibility(visible = uiState.enablePredictiveBack) {
-                                Column {
+                            ),
+                            startAction = {
+                                Icon(
+                                    Icons.AutoMirrored.Rounded.MenuOpen,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.settings_enable_predictive_back),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            checked = uiState.enablePredictiveBack,
+                            onCheckedChange = {
+                                actions.onSetEnablePredictiveBack(it)
+                            }
+                        )
+                        // 开关 + 菜单联动（与上方「莫奈取色 → 强调色」完全同款结构）：
+                        // 开关关闭即不启用返回动画，两条菜单整组收起。
+                        AnimatedVisibility(visible = uiState.enablePredictiveBack) {
+                            Column {
+                                OverlayDropdownPreference(
+                                    title = stringResource(R.string.settings_predictive_back_animation),
+                                    items = animationItems,
+                                    startAction = {
+                                        Icon(
+                                            Icons.Rounded.Description,
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            contentDescription = stringResource(R.string.settings_predictive_back_animation),
+                                            tint = colorScheme.onBackground
+                                        )
+                                    },
+                                    selectedIndex = animations.indexOf(currentAnimation).coerceAtLeast(0),
+                                    onSelectedIndexChange = { index ->
+                                        actions.onSetPredictiveBackAnimation(animations[index].value)
+                                    }
+                                )
+                                // 返回方向仅对「缩放」档生效，与上游 InstallerX 的显示逻辑一致。
+                                AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
                                     OverlayDropdownPreference(
-                                        title = stringResource(R.string.settings_predictive_back_animation),
-                                        items = animationItems,
+                                        title = stringResource(R.string.settings_predictive_back_direction),
+                                        items = directionItems,
                                         startAction = {
                                             Icon(
-                                                Icons.Rounded.Description,
+                                                Icons.Rounded.SwapHoriz,
                                                 modifier = Modifier.padding(end = 6.dp),
-                                                contentDescription = stringResource(R.string.settings_predictive_back_animation),
+                                                contentDescription = stringResource(R.string.settings_predictive_back_direction),
                                                 tint = colorScheme.onBackground
                                             )
                                         },
-                                        selectedIndex = animations.indexOf(currentAnimation).coerceAtLeast(0),
+                                        selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
                                         onSelectedIndexChange = { index ->
-                                            actions.onSetPredictiveBackAnimation(animations[index].value)
+                                            actions.onSetPredictiveBackExitDirection(directions[index].value)
                                         }
                                     )
-                                    // 返回方向仅对「缩放」档生效，与上游 InstallerX 的显示逻辑一致。
-                                    AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
-                                        OverlayDropdownPreference(
-                                            title = stringResource(R.string.settings_predictive_back_direction),
-                                            items = directionItems,
-                                            startAction = {
-                                                Icon(
-                                                    Icons.Rounded.SwapHoriz,
-                                                    modifier = Modifier.padding(end = 6.dp),
-                                                    contentDescription = stringResource(R.string.settings_predictive_back_direction),
-                                                    tint = colorScheme.onBackground
-                                                )
-                                            },
-                                            selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
-                                            onSelectedIndexChange = { index ->
-                                                actions.onSetPredictiveBackExitDirection(directions[index].value)
-                                            }
-                                        )
-                                    }
                                 }
                             }
-                            SwitchPreference(
-                                title = stringResource(id = R.string.settings_enable_swipe_dismiss),
-                                summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
-                                startAction = {
-                                    Icon(
-                                        Icons.Rounded.Swipe,
-                                        modifier = Modifier.padding(end = 6.dp),
-                                        contentDescription = stringResource(id = R.string.settings_enable_swipe_dismiss),
-                                        tint = colorScheme.onBackground,
-                                    )
-                                },
-                                checked = uiState.enableSwipeDismiss,
-                                onCheckedChange = actions.onSetEnableSwipeDismiss,
-                            )
-
-                            OverlayDropdownPreference(
-                                title = stringResource(id = R.string.settings_pager_gesture_mode),
-                                items = listOf(
-                                    stringResource(id = R.string.settings_pager_gesture_native),
-                                    stringResource(id = R.string.settings_pager_gesture_cross_axis),
-                                    stringResource(id = R.string.settings_pager_gesture_ios_like),
-                                ),
-                                startAction = {
-                                    Icon(
-                                        Icons.Rounded.ViewCarousel,
-                                        modifier = Modifier.padding(end = 6.dp),
-                                        contentDescription = stringResource(id = R.string.settings_pager_gesture_mode),
-                                        tint = colorScheme.onBackground,
-                                    )
-                                },
-                                selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
-                                onSelectedIndexChange = actions.onSetPagerInterceptionMode,
-                            )
                         }
+
+                        // 横移返回 / 页面切换手势与系统版本无关：分别由 miuix-nav 与 pager 自己处理，低版本同样可用。
+                        SwitchPreference(
+                            title = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                            summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.Swipe,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                                    tint = colorScheme.onBackground,
+                                )
+                            },
+                            checked = uiState.enableSwipeDismiss,
+                            onCheckedChange = actions.onSetEnableSwipeDismiss,
+                        )
+
+                        OverlayDropdownPreference(
+                            title = stringResource(id = R.string.settings_pager_gesture_mode),
+                            items = listOf(
+                                stringResource(id = R.string.settings_pager_gesture_native),
+                                stringResource(id = R.string.settings_pager_gesture_cross_axis),
+                                stringResource(id = R.string.settings_pager_gesture_ios_like),
+                            ),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.ViewCarousel,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.settings_pager_gesture_mode),
+                                    tint = colorScheme.onBackground,
+                                )
+                            },
+                            selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
+                            onSelectedIndexChange = actions.onSetPagerInterceptionMode,
+                        )
 
                         var sliderValue by remember(uiState.pageScale) { mutableFloatStateOf(uiState.pageScale) }
                         ArrowPreference(

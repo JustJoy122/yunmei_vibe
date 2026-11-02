@@ -79,13 +79,15 @@ object ThemeController {
 
         if (uiMode == "miuix") {
             val miuixMonet = prefs.getBoolean(SettingsPrefs.MIUIX_MONET, false)
+            val keyColor = prefs.getInt(SettingsPrefs.KEY_COLOR, 0)
             val colorMode = ColorMode.fromValue(colorModeValue)
-            colorModeValue = if (!miuixMonet && colorMode.isMonet) {
-                colorMode.toNonMonetMode()
-            } else if (miuixMonet && !colorMode.isMonet) {
-                colorMode.toMonetMode()
-            } else {
-                colorModeValue
+            // 低版本没有系统动态取色：勾了莫奈但没手选强调色时回落到普通深浅色；
+            // 手选了强调色则保留莫奈模式，由莫奈调色器用该强调色作种子生成配色。
+            val monetUsable = isDynamicColorSupported || keyColor != 0
+            colorModeValue = when {
+                !miuixMonet && colorMode.isMonet -> colorMode.toNonMonetMode()
+                miuixMonet && !colorMode.isMonet && monetUsable -> colorMode.toMonetMode()
+                else -> colorModeValue
             }
         }
 

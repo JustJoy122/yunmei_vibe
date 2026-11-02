@@ -380,8 +380,7 @@ fun ThemeSettingsMaterial(
                 )
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    // 开关 + 菜单联动（结构对齐「莫奈取色 → 强调色」）：开关关闭即不启用返回动画，菜单整组收起。
+                    // 预测性返回：全版本显示。Android 14 以下没有系统跟手预览，summary 里说明差异。
                     SegmentedColumn(
                         modifier = Modifier.padding(top = 4.dp),
                         content = listOf(
@@ -389,6 +388,13 @@ fun ThemeSettingsMaterial(
                                 SegmentedSwitchItem(
                                     icon = Icons.AutoMirrored.TwoTone.MenuOpen,
                                     title = stringResource(id = R.string.settings_enable_predictive_back),
+                                    summary = stringResource(
+                                        id = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                            R.string.settings_enable_predictive_back_summary
+                                        } else {
+                                            R.string.settings_enable_predictive_back_summary_legacy
+                                        }
+                                    ),
                                     checked = uiState.enablePredictiveBack,
                                     onCheckedChange = actions.onSetEnablePredictiveBack
                                 )
@@ -432,40 +438,42 @@ fun ThemeSettingsMaterial(
                             )
                         )
                     }
-        SegmentedColumn(
-            modifier = Modifier.padding(top = 4.dp),
-            content = listOf(
-                {
-                    SegmentedSwitchItem(
-                        icon = Icons.TwoTone.Swipe,
-                        title = stringResource(id = R.string.settings_enable_swipe_dismiss),
-                        summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
-                        checked = uiState.enableSwipeDismiss,
-                        onCheckedChange = actions.onSetEnableSwipeDismiss,
-                    )
-                },
-            )
-        )
 
-        SegmentedColumn(
-            modifier = Modifier.padding(top = 4.dp),
-            content = listOf(
-                {
-                    SegmentedDropdownItem(
-                        icon = Icons.TwoTone.ViewCarousel,
-                        title = stringResource(id = R.string.settings_pager_gesture_mode),
-                        items = listOf(
-                            stringResource(id = R.string.settings_pager_gesture_native),
-                            stringResource(id = R.string.settings_pager_gesture_cross_axis),
-                            stringResource(id = R.string.settings_pager_gesture_ios_like),
-                        ),
-                        selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
-                        onItemSelected = actions.onSetPagerInterceptionMode,
+                    // 横移返回手势 / 页面切换手势与系统版本无关：它们分别由 miuix-nav 与 pager 自己处理，
+                    // 低版本同样可用，因此不再藏在 API 34 判断里。
+                    SegmentedColumn(
+                        modifier = Modifier.padding(top = 4.dp),
+                        content = listOf(
+                            {
+                                SegmentedSwitchItem(
+                                    icon = Icons.TwoTone.Swipe,
+                                    title = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                                    summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
+                                    checked = uiState.enableSwipeDismiss,
+                                    onCheckedChange = actions.onSetEnableSwipeDismiss,
+                                )
+                            },
+                        )
                     )
-                },
-            )
-        )
-                }
+
+                    SegmentedColumn(
+                        modifier = Modifier.padding(top = 4.dp),
+                        content = listOf(
+                            {
+                                SegmentedDropdownItem(
+                                    icon = Icons.TwoTone.ViewCarousel,
+                                    title = stringResource(id = R.string.settings_pager_gesture_mode),
+                                    items = listOf(
+                                        stringResource(id = R.string.settings_pager_gesture_native),
+                                        stringResource(id = R.string.settings_pager_gesture_cross_axis),
+                                        stringResource(id = R.string.settings_pager_gesture_ios_like),
+                                    ),
+                                    selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
+                                    onItemSelected = actions.onSetPagerInterceptionMode,
+                                )
+                            },
+                        )
+                    )
 
                 // 按模板逻辑：模糊/悬浮底栏/液态玻璃为 Miuix 主题独占（Material 底栏不使用
                 // FloatingBottomBar，Material 页面不使用 BlurredBar），Material 模式下不显示。

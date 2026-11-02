@@ -42,14 +42,14 @@ fun MiuixTemplateTheme(
         ThemeColorSpec.Spec2021
     }
 
-    // remember 稳定化：主题热切换（如莫奈开关）时只在输入变化时才重建 ThemeController，
-    // 避免无关重组风暴干扰 MiuixTheme 子树（包括导航事件系统的状态）。
-    // 强调色为「默认」(keyColor == 0) 时不能直接给 Miuix 传 null：Miuix 的 ThemeController
-    // 收到 null 会退回自带蓝色种子，表现就是「默认档没有跟随莫奈取色」。
-    // KernelSU 本体（manager/ui/theme/MiuixTheme.kt）的做法是改传系统动态取色的 primary 作为种子。
+    // 强调色优先：只要用户选了自定义强调色（keyColor != 0），无论莫奈开关是否开启、
+    // 无论系统版本如何，都把该颜色作为种子色传给 ThemeController，覆盖 Miuix 自带默认种子。
+    // 没有手选色且开启了莫奈时才读系统动态取色；低版本（< Android 12）没有动态取色能力，
+    // 此时回落到静态色板（keyColor = null）。
     val resolvedKeyColor: Color? = when {
         appSettings.keyColor != 0 -> Color(appSettings.keyColor)
-        appSettings.colorMode.isMonet -> dynamicBaseColorScheme(context, darkTheme).primary
+        appSettings.colorMode.isMonet && isDynamicColorSupported ->
+            dynamicBaseColorScheme(context, darkTheme).primary
         else -> null
     }
 
@@ -62,9 +62,9 @@ fun MiuixTemplateTheme(
     ) {
         ThemeController(
             when {
-                // 莫奈只在 Android 12+ 存在：低版本把莫奈档位降级为对应深浅色，
-                // 避免 Miuix 的 Monet 模式去读不存在的系统动态色资源。
-                !isDynamicColorSupported && appSettings.colorMode.isMonet ->
+                // 低版本没有系统动态取色资源：勾了莫奈又没有手选强调色时回落到普通深浅色（静态色板），
+                // 避免 Miuix 的 Monet 模式去读不存在的系统动态色资源；手选了强调色则保留莫奈模式。
+                appSettings.colorMode.isMonet && !isDynamicColorSupported && appSettings.keyColor == 0 ->
                     if (darkTheme) ColorSchemeMode.Dark else ColorSchemeMode.Light
                 appSettings.colorMode == ColorMode.SYSTEM -> ColorSchemeMode.System
                 appSettings.colorMode == ColorMode.LIGHT -> ColorSchemeMode.Light

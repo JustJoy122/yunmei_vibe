@@ -164,7 +164,7 @@
     <string name="settings_amoled">AMOLED 纯黑背景</string>
     <string name="settings_amoled_summary">深色模式下使用纯黑背景</string>
     <string name="settings_enable_predictive_back">预测性返回手势</string>
-    <string name="settings_enable_predictive_back_summary">返回时跟手预览页面内容（Android 14 起）</string>
+    <string name="settings_enable_predictive_back_summary">返回时跟手预览页面内容</string>
     <string name="settings_enable_predictive_back_summary_legacy">当前系统可用，但无跟手预览动画</string>
     <string name="settings_predictive_back_animation">返回动画样式</string>
     <string name="settings_predictive_back_animation_aosp">AOSP</string>
@@ -182,7 +182,7 @@
     <string name="settings_enable_blur">模糊</string>
     <string name="settings_enable_blur_summary">启用顶栏和底栏的模糊效果</string>
     <string name="settings_blur_style">顶栏模糊样式</string>
-    <string name="settings_blur_style_summary">高斯：整体均匀模糊；渐进：自顶向下渐变模糊，需 Android 13 起</string>
+    <string name="settings_blur_style_summary">高斯：均匀模糊；渐进：渐变模糊</string>
     <string name="settings_blur_style_gaussian">高斯</string>
     <string name="settings_blur_style_progressive">渐进</string>
     <string name="settings_floating_bottom_bar">悬浮底栏</string>

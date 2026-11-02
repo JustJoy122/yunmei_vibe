@@ -30,6 +30,8 @@ object SettingsPrefs {
     const val PREDICTIVE_BACK_ANIMATION = "predictive_back_animation"
     const val PREDICTIVE_BACK_EXIT_DIRECTION = "predictive_back_exit_direction"
     const val ENABLE_BLUR = "enable_blur"
+    /** 顶栏模糊样式：gaussian（高斯）/ progressive（渐进）。 */
+    const val BLUR_STYLE = "blur_style"
     const val PAGE_SCALE = "page_scale"
     /** 「开门」快捷方式 Intent 的校验令牌（仅本应用可写，用于拒绝第三方直接启动入口）。 */
     const val SHORTCUT_TOKEN = "shortcut_token"

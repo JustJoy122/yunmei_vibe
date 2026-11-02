@@ -146,6 +146,9 @@ val LocalColorMode = staticCompositionLocalOf { 0 }
 
 val LocalEnableBlur = staticCompositionLocalOf { false }
 
+/** 顶栏模糊样式是否为「渐进」：由 MainActivity 依据设置注入，低版本渲染层会再判一次 RuntimeShader。 */
+val LocalUseProgressiveBlur = staticCompositionLocalOf { false }
+
 val LocalEnableFloatingBottomBar = staticCompositionLocalOf { false }
 
 val LocalEnableFloatingBottomBarBlur = staticCompositionLocalOf { false }

@@ -61,6 +61,7 @@ class SettingsViewModel(
                     predictiveBackAnimation = repo.predictiveBackAnimation,
                     predictiveBackExitDirection = repo.predictiveBackExitDirection,
                     enableBlur = repo.enableBlur,
+                    blurStyle = repo.blurStyle,
                     enableFloatingBottomBar = repo.enableFloatingBottomBar,
                     enableFloatingBottomBarBlur = repo.enableFloatingBottomBarBlur,
                     pageScale = repo.pageScale,
@@ -194,6 +195,12 @@ class SettingsViewModel(
     fun setEnableBlur(enabled: Boolean) {
         repo.enableBlur = enabled
         _uiState.update { it.copy(enableBlur = enabled) }
+    }
+
+    /** 顶栏模糊样式（gaussian / progressive），渐进档在低版本由 BlurExt 回退高斯。 */
+    fun setBlurStyle(style: String) {
+        repo.blurStyle = style
+        _uiState.update { it.copy(blurStyle = style) }
     }
 
     fun setEnableFloatingBottomBar(enabled: Boolean) {

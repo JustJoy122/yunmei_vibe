@@ -9,6 +9,8 @@ data class MainActivityUiState(
     val appSettings: AppSettings,
     val pageScale: Float,
     val enableBlur: Boolean,
+    /** 顶栏模糊样式：gaussian / progressive（渲染层还会再判 RuntimeShader）。 */
+    val blurStyle: String,
     val enableSwipeDismiss: Boolean = true,
     val pagerInterceptionMode: Int = 1,
     val enableFloatingBottomBar: Boolean,

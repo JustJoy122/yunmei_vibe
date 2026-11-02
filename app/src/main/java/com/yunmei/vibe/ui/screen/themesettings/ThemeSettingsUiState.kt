@@ -26,6 +26,7 @@ data class ThemeSettingsActions(
     val onSetColorStyle: (String) -> Unit,
     val onSetColorSpec: (String) -> Unit,
     val onSetEnableBlur: (Boolean) -> Unit,
+    val onSetBlurStyle: (String) -> Unit,
     val onSetEnableFloatingBottomBar: (Boolean) -> Unit,
     val onSetEnableFloatingBottomBarBlur: (Boolean) -> Unit,
     val onSetEnablePredictiveBack: (Boolean) -> Unit,

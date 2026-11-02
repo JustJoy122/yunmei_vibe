@@ -25,6 +25,8 @@ data class SettingsUiState(
     val predictiveBackAnimation: String = PredictiveBackAnimation.DEFAULT.value,
     val predictiveBackExitDirection: String = PredictiveBackExitDirection.DEFAULT.value,
     val enableBlur: Boolean = true,
+    /** 顶栏模糊样式：gaussian（高斯）/ progressive（渐进）。 */
+    val blurStyle: String = "gaussian",
     val enableFloatingBottomBar: Boolean = true,
     val enableFloatingBottomBarBlur: Boolean = true,
     val pageScale: Float = 1.0f,

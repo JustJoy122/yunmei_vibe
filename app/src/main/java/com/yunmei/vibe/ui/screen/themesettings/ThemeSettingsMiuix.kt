@@ -46,6 +46,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Style
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Wallpaper
 import com.yunmei.vibe.ui.theme.dynamicBaseColorScheme
@@ -76,6 +77,7 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.yunmei.vibe.ui.theme.effectiveFor
 import com.yunmei.vibe.R
+import com.yunmei.vibe.data.repository.SettingsRepository
 import com.yunmei.vibe.ui.component.miuix.ScaleDialog
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.theme.keyColorOptions
@@ -317,6 +319,33 @@ fun ThemeSettingsMiuix(
                                 checked = uiState.enableBlur,
                                 onCheckedChange = {
                                     actions.onSetEnableBlur(it)
+                                }
+                            )
+                        }
+                        // 「顶栏模糊样式」仅在模糊开启时出现；渐进档在 API 33 以下由 BlurExt 自动回退高斯，
+                        // 因此这里不按版本隐藏，避免用户在受支持的机器上找不到入口。
+                        AnimatedVisibility(visible = uiState.enableBlur) {
+                            OverlayDropdownPreference(
+                                title = stringResource(R.string.settings_blur_style),
+                                summary = stringResource(R.string.settings_blur_style_summary),
+                                items = listOf(
+                                    stringResource(R.string.settings_blur_style_gaussian),
+                                    stringResource(R.string.settings_blur_style_progressive),
+                                ),
+                                startAction = {
+                                    Icon(
+                                        Icons.Rounded.Tune,
+                                        modifier = Modifier.padding(end = 6.dp),
+                                        contentDescription = stringResource(R.string.settings_blur_style),
+                                        tint = colorScheme.onBackground
+                                    )
+                                },
+                                selectedIndex = if (uiState.blurStyle == SettingsRepository.BLUR_STYLE_PROGRESSIVE) 1 else 0,
+                                onSelectedIndexChange = { index ->
+                                    actions.onSetBlurStyle(
+                                        if (index == 1) SettingsRepository.BLUR_STYLE_PROGRESSIVE
+                                        else SettingsRepository.BLUR_STYLE_GAUSSIAN
+                                    )
                                 }
                             )
                         }

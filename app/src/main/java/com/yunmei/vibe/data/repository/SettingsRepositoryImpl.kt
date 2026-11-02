@@ -82,6 +82,12 @@ class SettingsRepositoryImpl : SettingsRepository {
         }
         set(value) = prefs.edit { putBoolean(SettingsPrefs.ENABLE_BLUR, value) }
 
+    /** 顶栏模糊样式；默认高斯。渐进档需要 RuntimeShader（API 33+），由 BlurExt 在渲染时兜底回退。 */
+    override var blurStyle: String
+        get() = prefs.getString(SettingsPrefs.BLUR_STYLE, SettingsRepository.BLUR_STYLE_GAUSSIAN)
+            ?: SettingsRepository.BLUR_STYLE_GAUSSIAN
+        set(value) = prefs.edit { putString(SettingsPrefs.BLUR_STYLE, value) }
+
     override var enableFloatingBottomBar: Boolean
         get() = prefs.getBoolean("enable_floating_bottom_bar", true)
         set(value) = prefs.edit { putBoolean("enable_floating_bottom_bar", value) }

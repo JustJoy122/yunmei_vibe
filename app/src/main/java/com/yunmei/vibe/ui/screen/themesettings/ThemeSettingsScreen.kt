@@ -73,6 +73,7 @@ fun ThemeSettingsScreen() {
         onSetColorStyle = viewModel::setColorStyle,
         onSetColorSpec = viewModel::setColorSpec,
         onSetEnableBlur = viewModel::setEnableBlur,
+        onSetBlurStyle = viewModel::setBlurStyle,
         onSetEnableFloatingBottomBar = viewModel::setEnableFloatingBottomBar,
         onSetEnableFloatingBottomBarBlur = viewModel::setEnableFloatingBottomBarBlur,
         onSetEnablePredictiveBack = { enabled ->

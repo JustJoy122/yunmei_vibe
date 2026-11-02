@@ -1,6 +1,7 @@
 package com.yunmei.vibe.ui
 
 import androidx.compose.runtime.mutableIntStateOf
+import com.yunmei.vibe.data.repository.SettingsRepository
 import com.yunmei.vibe.ui.navigation.PendingLockImport
 import top.yukonga.miuix.kmp.utils.PagerFlingTrackerConnection
 import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
@@ -88,6 +89,7 @@ import com.yunmei.vibe.ui.screen.themesettings.ThemeSettingsScreen
 import com.yunmei.vibe.ui.screen.themesettings.prewarmThemePaletteCache
 import com.yunmei.vibe.ui.theme.LocalColorMode
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
+import com.yunmei.vibe.ui.theme.LocalUseProgressiveBlur
 import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBar
 import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBarBlur
 import com.yunmei.vibe.ui.theme.TemplateTheme
@@ -202,6 +204,7 @@ class MainActivity : ComponentActivity() {
                 LocalDensity provides density,
                 LocalColorMode provides appSettings.colorMode.value,
                 LocalEnableBlur provides uiState.enableBlur,
+                LocalUseProgressiveBlur provides (uiState.blurStyle == SettingsRepository.BLUR_STYLE_PROGRESSIVE),
                 LocalEnableFloatingBottomBar provides uiState.enableFloatingBottomBar,
                 LocalEnableFloatingBottomBarBlur provides uiState.enableFloatingBottomBarBlur,
                 LocalUiMode provides uiMode,

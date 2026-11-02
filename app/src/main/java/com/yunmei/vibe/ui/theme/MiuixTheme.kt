@@ -3,6 +3,7 @@ package com.yunmei.vibe.ui.theme
 import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -11,12 +12,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowInsetsControllerCompat
 import com.materialkolor.dynamiccolor.ColorSpec
+import com.materialkolor.rememberDynamicColorScheme
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
+import top.yukonga.miuix.kmp.theme.Colors
 import top.yukonga.miuix.kmp.theme.LocalContentColor
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.ThemeColorSpec
 import top.yukonga.miuix.kmp.theme.ThemeController
 import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
+import top.yukonga.miuix.kmp.theme.darkColorScheme
+import top.yukonga.miuix.kmp.theme.lightColorScheme
 
 @SuppressLint("NewApi")
 @Composable
@@ -53,17 +58,57 @@ fun MiuixTemplateTheme(
         else -> null
     }
 
+    // 低版本（< Android 12）没有系统动态取色。Miuix 的 Monet 模式在这类机型上实测不保证
+    // 用传入的 keyColor 生成配色（强调色看起来“没生效”），所以这里彻底绕开库内部的莫奈分支：
+    // 自己用 material-kolor 从强调色推导明暗两套 MD3 配色，再映射成 Miuix 的 Colors，
+    // 通过 lightColors/darkColors 直接覆盖，色彩模式回落到普通 Light/Dark。
+    val customSeed = if (!isDynamicColorSupported && appSettings.keyColor != 0) {
+        Color(appSettings.keyColor)
+    } else {
+        null
+    }
+    val seedLightScheme: ColorScheme? = customSeed?.let { seed ->
+        rememberDynamicColorScheme(
+            seedColor = seed,
+            isDark = false,
+            isAmoled = false,
+            style = colorStyle,
+            specVersion = colorSpec.effectiveFor(colorStyle),
+        )
+    }
+    val seedDarkScheme: ColorScheme? = customSeed?.let { seed ->
+        rememberDynamicColorScheme(
+            seedColor = seed,
+            isDark = true,
+            isAmoled = appSettings.amoled,
+            style = colorStyle,
+            specVersion = colorSpec.effectiveFor(colorStyle),
+        )
+    }
+    val customLightColors = seedLightScheme?.let { scheme ->
+        remember(scheme) { lightColorScheme().mappedFrom(scheme) }
+    }
+    val customDarkColors = seedDarkScheme?.let { scheme ->
+        remember(scheme) { darkColorScheme().mappedFrom(scheme) }
+    }
+
     val controller = remember(
         appSettings.colorMode,
         appSettings.keyColor,
+        appSettings.amoled,
         darkTheme,
         miuixPaletteStyle,
         miuixColorSpec,
+        customLightColors,
+        customDarkColors,
     ) {
         ThemeController(
             when {
+                // 低版本手选了强调色：用自建色板，不再让库走莫奈分支。
+                customLightColors != null && customDarkColors != null ->
+                    if (darkTheme) ColorSchemeMode.Dark else ColorSchemeMode.Light
                 // 低版本没有系统动态取色资源：勾了莫奈又没有手选强调色时回落到普通深浅色（静态色板），
-                // 避免 Miuix 的 Monet 模式去读不存在的系统动态色资源；手选了强调色则保留莫奈模式。
+                // 避免 Miuix 的 Monet 模式去读不存在的系统动态色资源。
                 appSettings.colorMode.isMonet && !isDynamicColorSupported && appSettings.keyColor == 0 ->
                     if (darkTheme) ColorSchemeMode.Dark else ColorSchemeMode.Light
                 appSettings.colorMode == ColorMode.SYSTEM -> ColorSchemeMode.System
@@ -73,6 +118,8 @@ fun MiuixTemplateTheme(
                 appSettings.colorMode == ColorMode.MONET_LIGHT -> ColorSchemeMode.MonetLight
                 else -> ColorSchemeMode.MonetDark
             },
+            lightColors = customLightColors ?: lightColorScheme(),
+            darkColors = customDarkColors ?: darkColorScheme(),
             keyColor = resolvedKeyColor,
             isDark = darkTheme,
             paletteStyle = miuixPaletteStyle,
@@ -95,6 +142,51 @@ fun MiuixTemplateTheme(
             ) {
                 content()
             }
-        }
+        },
     )
 }
+
+/**
+ * 把 material-kolor 推导出的 MD3 配色映射到 Miuix 的 [Colors]。
+ *
+ * 只覆盖与品牌色相关的角色，其余（禁用态、滑杆、窗口遮罩等）沿用默认色板的取值，
+ * 避免低版本覆盖了强调色却在禁用态/对比度上出现新的问题。
+ */
+private fun Colors.mappedFrom(colorScheme: ColorScheme): Colors = copy(
+    primary = colorScheme.primary,
+    onPrimary = colorScheme.onPrimary,
+    primaryVariant = colorScheme.primaryContainer,
+    onPrimaryVariant = colorScheme.onPrimaryContainer,
+    primaryContainer = colorScheme.primaryContainer,
+    onPrimaryContainer = colorScheme.onPrimaryContainer,
+    secondary = colorScheme.secondary,
+    onSecondary = colorScheme.onSecondary,
+    secondaryVariant = colorScheme.secondaryContainer,
+    onSecondaryVariant = colorScheme.onSecondaryContainer,
+    secondaryContainer = colorScheme.secondaryContainer,
+    onSecondaryContainer = colorScheme.onSecondaryContainer,
+    tertiaryContainer = colorScheme.tertiaryContainer,
+    onTertiaryContainer = colorScheme.onTertiaryContainer,
+    error = colorScheme.error,
+    onError = colorScheme.onError,
+    errorContainer = colorScheme.errorContainer,
+    onErrorContainer = colorScheme.onErrorContainer,
+    background = colorScheme.background,
+    onBackground = colorScheme.onBackground,
+    onBackgroundVariant = colorScheme.onSurfaceVariant,
+    surface = colorScheme.surface,
+    onSurface = colorScheme.onSurface,
+    surfaceVariant = colorScheme.surfaceVariant,
+    onSurfaceSecondary = colorScheme.onSurfaceVariant,
+    onSurfaceVariantSummary = colorScheme.onSurfaceVariant,
+    onSurfaceVariantActions = colorScheme.onSurfaceVariant,
+    surfaceContainer = colorScheme.surfaceContainer,
+    onSurfaceContainer = colorScheme.onSurface,
+    onSurfaceContainerVariant = colorScheme.onSurfaceVariant,
+    surfaceContainerHigh = colorScheme.surfaceContainerHigh,
+    onSurfaceContainerHigh = colorScheme.onSurface,
+    surfaceContainerHighest = colorScheme.surfaceContainerHighest,
+    onSurfaceContainerHighest = colorScheme.onSurface,
+    outline = colorScheme.outline,
+    dividerLine = colorScheme.outlineVariant,
+)

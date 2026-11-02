@@ -64,6 +64,9 @@ fun BottomBarMiuix(
             NavigationBar(
                 modifier = modifier,
                 color = if (blurBackdrop != null) Color.Transparent else MiuixTheme.colorScheme.surface,
+                // 与悬浮底栏保持一致：悬浮态没有顶部分割线，这里也关掉库自带的 showDivider，
+                // 避免切换「悬浮底栏」时多出一条线。
+                showDivider = false,
                 content = {
                     items.forEachIndexed { index, item ->
                         NavigationBarItem(

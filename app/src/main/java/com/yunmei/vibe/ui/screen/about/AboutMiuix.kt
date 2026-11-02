@@ -313,9 +313,11 @@ private fun AboutContent(
                         contentDescription = null,
                     )
                 } else {
-                    // 回退：系统安装的 App 图标（自适应图标）。
+                    // 回退：矢量前景图。不能用 R.mipmap.ic_launcher——那几份是 <adaptive-icon>
+                    // 文档，painterResource 只接受 <vector> 或位图，低版本走进这里会抛
+                    // IllegalArgumentException: Only VectorDrawables and rasterized asset types…
                     Image(
-                        painter = painterResource(id = R.mipmap.ic_launcher),
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
                         modifier = Modifier.size(80.dp),
                         contentDescription = state.appName,
                     )

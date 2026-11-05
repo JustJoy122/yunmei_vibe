@@ -379,101 +379,100 @@ fun ThemeSettingsMaterial(
                     stringResource(R.string.settings_predictive_back_direction_always_left),
                 )
 
-
-                    // 预测性返回：全版本显示。Android 14 以下没有系统跟手预览，summary 里说明差异。
-                    SegmentedColumn(
-                        modifier = Modifier.padding(top = 4.dp),
-                        content = listOf(
-                            {
-                                SegmentedSwitchItem(
-                                    icon = Icons.AutoMirrored.TwoTone.MenuOpen,
-                                    title = stringResource(id = R.string.settings_enable_predictive_back),
-                                    summary = stringResource(
-                                        id = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                            R.string.settings_enable_predictive_back_summary
-                                        } else {
-                                            R.string.settings_enable_predictive_back_summary_legacy
-                                        }
-                                    ),
-                                    checked = uiState.enablePredictiveBack,
-                                    onCheckedChange = actions.onSetEnablePredictiveBack
-                                )
-                            }
-                        )
-                    )
-
-                    AnimatedVisibility(visible = uiState.enablePredictiveBack) {
-                        // 动画样式 + 返回方向放进同一张 SegmentedColumn（与上方「色彩风格 / 色彩标准」完全同款结构）：
-                        // 两者是同一张卡里的相邻两行，各自把弹出菜单锚定在自己的行上，不会互相压盖；
-                        // 方向行隐藏时用 visibleLen 修正圆角分组，保证只剩一行时卡片圆角仍然正确。
-                        SegmentedColumn(
-                            modifier = Modifier.padding(top = 4.dp),
-                            visibleLen = if (currentAnimation == PredictiveBackAnimation.SCALE) 2 else 1,
-                            content = listOf(
-                                {
-                                    SegmentedDropdownItem(
-                                        icon = Icons.TwoTone.Description,
-                                        title = stringResource(R.string.settings_predictive_back_animation),
-                                        items = animationItems,
-                                        selectedIndex = animations.indexOf(currentAnimation).coerceAtLeast(0),
-                                        onItemSelected = { index ->
-                                            actions.onSetPredictiveBackAnimation(animations[index].value)
-                                        }
-                                    )
-                                },
-                                {
-                                    // 返回方向仅对「缩放」档生效，与上游 InstallerX 的显示逻辑一致。
-                                    AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
-                                        SegmentedDropdownItem(
-                                            icon = Icons.TwoTone.SwapHoriz,
-                                            title = stringResource(R.string.settings_predictive_back_direction),
-                                            items = directionItems,
-                                            selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
-                                            onItemSelected = { index ->
-                                                actions.onSetPredictiveBackExitDirection(directions[index].value)
-                                            }
-                                        )
+                // 预测性返回：全版本显示。Android 14 以下没有系统跟手预览，summary 里说明差异。
+                SegmentedColumn(
+                    modifier = Modifier.padding(top = 4.dp),
+                    content = listOf(
+                        {
+                            SegmentedSwitchItem(
+                                icon = Icons.AutoMirrored.TwoTone.MenuOpen,
+                                title = stringResource(id = R.string.settings_enable_predictive_back),
+                                summary = stringResource(
+                                    id = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                        R.string.settings_enable_predictive_back_summary
+                                    } else {
+                                        R.string.settings_enable_predictive_back_summary_legacy
                                     }
-                                },
+                                ),
+                                checked = uiState.enablePredictiveBack,
+                                onCheckedChange = actions.onSetEnablePredictiveBack
                             )
-                        )
-                    }
-
-                    // 横移返回手势 / 页面切换手势与系统版本无关：它们分别由 miuix-nav 与 pager 自己处理，
-                    // 低版本同样可用，因此不再藏在 API 34 判断里。
-                    SegmentedColumn(
-                        modifier = Modifier.padding(top = 4.dp),
-                        content = listOf(
-                            {
-                                SegmentedSwitchItem(
-                                    icon = Icons.TwoTone.Swipe,
-                                    title = stringResource(id = R.string.settings_enable_swipe_dismiss),
-                                    summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
-                                    checked = uiState.enableSwipeDismiss,
-                                    onCheckedChange = actions.onSetEnableSwipeDismiss,
-                                )
-                            },
-                        )
+                        }
                     )
+                )
 
+                AnimatedVisibility(visible = uiState.enablePredictiveBack) {
+                    // 动画样式 + 返回方向放进同一张 SegmentedColumn（与上方「色彩风格 / 色彩标准」完全同款结构）：
+                    // 两者是同一张卡里的相邻两行，各自把弹出菜单锚定在自己的行上，不会互相压盖；
+                    // 方向行隐藏时用 visibleLen 修正圆角分组，保证只剩一行时卡片圆角仍然正确。
                     SegmentedColumn(
                         modifier = Modifier.padding(top = 4.dp),
+                        visibleLen = if (currentAnimation == PredictiveBackAnimation.SCALE) 2 else 1,
                         content = listOf(
                             {
                                 SegmentedDropdownItem(
-                                    icon = Icons.TwoTone.ViewCarousel,
-                                    title = stringResource(id = R.string.settings_pager_gesture_mode),
-                                    items = listOf(
-                                        stringResource(id = R.string.settings_pager_gesture_native),
-                                        stringResource(id = R.string.settings_pager_gesture_cross_axis),
-                                        stringResource(id = R.string.settings_pager_gesture_ios_like),
-                                    ),
-                                    selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
-                                    onItemSelected = actions.onSetPagerInterceptionMode,
+                                    icon = Icons.TwoTone.Description,
+                                    title = stringResource(R.string.settings_predictive_back_animation),
+                                    items = animationItems,
+                                    selectedIndex = animations.indexOf(currentAnimation).coerceAtLeast(0),
+                                    onItemSelected = { index ->
+                                        actions.onSetPredictiveBackAnimation(animations[index].value)
+                                    }
                                 )
+                            },
+                            {
+                                // 返回方向仅对「缩放」档生效，与上游 InstallerX 的显示逻辑一致。
+                                AnimatedVisibility(visible = currentAnimation == PredictiveBackAnimation.SCALE) {
+                                    SegmentedDropdownItem(
+                                        icon = Icons.TwoTone.SwapHoriz,
+                                        title = stringResource(R.string.settings_predictive_back_direction),
+                                        items = directionItems,
+                                        selectedIndex = directions.indexOf(currentDirection).coerceAtLeast(0),
+                                        onItemSelected = { index ->
+                                            actions.onSetPredictiveBackExitDirection(directions[index].value)
+                                        }
+                                    )
+                                }
                             },
                         )
                     )
+                }
+
+                // 横移返回手势 / 页面切换手势与系统版本无关：它们分别由 miuix-nav 与 pager 自己处理，
+                // 低版本同样可用，因此不再藏在 API 34 判断里。
+                SegmentedColumn(
+                    modifier = Modifier.padding(top = 4.dp),
+                    content = listOf(
+                        {
+                            SegmentedSwitchItem(
+                                icon = Icons.TwoTone.Swipe,
+                                title = stringResource(id = R.string.settings_enable_swipe_dismiss),
+                                summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
+                                checked = uiState.enableSwipeDismiss,
+                                onCheckedChange = actions.onSetEnableSwipeDismiss,
+                            )
+                        },
+                    )
+                )
+
+                SegmentedColumn(
+                    modifier = Modifier.padding(top = 4.dp),
+                    content = listOf(
+                        {
+                            SegmentedDropdownItem(
+                                icon = Icons.TwoTone.ViewCarousel,
+                                title = stringResource(id = R.string.settings_pager_gesture_mode),
+                                items = listOf(
+                                    stringResource(id = R.string.settings_pager_gesture_native),
+                                    stringResource(id = R.string.settings_pager_gesture_cross_axis),
+                                    stringResource(id = R.string.settings_pager_gesture_ios_like),
+                                ),
+                                selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
+                                onItemSelected = actions.onSetPagerInterceptionMode,
+                            )
+                        },
+                    )
+                )
 
                 // 按模板逻辑：模糊/悬浮底栏/液态玻璃为 Miuix 主题独占（Material 底栏不使用
                 // FloatingBottomBar，Material 页面不使用 BlurredBar），Material 模式下不显示。

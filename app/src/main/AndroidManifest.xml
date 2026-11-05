@@ -93,8 +93,9 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="yunmeiui" android:host="lock_info" />
-                <data android:scheme="yunmeiui" android:host="lock_id" />
+                <data android:scheme="yunmeiui" />
+                <data android:host="lock_info" />
+                <data android:host="lock_id" />
             </intent-filter>
         </activity>
         <activity

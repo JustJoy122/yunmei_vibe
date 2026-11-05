@@ -55,7 +55,7 @@ private fun checkReleaseChannel(): LatestVersionInfo {
             .execute()
             .use { response ->
                 if (!response.isSuccessful) return@use empty
-                val body = response.body?.string().orEmpty()
+                val body = response.body.string()
                 if (body.isBlank()) return@use empty
 
                 val json = JSONObject(body)
@@ -99,7 +99,7 @@ private fun checkDebugChannel(): LatestVersionInfo {
             .execute()
             .use { response ->
                 if (!response.isSuccessful) return@use empty
-                val body = response.body?.string().orEmpty()
+                val body = response.body.string()
                 if (body.isBlank()) return@use empty
 
                 val releases = JSONArray(body)

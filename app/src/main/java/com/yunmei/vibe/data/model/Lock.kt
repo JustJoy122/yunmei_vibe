@@ -28,10 +28,15 @@ data class Lock(
     val lockTypeId: Int? = null,
     /**
      * 该型号是否要求 AES 加密协议，由 locktype/all 的 aesSupport 按 lockTypeId 匹配得到。
-     * true = 官方客户端会再套一层 AES，当前版本未实现，开锁前直接拦截；
+     * true = 官方客户端会再套一层 D2D3 加密帧，需要 [customAesKey] 才能开门；
      * false / null = 继续走普通 OPEN 帧（null 表示型号未知或型号能力表没取到）。
      */
     val aesSupport: Boolean? = null,
+    /**
+     * AES 型号的自定义密钥（32 位十六进制，对应官方前端 AesFrameCodec 里的固定 KEY）。
+     * 仅当 [aesSupport] 为 true 时使用；为空表示用户还没设置，开门前会被拦截并提示去设置。
+     */
+    val customAesKey: String? = null,
 ) {
 
     val isUsable: Boolean

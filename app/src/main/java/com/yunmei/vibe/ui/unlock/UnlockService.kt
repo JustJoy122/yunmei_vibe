@@ -12,6 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
+import com.yunmei.vibe.data.ble.UnlockCooldown
 import com.yunmei.vibe.data.ble.UnlockManager
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.Lock
@@ -134,6 +135,13 @@ class UnlockService : Service() {
         }
         if (!lock.isUsable) {
             finishWithFailure(getString(R.string.unlock_lock_unusable))
+            return
+        }
+        // 8 秒开门冷却（官方 openDelay）：快捷方式、通知按钮、小组件都走这里，统一拦住。
+        val cooldownMs = UnlockCooldown.remainingMs()
+        if (cooldownMs > 0L) {
+            val seconds = ((cooldownMs + 999L) / 1000L).toInt()
+            finishWithFailure(getString(R.string.unlock_cooldown_wait, seconds))
             return
         }
         // 打开门之前先刷新一次 secret：本地保存的可能是首次添加时的旧快照，服务端会轮换。

@@ -10,6 +10,8 @@ import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 import androidx.compose.foundation.layout.PaddingValues
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import android.content.ClipData
@@ -44,12 +46,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.twotone.ContentCopy
 import androidx.compose.material.icons.twotone.Delete
+import androidx.compose.material.icons.twotone.Key
 import androidx.compose.material.icons.twotone.QrCode2
 import androidx.compose.material.icons.twotone.Share
 import androidx.compose.material.icons.twotone.Star
@@ -119,6 +123,7 @@ fun LockDetailScreen(label: String) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var showQr by rememberSaveable { mutableStateOf(false) }
+    var showAesKey by rememberSaveable { mutableStateOf(false) }
 
     LifecycleResumeEffect(Unit) {
         viewModel.refresh(label)
@@ -170,11 +175,24 @@ fun LockDetailScreen(label: String) {
         },
         onShare = { shareLock(current) },
         onCopyLink = { copyLink(current) },
+        onShowAesKey = { showAesKey = true },
+        onSaveAesKey = { value -> viewModel.setCustomAesKey(value) },
     )
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> LockDetailScreenMiuix(current, uiState.isDefault, uiState.accountSaved, showQr, onToggleQr = { showQr = !showQr }, actions)
         UiMode.Material -> LockDetailScreenMaterial(current, uiState.isDefault, uiState.accountSaved, showQr, onToggleQr = { showQr = !showQr }, actions)
+    }
+
+    if (showAesKey) {
+        AesKeyDialog(
+            initialValue = current.customAesKey.orEmpty(),
+            onDismiss = { showAesKey = false },
+            onConfirm = { value ->
+                showAesKey = false
+                actions.onSaveAesKey(value)
+            },
+        )
     }
 }
 
@@ -183,6 +201,10 @@ private data class LockDetailActions(
     val onDelete: () -> Unit,
     val onShare: () -> Unit,
     val onCopyLink: () -> Unit,
+    /** 打开「设置 AES 密钥」弹窗（仅 AES 型号门锁显示该入口）。 */
+    val onShowAesKey: () -> Unit,
+    /** 提交 AES 密钥（32 位十六进制，空串表示清除）。 */
+    val onSaveAesKey: (String) -> Unit,
 )
 
 @Composable
@@ -292,6 +314,30 @@ private fun LockDetailScreenMaterial(
                     )
                 }
             )
+
+            // AES 型号门锁的密钥入口：只在服务端标记 aesSupport 时出现，
+            // 官方把这对 Key/IV 写死在客户端里，本应用改为由用户填写本机保存。
+            if (lock.aesSupport == true) {
+                SegmentedColumn(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    content = listOf {
+                        SegmentedListItem(
+                            onClick = actions.onShowAesKey,
+                            headlineContent = { Text(stringResource(R.string.lock_detail_aes_key)) },
+                            supportingContent = {
+                                val configured = !lock.customAesKey.isNullOrBlank()
+                                Text(
+                                    stringResource(
+                                        if (configured) R.string.lock_detail_aes_key_configured
+                                        else R.string.lock_detail_aes_key_unset
+                                    )
+                                )
+                            },
+                            leadingContent = { Icon(Icons.TwoTone.Key, null) },
+                        )
+                    }
+                )
+            }
 
             // 「分享」分组（组标题：分享）：系统分享 / 复制链接 / 生成二维码。
             // 生成二维码行必须紧贴下方二维码面板（手风琴式），因此把三行合并到同一组后再放面板。
@@ -451,6 +497,32 @@ private fun LockDetailScreenMiuix(
                         checked = isDefault,
                         onCheckedChange = actions.onSetDefault,
                     )
+                }
+
+                // AES 门锁的密钥入口（仅 aesSupport 门锁显示），与 Material 分支同一条件。
+                if (lock.aesSupport == true) {
+                    Card(
+                        modifier = Modifier
+                            .padding(top = 12.dp)
+                            .fillMaxWidth(),
+                    ) {
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_aes_key),
+                            summary = stringResource(
+                                if (lock.customAesKey.isNullOrBlank()) R.string.lock_detail_aes_key_unset
+                                else R.string.lock_detail_aes_key_configured
+                            ),
+                            startAction = {
+                                MiuixIcon(
+                                    imageVector = Icons.Filled.Key,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(R.string.lock_detail_aes_key),
+                                    tint = colorScheme.onBackground,
+                                )
+                            },
+                            onClick = actions.onShowAesKey,
+                        )
+                    }
                 }
 
                 // 「分享」分组小标题（间距规则：标题上 12 / 下 12，与卡片 top=12 的节奏一致）。
@@ -654,4 +726,74 @@ private fun rememberShareQrImage(lock: Lock): ImageBitmap? {
         }
     }
     return image
+}
+
+/**
+ * AES 密钥输入弹窗（双主题）：沿用备份页 `PasswordDialog` 的同一套组件
+ * （Miuix = OverlayDialog + TextField，Material = AlertDialog + OutlinedTextField）。
+ *
+ * 只做格式提示，不做十六进制校验阻断——非法值保存后开门时会被拦下并提示重新设置，
+ * 这样用户可以先粘贴再修改，不会在弹窗里卡住。
+ */
+@Composable
+private fun AesKeyDialog(
+    initialValue: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var value by remember(initialValue) { mutableStateOf(initialValue) }
+    val title = stringResource(R.string.lock_detail_aes_key)
+    val hint = stringResource(R.string.lock_detail_aes_key_hint)
+    if (LocalUiMode.current == UiMode.Miuix) {
+        OverlayDialog(
+            show = true,
+            title = title,
+            summary = hint,
+            onDismissRequest = onDismiss,
+            content = {
+                MiuixTextField(
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    value = value,
+                    maxLines = 1,
+                    onValueChange = { value = it },
+                )
+                Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                    MiuixTextButton(
+                        text = stringResource(R.string.cancel),
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(20.dp))
+                    MiuixTextButton(
+                        text = stringResource(R.string.confirm),
+                        onClick = { onConfirm(value.trim()) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            },
+        )
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(title) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = { value = it },
+                        singleLine = true,
+                        label = { Text(hint) },
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { onConfirm(value.trim()) }) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            },
+        )
+    }
 }

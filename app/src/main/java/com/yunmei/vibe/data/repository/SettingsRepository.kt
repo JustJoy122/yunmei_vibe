@@ -21,6 +21,9 @@ interface SettingsRepository {
     var enableFloatingBottomBarBlur: Boolean
     var pageScale: Float
 
+    /** 开门成功后是否上传开门记录（默认 true；关掉只影响上传，不影响开门本身）。 */
+    var enableRecordUpload: Boolean
+
     companion object {
         /** 顶栏模糊样式取值：均匀高斯。 */
         const val BLUR_STYLE_GAUSSIAN = "gaussian"

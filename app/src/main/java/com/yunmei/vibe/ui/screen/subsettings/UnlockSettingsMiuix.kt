@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material3.Icon
@@ -120,6 +121,20 @@ fun UnlockSettingsMiuix(
                                     },
                                     checked = state.settings.autoExit,
                                     onCheckedChange = actions.onSetAutoExit
+                                )
+                                SwitchPreference(
+                                    title = stringResource(id = R.string.settings_enable_record_upload),
+                                    summary = stringResource(id = R.string.settings_enable_record_upload_summary),
+                                    startAction = {
+                                        Icon(
+                                            Icons.Rounded.CloudUpload,
+                                            modifier = Modifier.padding(end = 6.dp),
+                                            contentDescription = stringResource(id = R.string.settings_enable_record_upload),
+                                            tint = colorScheme.onBackground
+                                        )
+                                    },
+                                    checked = state.recordUpload,
+                                    onCheckedChange = actions.onSetRecordUpload
                                 )
                             }
                         }

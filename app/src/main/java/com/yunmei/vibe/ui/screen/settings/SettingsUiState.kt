@@ -32,6 +32,8 @@ data class SettingsUiState(
     val pageScale: Float = 1.0f,
     /** 加密存储是否可用（设置页内联提示用，避免 Composable 直接读 AppContainer）。 */
     val secureStoreAvailable: Boolean = true,
+    /** 开门成功后是否把记录上报到学校服务（官方 lockrecord/savelockrecord）。 */
+    val enableRecordUpload: Boolean = true,
 )
 
 /**

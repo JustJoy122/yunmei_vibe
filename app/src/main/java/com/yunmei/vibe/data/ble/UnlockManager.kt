@@ -16,6 +16,7 @@ import com.clj.fastble.exception.BleException
 import com.clj.fastble.scan.BleScanRuleConfig
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.Lock
+import com.yunmei.vibe.data.repository.UnlockRecordReporter
 import java.io.ByteArrayOutputStream
 import java.util.UUID
 import kotlin.math.roundToInt
@@ -72,6 +73,13 @@ class UnlockManager(context: Context) {
     private var pendingOffset = 0
     private val rxBuffer = ByteArrayOutputStream()
     private var responseTimer: Runnable? = null
+
+    // ── 开门记录上报 ─────────────────────────────────────────────────────────
+    // 官方在收到 A7 确认后立即异步上报；这里记录本次发起时刻与最近一次回传电量，
+    // 成功时交给 UnlockRecordReporter 组装并上报（失败只打日志，不补传）。
+    private var attemptStartMs = 0L
+    private var lastBattery: Int? = null
+    private val recordReporter = UnlockRecordReporter(appContext)
 
     // ── 看门狗 ───────────────────────────────────────────────────────────────
     // 卡在某个百分比（最常见是 20%）的本质是「该阶段之后再也没有回调」：蓝牙连接回调丢失、
@@ -140,10 +148,10 @@ class UnlockManager(context: Context) {
 
     fun openDoor(lock: Lock, quickConnect: Boolean, listener: Listener) {
 
-        // AES 型号门锁在官方客户端里会再套一层 D2D3 加密帧，当前版本尚未实现：
-        // 直接拦截，避免把明文 OPEN 帧发给需要加密的门锁造成无响应或误动作。
-        if (lock.aesSupport == true) {
-            listener.onFailure(appContext.getString(R.string.unlock_aes_unsupported))
+        // AES 型号门锁在官方客户端里会再套一层 D2D3 加密帧：
+        // 用户没填密钥（或格式不对）时直接拦截，避免把明文 OPEN 帧发给需要加密的门锁。
+        if (lock.aesSupport == true && !AesFrameCodec.isValidKey(lock.customAesKey.orEmpty())) {
+            listener.onFailure(appContext.getString(R.string.unlock_aes_key_required))
             return
         }
         if (!lock.isUsable) {
@@ -164,6 +172,9 @@ class UnlockManager(context: Context) {
 
         completed = false
         resetIoState()
+        // 记录本次开门起点与电量：成功上报时用来算时长、填 el 字段。
+        attemptStartMs = System.currentTimeMillis()
+        lastBattery = null
         val guarded = GuardedListener(listener)
         activeGuarded = guarded
         // 起点即计时：即使第一个回调就丢，也不会永久停在 20%。
@@ -272,7 +283,11 @@ class UnlockManager(context: Context) {
             }
 
             override fun onCharacteristicChanged(data: ByteArray) {
-                parseBattery(data)?.let { listener.onBattery(it) }
+                parseBattery(data)?.let { percent ->
+                    // 记下本次电量：开门记录上报的 el 字段要用。
+                    lastBattery = percent
+                    listener.onBattery(percent)
+                }
                 handleIncoming(data, listener)
             }
         })
@@ -281,7 +296,7 @@ class UnlockManager(context: Context) {
     private fun sendMessage(lock: Lock, device: BleDevice, listener: Listener) {
         writeLock = lock
         writeDevice = device
-        pendingFrame = buildUnlockFrame(lock.secret)
+        pendingFrame = buildFrame(lock)
         pendingOffset = 0
         listener.onProgress(UnlockProgress.SENDING, appContext.getString(R.string.unlock_sending))
         sendNextChunk(listener)
@@ -387,16 +402,30 @@ class UnlockManager(context: Context) {
         if (consumed < bytes.size) rxBuffer.write(bytes, consumed, bytes.size - consumed)
     }
 
-    /** 解析一帧完整回传：只有 A7 动作确认与密钥失效是可识别的明确结果。 */
+    /** 解析一帧完整回传：AES 型号的 D2D3 外层先解出明文 D0 帧，再按普通帧处理。 */
     private fun dispatchFrame(frame: ByteArray, listener: Listener) {
         if (completed) return
-        if ((frame[0].toInt() and 0xFF) != 0xD0) {
-            // 只发普通帧却收到加密响应，说明这次开门的能力判断与实际不符。
+        val plainFrame = if ((frame[0].toInt() and 0xFF) == 0xD2) {
+            // 收到加密响应：必须用本把门锁的密钥解出明文，否则无法判断动作结果。
+            val key = writeLock?.customAesKey.orEmpty()
+            if (!AesFrameCodec.isValidKey(key)) {
+                listener.onFailure(appContext.getString(R.string.unlock_error_encrypted_response))
+                return
+            }
+            AesFrameCodec.decryptFrame(frame, key) ?: run {
+                listener.onFailure(appContext.getString(R.string.unlock_error_encrypted_response))
+                return
+            }
+        } else {
+            frame
+        }
+        if (plainFrame.isEmpty() || (plainFrame[0].toInt() and 0xFF) != 0xD0) {
+            // 只发普通帧却收到无法识别的响应，说明这次开门的能力判断与实际不符。
             listener.onFailure(appContext.getString(R.string.unlock_error_encrypted_response))
             return
         }
-        val action = frame[2].toInt() and 0xFF
-        val payload = String(frame, 3, frame.size - 3, Charsets.US_ASCII)
+        val action = plainFrame[2].toInt() and 0xFF
+        val payload = String(plainFrame, 3, plainFrame.size - 3, Charsets.US_ASCII)
         when {
             payload == "SECRET_KEY_FAIL" || payload == "SECRET_KEY_FAI" ->
                 listener.onFailure(appContext.getString(R.string.unlock_secret_invalid))
@@ -408,11 +437,25 @@ class UnlockManager(context: Context) {
                 if (scanMode && device != null && opened != null) {
                     onMacDiscovered?.invoke(opened, device.mac)
                 }
+                // 门锁已执行开门：打冷却点（所有入口共用）并异步上报记录。
+                UnlockCooldown.markSuccess()
+                if (opened != null) {
+                    recordReporter.report(opened, attemptStartMs, lastBattery)
+                }
                 listener.onProgress(UnlockProgress.ACK, appContext.getString(R.string.unlock_progress_ack))
                 listener.onSuccess()
             }
             // A5 是密码新增回应，其它未知动作都不算开门结果，继续等待。
         }
+    }
+
+    /** 按门锁能力封装待下发帧：AES 型号在明文 OPEN 帧外再套一层 D2D3。 */
+    private fun buildFrame(lock: Lock): ByteArray {
+        val plainFrame = buildUnlockFrame(lock.secret)
+        if (lock.aesSupport != true) return plainFrame
+        val key = lock.customAesKey.orEmpty()
+        if (!AesFrameCodec.isValidKey(key)) return plainFrame
+        return AesFrameCodec.encryptFrame(plainFrame, key)
     }
 
     private fun buildUnlockFrame(secret: String): ByteArray {

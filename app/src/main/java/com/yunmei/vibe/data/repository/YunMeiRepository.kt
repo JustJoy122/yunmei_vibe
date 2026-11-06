@@ -1,11 +1,14 @@
 package com.yunmei.vibe.data.repository
 
 import android.content.Context
+import android.os.Build
+import com.yunmei.vibe.BuildConfig
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.data.model.LoginUser
 import com.yunmei.vibe.data.model.SchoolEntry
+import com.yunmei.vibe.data.model.UnlockRecord
 import com.yunmei.vibe.data.network.YunMeiApiClient
 import com.yunmei.vibe.data.security.Md5
 import kotlinx.coroutines.CancellationException
@@ -251,6 +254,43 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         // 其余异常按「刷新失败」处理，交给调用方沿用本地门锁。
         if (error is CancellationException) throw error
         null
+    }
+
+    /**
+     * 上报一次开门记录（学校服务 `lockrecord/savelockrecord`）。
+     *
+     * 与签到/取码一样先切到学校 token 再调用；整体放在 `runCatching` 里，
+     * 网络/服务端失败只返回 false，绝不影响已经成功的开门结果。
+     *
+     * @return 服务端是否接受（`success` 字段）；任何异常都返回 false。
+     */
+    suspend fun saveUnlockRecord(record: UnlockRecord, deviceId: String): Boolean = mutex.withLock {
+        val school = findSchool(record.schoolNo)
+        applySchoolAuth(school, requireUserId())
+        runCatching {
+            client.api(requireServerUrl(school)).saveLockRecord(
+                isDel = 0,
+                schoolNo = record.schoolNo,
+                lockNo = record.lockNo,
+                userName = record.userName,
+                lockDevice = deviceId,
+                lockSuccess = if (record.success) 1 else 0,
+                lockResult = record.resultJson,
+                lockDuration = record.durationSeconds,
+                lockType = 1,
+                appVersion = BuildConfig.VERSION_NAME,
+                el = record.battery,
+                lockTime = record.lockTime,
+                newPwd = record.newPwd,
+                phoneBrand = Build.MANUFACTURER.orEmpty(),
+                phoneModel = Build.MODEL.orEmpty(),
+                phonePlatform = "Android",
+                phonePlatformVersion = Build.VERSION.RELEASE.orEmpty(),
+            ).success
+        }.getOrElse { error ->
+            if (error is CancellationException) throw error
+            false
+        }
     }
 
     private suspend fun findSchool(schoolNo: String): SchoolEntry {

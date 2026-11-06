@@ -182,7 +182,6 @@
     <string name="settings_enable_blur">模糊</string>
     <string name="settings_enable_blur_summary">启用顶栏和底栏的模糊效果</string>
     <string name="settings_blur_style">顶栏模糊样式</string>
-    <string name="settings_blur_style_summary">高斯：均匀模糊；渐进：渐变模糊</string>
     <string name="settings_blur_style_gaussian">高斯</string>
     <string name="settings_blur_style_progressive">渐进</string>
     <string name="settings_floating_bottom_bar">悬浮底栏</string>
@@ -332,5 +331,12 @@
     <string name="settings_group_unlock">开锁</string>
     <string name="settings_group_code_sign">取码与打卡</string>
     <string name="settings_group_lock_behavior">门锁行为</string>
-    <string name="unlock_aes_unsupported">暂不支持该加密型号门锁，请在 GitHub 反馈</string>
+    <string name="settings_enable_record_upload">上传开门记录</string>
+    <string name="settings_enable_record_upload_summary">开门成功后把这次记录上报到学校服务</string>
+    <string name="unlock_aes_key_required">该门锁需要 AES 密钥，请先在门锁详情页设置</string>
+    <string name="lock_detail_aes_key">设置 AES 密钥</string>
+    <string name="lock_detail_aes_key_configured">已设置</string>
+    <string name="lock_detail_aes_key_unset">未设置，该门锁暂时无法开门</string>
+    <string name="lock_detail_aes_key_hint">32 位十六进制密钥</string>
+    <string name="unlock_cooldown_wait">开门成功后再次开门间隔不能小于 %1$d 秒</string>
 </resources>

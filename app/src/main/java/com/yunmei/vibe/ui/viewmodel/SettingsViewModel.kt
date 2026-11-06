@@ -66,6 +66,7 @@ class SettingsViewModel(
                     enableFloatingBottomBarBlur = repo.enableFloatingBottomBarBlur,
                     pageScale = repo.pageScale,
                     secureStoreAvailable = container.secureStoreAvailable,
+                    enableRecordUpload = repo.enableRecordUpload,
                 )
             }
             val (settings, accounts) = functional
@@ -230,6 +231,12 @@ class SettingsViewModel(
     fun setHideSign(value: Boolean) = setSetting { container.appPreferences.setHideSign(value) }
 
     fun setHideCode(value: Boolean) = setSetting { container.appPreferences.setHideCode(value) }
+
+    /** 开门记录上报开关：走 SettingsRepository（与外观开关同一存储层）。 */
+    fun setEnableRecordUpload(enabled: Boolean) {
+        repo.enableRecordUpload = enabled
+        _uiState.update { it.copy(enableRecordUpload = enabled) }
+    }
 
     fun setSignLocationMode(value: String) = setSetting { container.appPreferences.setSignLocationMode(value) }
 

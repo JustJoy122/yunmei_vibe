@@ -48,4 +48,32 @@ interface YunMeiApi {
     @FormUrlEncoded
     @POST("lockpassword/getlockpwdbylockno")
     suspend fun getLockPassword(@Field("lockNo") lockNo: String): LockPasswordResponse
+
+    /**
+     * 开门记录上报（学校服务，官方 `lockrecord/savelockrecord`）。
+     *
+     * 字段名与官方前端逐字一致：服务端只做业务校验、不校验签名，
+     * 因此这里原样透传，缺少的字段（本应用没有的楼栋/房间）由调用方传空串。
+     */
+    @FormUrlEncoded
+    @POST("lockrecord/savelockrecord")
+    suspend fun saveLockRecord(
+        @Field("isDel") isDel: Int,
+        @Field("schoolNo") schoolNo: String,
+        @Field("lockNo") lockNo: String,
+        @Field("userName") userName: String,
+        @Field("lockDevice") lockDevice: String,
+        @Field("lockSuccess") lockSuccess: Int,
+        @Field("lockResult") lockResult: String,
+        @Field("lockDuration") lockDuration: Int,
+        @Field("lockType") lockType: Int,
+        @Field("appVersion") appVersion: String,
+        @Field("el") el: Int,
+        @Field("lockTime") lockTime: String,
+        @Field("newPwd") newPwd: String,
+        @Field("phoneBrand") phoneBrand: String,
+        @Field("phoneModel") phoneModel: String,
+        @Field("phonePlatform") phonePlatform: String,
+        @Field("phonePlatformVersion") phonePlatformVersion: String,
+    ): ApiMessage
 }

@@ -81,6 +81,40 @@ class LockStore(private val secureStore: SecureStore) {
     }
 
     /**
+     * 写入 AES 型号门锁的自定义密钥（传空串等于清除）。
+     *
+     * 与 [setMac] 一样同时更新列表与默认门锁，避免首页读到旧快照。
+     */
+    fun setCustomAesKey(label: String, key: String) {
+        val normalized = key.trim()
+        val locks = getAll().map { lock ->
+            if (lock.label == label) lock.copy(customAesKey = normalized.ifBlank { null }) else lock
+        }
+        secureStore.putJson(KEY_LOCKS, locks)
+        getDefault()?.let { def ->
+            if (def.label == label) {
+                secureStore.putJson(KEY_DEFAULT, def.copy(customAesKey = normalized.ifBlank { null }))
+            }
+        }
+        notifyChanged()
+    }
+
+    /**
+     * 上报开门记录用的本机标识：首次调用随机生成 8 位小写字母数字并持久化。
+     *
+     * 官方客户端也是本地生成后随记录一起上报，不参与鉴权，因此不写入账号相关字段。
+     */
+    fun getOrCreateDeviceId(): String {
+        val existing = secureStore.getString(KEY_DEVICE_ID, "")
+        if (existing.isNotBlank()) return existing
+        val generated = buildString(DEVICE_ID_LENGTH) {
+            repeat(DEVICE_ID_LENGTH) { append(DEVICE_ID_ALPHABET.random()) }
+        }
+        secureStore.putString(KEY_DEVICE_ID, generated)
+        return generated
+    }
+
+    /**
      * 开门前从服务端刷新到的门锁信息写回（列表与默认门锁同步）。
      *
      * 只合并 secret 与型号能力，不动 MAC 等本地学习到的字段。
@@ -113,5 +147,11 @@ class LockStore(private val secureStore: SecureStore) {
     private companion object {
         const val KEY_LOCKS = "locks"
         const val KEY_DEFAULT = "lock_default"
+
+        /** 开门记录上报用的本机标识（随机 8 位）。 */
+        const val KEY_DEVICE_ID = "unlock_device_id"
+
+        const val DEVICE_ID_LENGTH = 8
+        const val DEVICE_ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789"
     }
 }

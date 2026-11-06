@@ -27,6 +27,8 @@ fun UnlockSettingsScreen() {
     val navigator = LocalNavigator.current
     val viewModel = viewModel<SettingsViewModel>()
     val functionalState by viewModel.functionalState.collectAsStateWithLifecycle()
+    // 上报开关存在 SettingsRepository 里，由主题设置那份状态流带出来。
+    val appearanceState by viewModel.uiState.collectAsStateWithLifecycle()
     val confirmDialog = rememberConfirmDialog()
     val scope = rememberCoroutineScope()
 
@@ -35,7 +37,10 @@ fun UnlockSettingsScreen() {
         onPauseOrDispose { }
     }
 
-    val state = UnlockSettingsUiState(settings = functionalState.settings)
+    val state = UnlockSettingsUiState(
+        settings = functionalState.settings,
+        recordUpload = appearanceState.enableRecordUpload,
+    )
     val onBack = dropUnlessResumed { navigator.pop() }
 
     // 「自动开门」与「开门后自动退出」互斥：同时开启会变成「启动即开门、开门即退出」。
@@ -97,6 +102,7 @@ fun UnlockSettingsScreen() {
         onSetQuickConnect = viewModel::setQuickConnect,
         onSetAutoConnect = ::onSetAutoConnect,
         onSetAutoExit = ::onSetAutoExit,
+        onSetRecordUpload = viewModel::setEnableRecordUpload,
     )
 
     when (LocalUiMode.current) {

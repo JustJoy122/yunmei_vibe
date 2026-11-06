@@ -82,4 +82,18 @@ class LockDetailViewModel : ViewModel() {
         val current = _uiState.value.lock ?: return
         withContext(Dispatchers.IO) { container.lockStore.remove(current.label) }
     }
+
+    /**
+     * 保存 AES 门锁的密钥（32 位十六进制）。
+     *
+     * 只在本机保存、不上传：官方把这对 Key/IV 硬编码在客户端里，本应用改成由用户自行填写。
+     * 传空串表示清除，之后开门会被 [com.yunmei.vibe.data.ble.UnlockManager] 拦下并提示填写。
+     */
+    fun setCustomAesKey(value: String) {
+        viewModelScope.launch {
+            val current = _uiState.value.lock ?: return@launch
+            withContext(Dispatchers.IO) { container.lockStore.setCustomAesKey(current.label, value) }
+            refresh(label)
+        }
+    }
 }

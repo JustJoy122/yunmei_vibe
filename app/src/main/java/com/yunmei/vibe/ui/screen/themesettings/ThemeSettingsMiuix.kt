@@ -327,7 +327,6 @@ fun ThemeSettingsMiuix(
                         AnimatedVisibility(visible = uiState.enableBlur) {
                             OverlayDropdownPreference(
                                 title = stringResource(R.string.settings_blur_style),
-                                summary = stringResource(R.string.settings_blur_style_summary),
                                 items = listOf(
                                     stringResource(R.string.settings_blur_style_gaussian),
                                     stringResource(R.string.settings_blur_style_progressive),

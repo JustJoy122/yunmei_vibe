@@ -27,7 +27,11 @@ class YunMeiApiClient {
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
                 .header("x-requested-with", "XMLHttpRequest")
-            token?.let { request.header("token_data", it) }
+            token?.let {
+                // 官方客户端同时下发下划线与驼峰两份 token，服务端两条都会读。
+                request.header("token_data", it)
+                request.header("tokenData", it)
+            }
             userId?.let {
                 request.header("token_userId", it)
                 request.header("tokenUserId", it)

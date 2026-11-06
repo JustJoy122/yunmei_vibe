@@ -12,6 +12,8 @@ import com.yunmei.vibe.data.preferences.AppSettings
 @Immutable
 data class UnlockSettingsUiState(
     val settings: AppSettings = AppSettings(),
+    /** 开门成功后是否上报记录（SettingsRepository.enableRecordUpload）。 */
+    val recordUpload: Boolean = true,
 )
 
 @Immutable
@@ -20,6 +22,7 @@ data class UnlockSettingsActions(
     val onSetQuickConnect: (Boolean) -> Unit,
     val onSetAutoConnect: (Boolean) -> Unit,
     val onSetAutoExit: (Boolean) -> Unit,
+    val onSetRecordUpload: (Boolean) -> Unit,
 )
 
 /**

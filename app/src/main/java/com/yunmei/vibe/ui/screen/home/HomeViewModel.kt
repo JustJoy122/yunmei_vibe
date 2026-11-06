@@ -6,6 +6,7 @@ import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import com.yunmei.vibe.data.ble.UnlockCooldown
 import com.yunmei.vibe.data.ble.UnlockManager
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.Lock
@@ -129,6 +130,14 @@ class HomeViewModel : ViewModel() {
         if (_uiState.value.defaultLock == null) return
         val lock = currentLock ?: return
         if (_uiState.value.isOpening) return
+        // 官方客户端有 8 秒开门冷却（服务端 openDelay），冷却期内不发起蓝牙连接，
+        // 避免连续开门把门锁打进异常状态；UI 层的按钮防抖只挡重复点击，挡不住其它入口。
+        val cooldownMs = UnlockCooldown.remainingMs()
+        if (cooldownMs > 0L) {
+            val seconds = ((cooldownMs + 999L) / 1000L).toInt()
+            _uiState.update { it.copy(statusText = YunMeiApp.app.getString(R.string.unlock_cooldown_wait, seconds)) }
+            return
+        }
         if (!lock.isUsable) {
             _uiState.update { it.copy(statusText = str(R.string.unlock_lock_unusable)) }
             return

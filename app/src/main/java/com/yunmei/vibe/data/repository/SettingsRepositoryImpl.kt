@@ -104,4 +104,9 @@ class SettingsRepositoryImpl : SettingsRepository {
     override var pageScale: Float
         get() = prefs.getFloat(SettingsPrefs.PAGE_SCALE, 1.0f)
         set(value) = prefs.edit { putFloat(SettingsPrefs.PAGE_SCALE, value) }
+
+    /** 开门记录上报：官方客户端开门成功即上报，这里默认开启，失败只打日志不补传。 */
+    override var enableRecordUpload: Boolean
+        get() = prefs.getBoolean(SettingsPrefs.ENABLE_RECORD_UPLOAD, true)
+        set(value) = prefs.edit { putBoolean(SettingsPrefs.ENABLE_RECORD_UPLOAD, value) }
 }

@@ -106,9 +106,10 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
      *
      * [applySchoolAuth] 已把 client.token 换成学校 token，而这个请求要用登录 token，
      * 所以临时切回 baseToken，结束后恢复，避免影响调用方后续的学校请求。
-     * 返回 id → aesSupport；整体失败时返回空表，门锁 aesSupport 保持 null。
+     * 返回 id → 型号能力（aesSupport / pwdSupport / pwdLength）；整体失败时返回空表，
+     * 门锁的能力字段保持 null（按最保守的老协议处理）。
      */
-    private suspend fun fetchLockTypeCapabilities(): Map<Int, Boolean?> {
+    private suspend fun fetchLockTypeCapabilities(): Map<Int, LockCapability> {
         val loginToken = baseToken ?: return emptyMap()
         val schoolToken = client.token
         val schoolNo = client.adminSchoolNo
@@ -119,7 +120,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             val element = client.api(YunMeiApiClient.BASE_URL).getLockTypes()
             extractArray(element).mapNotNull { row ->
                 val id = row["id"]?.jsonPrimitive?.contentOrNull?.toIntOrNull()
-                if (id == null) null else id to row.aesSupportOf()
+                if (id == null) null else id to row.capabilityOf()
             }.toMap()
         } catch (error: CancellationException) {
             throw error
@@ -133,15 +134,30 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         }
     }
 
+    /** 型号能力表的一行：官方 locktype/all 返回的协议能力。 */
+    private data class LockCapability(
+        val aesSupport: Boolean? = null,
+        val pwdSupport: Boolean? = null,
+        val pwdLength: Int? = null,
+    )
+
+    private fun JsonObject.capabilityOf(): LockCapability = LockCapability(
+        aesSupport = flagOf("aesSupport"),
+        pwdSupport = flagOf("pwdSupport"),
+        pwdLength = this["pwdLength"]?.jsonPrimitive?.contentOrNull?.toIntOrNull(),
+    )
+
+    private fun JsonObject.aesSupportOf(): Boolean? = flagOf("aesSupport")
+
     /**
-     * 解析型号表里的 aesSupport。
+     * 解析型号表里的布尔能力。
      *
-     * 官方 4.2.2 是用「值 == 1」判断是否 AES，所以字段显式为 JSON null 时等价于 false；
-     * 字段缺失或值无法识别返回 null（未知），开锁时同样按普通协议处理。
+     * 官方 4.2.2 是用「值 == 1」判断，所以字段显式为 JSON null 时等价于 false；
+     * 字段缺失或值无法识别返回 null（未知）。
      */
-    private fun JsonObject.aesSupportOf(): Boolean? {
-        if (!containsKey("aesSupport")) return null
-        val primitive = this["aesSupport"]?.jsonPrimitive ?: return null
+    private fun JsonObject.flagOf(key: String): Boolean? {
+        if (!containsKey(key)) return null
+        val primitive = this[key]?.jsonPrimitive ?: return null
         if (primitive is JsonNull) return false
         primitive.booleanOrNull?.let { return it }
         return when (primitive.contentOrNull?.trim()?.lowercase()) {
@@ -168,7 +184,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         return emptyList()
     }
 
-    private fun JsonObject.toLock(school: SchoolEntry, capabilities: Map<Int, Boolean?>): Lock? {
+    private fun JsonObject.toLock(school: SchoolEntry, capabilities: Map<Int, LockCapability>): Lock? {
         fun str(vararg keys: String): String? =
             keys.firstNotNullOfOrNull { key -> this[key]?.jsonPrimitive?.contentOrNull }
 
@@ -189,7 +205,9 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             schoolNo = school.schoolNo.orEmpty(),
             lockNo = lockNo,
             lockTypeId = typeId,
-            aesSupport = typeId?.let { capabilities[it] },
+            aesSupport = typeId?.let { capabilities[it]?.aesSupport },
+            pwdSupport = typeId?.let { capabilities[it]?.pwdSupport },
+            pwdLength = typeId?.let { capabilities[it]?.pwdLength },
             lockElectricity = str("lockElectricity")?.toIntOrNull(),
             // 官方字段名是 updateTime；lastUpdateTime 作为兼容别名一起认。
             updateTime = str("updateTime", "lastUpdateTime"),
@@ -268,6 +286,8 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             secret = latest.secret.ifBlank { lock.secret },
             lockTypeId = latest.lockTypeId ?: lock.lockTypeId,
             aesSupport = latest.aesSupport ?: lock.aesSupport,
+            pwdSupport = latest.pwdSupport ?: lock.pwdSupport,
+            pwdLength = latest.pwdLength ?: lock.pwdLength,
             lockElectricity = latest.lockElectricity ?: lock.lockElectricity,
             updateTime = latest.updateTime ?: lock.updateTime,
             areaNo = latest.areaNo.ifBlank { lock.areaNo },

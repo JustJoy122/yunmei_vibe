@@ -86,8 +86,12 @@ class UnlockManager(context: Context) {
     private var lastVoltage: Int? = null
     /** 本次开门的阶段流水，官方把它作为 lockLog 上报（时间 + 阶段描述，逐条分号分隔）。 */
     private val attemptLog = StringBuilder()
-    /** 本次开门生成的一次性临时密码（官方 createPwd 的 6 位数字），随记录一起上报。 */
+    /** 本次开门生成的临时密码；只有走 A5 组合帧时才非空，值必须与写入门锁的完全一致。 */
     private var attemptNewPwd = ""
+    /** 本次开门是否真的下发了 A5 写密码指令（pwdSupport == true 时才会）。 */
+    private var attemptUsesPwdCommand = false
+    /** 组合帧超时后是否已经降级重发过极简 A7 帧（只重发一次）。 */
+    private var retriedWithoutPwd = false
     private val recordReporter = UnlockRecordReporter(appContext)
 
     // ── 看门狗 ───────────────────────────────────────────────────────────────
@@ -187,7 +191,11 @@ class UnlockManager(context: Context) {
         lastBattery = null
         lastVoltage = null
         attemptLog.setLength(0)
-        attemptNewPwd = (1..PWD_LENGTH).map { Random.nextInt(10) }.joinToString("")
+        // 官方闭环：本地生成随机密码 → A5 写入门锁 → A7 开门 → 上报同一个值。
+        // 型号能力未知（老锁/离线导入）时保守地只发 A7，既不上报密码也不污染服务端存档。
+        attemptUsesPwdCommand = lock.pwdSupport == true
+        retriedWithoutPwd = false
+        attemptNewPwd = if (attemptUsesPwdCommand) generatePwd(lock.pwdLength) else ""
         val guarded = GuardedListener(listener)
         activeGuarded = guarded
         // 起点即计时：即使第一个回调就丢，也不会永久停在 20%。
@@ -352,6 +360,18 @@ class UnlockManager(context: Context) {
         val task = Runnable {
             responseTimer = null
             if (completed) return@Runnable
+            // 组合帧无人应答：多数是老固件不认多指令帧，降级重发一次极简 A7 帧。
+            val lock = writeLock
+            if (!retriedWithoutPwd && attemptUsesPwdCommand && lock != null) {
+                retriedWithoutPwd = true
+                // 降级后并没有写入门锁，密码不能再上报，否则又会污染服务端存档。
+                attemptNewPwd = ""
+                appendLog("组合帧无回传，降级极简 A7 帧重试")
+                pendingFrame = buildFrame(lock, openOnly = true)
+                pendingOffset = 0
+                sendNextChunk(listener)
+                return@Runnable
+            }
             listener.onFailure(appContext.getString(R.string.unlock_timeout))
         }
         responseTimer = task
@@ -443,6 +463,12 @@ class UnlockManager(context: Context) {
             payload == "SECRET_KEY_FAIL" || payload == "SECRET_KEY_FAI" ->
                 listener.onFailure(appContext.getString(R.string.unlock_secret_invalid))
 
+            // 0xA5 是「临时密码写入回应」：门锁已记住密码，真正的开门结果还在后面。
+            action == 0xA5 -> {
+                appendLog("临时密码写入回应")
+                listener.onProgress(UnlockProgress.SENT, appContext.getString(R.string.unlock_pwd_written))
+            }
+
             action == 0xA7 -> {
                 // 扫描模式开门成功后把学到的真实 MAC 写回（原项目行为），下次即可快速连接。
                 val device = writeDevice
@@ -469,16 +495,51 @@ class UnlockManager(context: Context) {
         }
     }
 
-    /** 按门锁能力封装待下发帧：AES 型号在明文 OPEN 帧外再套一层 D2D3。 */
-    private fun buildFrame(lock: Lock): ByteArray {
-        val plainFrame = buildUnlockFrame(lock.secret)
+    /**
+     * 按门锁能力封装待下发帧。
+     *
+     * - 支持密码（pwdSupport == true）：官方闭环的组合帧 `A5 密码 + A7`；
+     * - 型号不支持密码或能力未知：极简 `A7` 帧（老固件只认这一种）；
+     * - AES 型号：以上明文帧再套一层 D2D3。
+     *
+     * @param openOnly 强制只发 A7（组合帧超时后的降级重试用）。
+     */
+    private fun buildFrame(lock: Lock, openOnly: Boolean = false): ByteArray {
+        val plainFrame = if (attemptUsesPwdCommand && !openOnly) {
+            buildPwdOpenFrame(lock)
+        } else {
+            buildOpenFrame(lock.secret)
+        }
         if (lock.aesSupport != true) return plainFrame
         val key = lock.customAesKey.orEmpty()
         if (!AesFrameCodec.isValidKey(key)) return plainFrame
         return AesFrameCodec.encryptFrame(plainFrame, key)
     }
 
-    private fun buildUnlockFrame(secret: String): ByteArray {
+    /**
+     * 官方组合帧：`D0 | len | secret | A5 | 密码 + ID01 | A7`。
+     *
+     * len 含帧头自身；AES 型号的密码后缀是 `ID001`（随后由 [buildFrame] 整帧加密）。
+     */
+    private fun buildPwdOpenFrame(lock: Lock): ByteArray {
+        val secretBytes = lock.secret.toByteArray(Charsets.UTF_8)
+        val suffix = if (lock.aesSupport == true) "ID001" else "ID01"
+        val pwdBytes = (attemptNewPwd + suffix).toByteArray(Charsets.US_ASCII)
+        val size = 2 + secretBytes.size + 2 + pwdBytes.size
+        val frame = ByteArray(size)
+        frame[0] = 0xD0.toByte()
+        frame[1] = size.toByte()
+        System.arraycopy(secretBytes, 0, frame, 2, secretBytes.size)
+        var pos = 2 + secretBytes.size
+        frame[pos++] = 0xA5.toByte()
+        System.arraycopy(pwdBytes, 0, frame, pos, pwdBytes.size)
+        pos += pwdBytes.size
+        frame[pos] = 0xA7.toByte()
+        return frame
+    }
+
+    /** 极简帧：`D0 | len | secret | A7`，官方离线/测试路径与老固件用这一种。 */
+    private fun buildOpenFrame(secret: String): ByteArray {
         val secretBytes = secret.toByteArray(Charsets.UTF_8)
         val frame = ByteArray(secretBytes.size + 3)
         frame[0] = 0xD0.toByte()
@@ -486,6 +547,12 @@ class UnlockManager(context: Context) {
         System.arraycopy(secretBytes, 0, frame, 2, secretBytes.size)
         frame[frame.lastIndex] = 0xA7.toByte()
         return frame
+    }
+
+    /** 按官方 createPwd 的规则生成随机数字密码（位数取型号能力表的 pwdLength）。 */
+    private fun generatePwd(length: Int?): String {
+        val digits = (length ?: PWD_LENGTH).coerceIn(MIN_PWD_LENGTH, MAX_PWD_LENGTH)
+        return (1..digits).map { Random.nextInt(10) }.joinToString("")
     }
 
     /**
@@ -532,6 +599,10 @@ class UnlockManager(context: Context) {
     private companion object {
         /** 临时密码位数：官方 createPwd 用 basicdata 下发的 pwdLength，宿舍锁固定 6 位。 */
         const val PWD_LENGTH = 6
+
+        /** 型号能力表给的 pwdLength 异常时的兜底范围，避免生成 0 位或超长密码。 */
+        const val MIN_PWD_LENGTH = 4
+        const val MAX_PWD_LENGTH = 12
 
         /** lockLog 每行的时间格式。 */
         const val LOG_TIME_PATTERN = "HH:mm:ss.SSS"

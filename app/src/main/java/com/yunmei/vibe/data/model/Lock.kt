@@ -33,6 +33,16 @@ data class Lock(
      */
     val aesSupport: Boolean? = null,
     /**
+     * 该型号是否支持密码指令（locktype/all 的 pwdSupport）。
+     *
+     * true = 开门帧要按官方闭环先写临时密码（A5）再开门（A7）；
+     * false = 型号明确不支持密码，只发 A7；
+     * null = 型号未知（没拉过能力表的老锁/离线导入的锁），保守地只发 A7，避免老固件不认组合帧。
+     */
+    val pwdSupport: Boolean? = null,
+    /** 临时密码位数（locktype/all 的 pwdLength），缺省按 6 位处理。 */
+    val pwdLength: Int? = null,
+    /**
      * AES 型号的自定义密钥（32 位十六进制，对应官方前端 AesFrameCodec 里的固定 KEY）。
      * 仅当 [aesSupport] 为 true 时使用；为空表示用户还没设置，开门前会被拦截并提示去设置。
      */

@@ -280,6 +280,28 @@ private fun LockDetailScreenMaterial(
                         )
                     },
                     {
+                        // 电量用服务端记录值，更新时间来自 getuserlock 的 updateTime；
+                        // 蓝牙开门成功后本地会写回最新的电量与时间。
+                        val battery = lock.lockElectricity
+                        val updated = lock.updateTime
+                        if (battery != null || !updated.isNullOrBlank()) {
+                            SegmentedListItem(
+                                headlineContent = { Text(stringResource(R.string.lock_detail_battery)) },
+                                supportingContent = {
+                                    Text(
+                                        buildString {
+                                            if (battery != null) append(battery).append('%')
+                                            if (!updated.isNullOrBlank()) {
+                                                if (isNotEmpty()) append('\n')
+                                                append(stringResource(R.string.unlock_battery_updated, updated))
+                                            }
+                                        }
+                                    )
+                                },
+                            )
+                        }
+                    },
+                    {
                         SegmentedListItem(
                             headlineContent = { Text(stringResource(R.string.lock_detail_user_hash)) },
                             supportingContent = {
@@ -462,6 +484,17 @@ private fun LockDetailScreenMiuix(
                         title = stringResource(R.string.lock_detail_lock_no),
                         summary = lock.lockNo,
                     )
+                    // 电量与更新时间：服务端记录值，蓝牙开门后被本地写回的最新值覆盖。
+                    (lock.lockElectricity ?: lock.updateTime?.takeIf { it.isNotBlank() })?.let {
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_battery),
+                            summary = listOfNotNull(
+                                lock.lockElectricity?.let { value -> "$value%" },
+                                lock.updateTime?.takeIf { time -> time.isNotBlank() }
+                                    ?.let { time -> stringResource(R.string.unlock_battery_updated, time) },
+                            ).joinToString("\n"),
+                        )
+                    }
                     BasicComponent(
                         title = stringResource(R.string.lock_detail_user_hash),
                         summary = lock.usernameMd5 +

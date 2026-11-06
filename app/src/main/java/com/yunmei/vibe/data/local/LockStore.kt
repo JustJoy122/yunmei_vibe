@@ -127,11 +127,37 @@ class LockStore(private val secureStore: SecureStore) {
             secret = fresh.secret.ifBlank { current.secret },
             lockTypeId = fresh.lockTypeId ?: current.lockTypeId,
             aesSupport = fresh.aesSupport ?: current.aesSupport,
+            lockElectricity = fresh.lockElectricity ?: current.lockElectricity,
+            updateTime = fresh.updateTime ?: current.updateTime,
+            areaNo = fresh.areaNo.ifBlank { current.areaNo },
+            buildNo = fresh.buildNo.ifBlank { current.buildNo },
+            dormNo = fresh.dormNo.ifBlank { current.dormNo },
         )
         if (merged == current) return
         secureStore.putJson(KEY_LOCKS, all.map { lock -> if (lock.label == fresh.label) merged else lock })
         getDefault()?.let { def ->
             if (def.label == fresh.label) secureStore.putJson(KEY_DEFAULT, merged)
+        }
+        notifyChanged()
+    }
+
+    /**
+     * 蓝牙开门成功后把回传的电量与时间写回本地（列表与默认门锁同步）。
+     *
+     * @param percent 本次解析出的电量百分比；null 表示门锁没回传 AA/AB，此时只更新时间。
+     * @param updateTime 本次开门时刻（`yyyy-MM-dd HH:mm:ss`），界面显示成「上次更新」。
+     */
+    fun setBattery(label: String, percent: Int?, updateTime: String) {
+        val locks = getAll()
+        if (locks.none { it.label == label }) return
+        val updated = locks.map { lock ->
+            if (lock.label == label) lock.copy(lockElectricity = percent ?: lock.lockElectricity, updateTime = updateTime) else lock
+        }
+        secureStore.putJson(KEY_LOCKS, updated)
+        getDefault()?.let { def ->
+            if (def.label == label) {
+                secureStore.putJson(KEY_DEFAULT, def.copy(lockElectricity = percent ?: def.lockElectricity, updateTime = updateTime))
+            }
         }
         notifyChanged()
     }

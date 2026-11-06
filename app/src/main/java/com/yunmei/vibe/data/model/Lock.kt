@@ -37,6 +37,14 @@ data class Lock(
      * 仅当 [aesSupport] 为 true 时使用；为空表示用户还没设置，开门前会被拦截并提示去设置。
      */
     val customAesKey: String? = null,
+    /** 服务端记录的门锁电量百分比（getuserlock 的 lockElectricity）；null 表示服务端没给。 */
+    val lockElectricity: Int? = null,
+    /** 服务端数据最后一次更新时间（getuserlock 的 updateTime），用于界面展示。 */
+    val updateTime: String? = null,
+    /** 校区/楼栋/房间编号，开门记录上报时要原样带回学校服务。 */
+    val areaNo: String = "",
+    val buildNo: String = "",
+    val dormNo: String = "",
 ) {
 
     val isUsable: Boolean

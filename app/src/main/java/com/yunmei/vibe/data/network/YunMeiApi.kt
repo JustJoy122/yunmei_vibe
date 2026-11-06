@@ -1,7 +1,6 @@
 package com.yunmei.vibe.data.network
 
 import com.yunmei.vibe.data.model.ApiMessage
-import com.yunmei.vibe.data.model.LockPasswordResponse
 import com.yunmei.vibe.data.model.LoginResponse
 import com.yunmei.vibe.data.model.SchoolEntry
 import kotlinx.serialization.json.JsonElement
@@ -45,9 +44,16 @@ interface YunMeiApi {
     @FormUrlEncoded
     @POST("locktype/all")
     suspend fun getLockTypes(): JsonElement
+    /**
+     * 取开门密码（学校服务 `lockpassword/getlockpwdbylockno`）。
+     *
+     * 官方只传 `lockNo`，学校上下文靠 `adminSchoolNo` 头确定，所以这里同样只带一个字段；
+     * 响应体是 `{ "lockPwd": "123456", "success": true, "msg": null }`，但服务端偶尔会
+     * 把它再包一层 `data`，因此返回原始 JSON 由仓库层兼容两种形状。
+     */
     @FormUrlEncoded
     @POST("lockpassword/getlockpwdbylockno")
-    suspend fun getLockPassword(@Field("lockNo") lockNo: String): LockPasswordResponse
+    suspend fun getLockPassword(@Field("lockNo") lockNo: String): JsonElement
 
     /**
      * 开门记录上报（学校服务，官方 `lockrecord/savelockrecord`）。
@@ -60,6 +66,9 @@ interface YunMeiApi {
     suspend fun saveLockRecord(
         @Field("isDel") isDel: Int,
         @Field("schoolNo") schoolNo: String,
+        @Field("areaNo") areaNo: String,
+        @Field("buildNo") buildNo: String,
+        @Field("dormNo") dormNo: String,
         @Field("lockNo") lockNo: String,
         @Field("userName") userName: String,
         @Field("lockDevice") lockDevice: String,
@@ -68,9 +77,12 @@ interface YunMeiApi {
         @Field("lockDuration") lockDuration: Int,
         @Field("lockType") lockType: Int,
         @Field("appVersion") appVersion: String,
+        @Field("lockLog") lockLog: String,
         @Field("el") el: Int,
+        @Field("voltage") voltage: Int,
         @Field("lockTime") lockTime: String,
         @Field("newPwd") newPwd: String,
+        @Field("location") location: String,
         @Field("phoneBrand") phoneBrand: String,
         @Field("phoneModel") phoneModel: String,
         @Field("phonePlatform") phonePlatform: String,

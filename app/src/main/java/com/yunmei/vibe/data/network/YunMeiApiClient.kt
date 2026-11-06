@@ -15,6 +15,16 @@ class YunMeiApiClient {
     @Volatile
     var userId: String? = null
 
+    /**
+     * 当前学校编号，学校域接口（`dormuser/`、`lockpassword/`、`lockrecord/` 等）会作为
+     * `adminSchoolNo` 头下发给服务端。
+     *
+     * 官方前端在「非基础服务」请求上固定带这个头（`common/ajax.js`），服务端据此把只传
+     * `lockNo` 的接口（取码、开门记录）定位到具体学校；基础服务请求必须为 null。
+     */
+    @Volatile
+    var adminSchoolNo: String? = null
+
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
@@ -35,6 +45,9 @@ class YunMeiApiClient {
             userId?.let {
                 request.header("token_userId", it)
                 request.header("tokenUserId", it)
+            }
+            adminSchoolNo?.takeIf { it.isNotBlank() }?.let {
+                request.header("adminSchoolNo", it)
             }
             chain.proceed(request.build())
         }

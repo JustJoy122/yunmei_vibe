@@ -70,6 +70,8 @@
     <string name="unlock_success">开门成功</string>
     <string name="unlock_failed">开门失败</string>
     <string name="unlock_battery">电量</string>
+    <string name="unlock_battery_updated">上次更新：%1$s</string>
+    <string name="lock_detail_battery">电量</string>
     <string name="unlock_quick_connect">快速连接</string>
     <string name="unlock_quick_connect_summary">已知门锁号时跳过扫描，直接连接</string>
     <string name="unlock_get_code">获取开门密码</string>

@@ -71,6 +71,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         this.usernameMd5 = Md5.hex(username)
         client.token = safeUser.token
         client.userId = safeUser.userId
+        client.adminSchoolNo = null
         baseToken = safeUser.token
         // 安全：不打印 token / userId（会被"发送日志"整包带出）
         safeUser
@@ -110,8 +111,11 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
     private suspend fun fetchLockTypeCapabilities(): Map<Int, Boolean?> {
         val loginToken = baseToken ?: return emptyMap()
         val schoolToken = client.token
+        val schoolNo = client.adminSchoolNo
         return try {
             client.token = loginToken
+            // 基础服务请求不带学校上下文（官方同样只在非基础服务上带 adminSchoolNo）。
+            client.adminSchoolNo = null
             val element = client.api(YunMeiApiClient.BASE_URL).getLockTypes()
             extractArray(element).mapNotNull { row ->
                 val id = row["id"]?.jsonPrimitive?.contentOrNull?.toIntOrNull()
@@ -125,6 +129,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             emptyMap()
         } finally {
             client.token = schoolToken
+            client.adminSchoolNo = schoolNo
         }
     }
 
@@ -185,6 +190,12 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             lockNo = lockNo,
             lockTypeId = typeId,
             aesSupport = typeId?.let { capabilities[it] },
+            lockElectricity = str("lockElectricity")?.toIntOrNull(),
+            // 官方字段名是 updateTime；lastUpdateTime 作为兼容别名一起认。
+            updateTime = str("updateTime", "lastUpdateTime"),
+            areaNo = str("areaNo").orEmpty(),
+            buildNo = str("buildNo").orEmpty(),
+            dormNo = str("dormNo").orEmpty(),
         )
     }
 
@@ -202,9 +213,19 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         val userId = requireUserId()
         val serverUrl = requireServerUrl(school)
         applySchoolAuth(school, userId)
-        val response = client.api(serverUrl).getLockPassword(lock.lockNo)
-        response.lockPwd ?: throw YunMeiException(response.msg ?: appContext.getString(R.string.unlock_code_failed))
+        val element = client.api(serverUrl).getLockPassword(lock.lockNo)
+        // 官方直接读 body.lockPwd；个别学校的网关会再包一层 data，两种形状都兼容。
+        val body = element as? JsonObject
+        val payload = (body?.get("data") as? JsonObject) ?: body
+        val code = payload?.jsonText("lockPwd", "pwd")
+        if (!code.isNullOrBlank()) return@withLock code
+        val message = body?.jsonText("msg") ?: payload?.jsonText("msg")
+        throw YunMeiException(message ?: appContext.getString(R.string.unlock_code_failed))
     }
+
+    /** 依次尝试多个字段名，取到第一个非空字符串。 */
+    private fun JsonObject.jsonText(vararg keys: String): String? =
+        keys.firstNotNullOfOrNull { key -> this[key]?.jsonPrimitive?.contentOrNull }
 
     /** 用已保存账号重新登录后获取开门密码（供主界面长期使用）。 */
     suspend fun getLockPassword(user: StoredUser, lock: Lock): String {
@@ -247,6 +268,11 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             secret = latest.secret.ifBlank { lock.secret },
             lockTypeId = latest.lockTypeId ?: lock.lockTypeId,
             aesSupport = latest.aesSupport ?: lock.aesSupport,
+            lockElectricity = latest.lockElectricity ?: lock.lockElectricity,
+            updateTime = latest.updateTime ?: lock.updateTime,
+            areaNo = latest.areaNo.ifBlank { lock.areaNo },
+            buildNo = latest.buildNo.ifBlank { lock.buildNo },
+            dormNo = latest.dormNo.ifBlank { lock.dormNo },
         )
         merged.takeIf { it != lock }
     }.getOrElse { error ->
@@ -266,22 +292,30 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
      */
     suspend fun saveUnlockRecord(record: UnlockRecord, deviceId: String): Boolean = mutex.withLock {
         val school = findSchool(record.schoolNo)
-        applySchoolAuth(school, requireUserId())
+        val userId = requireUserId()
+        applySchoolAuth(school, userId)
         runCatching {
             client.api(requireServerUrl(school)).saveLockRecord(
                 isDel = 0,
                 schoolNo = record.schoolNo,
+                areaNo = record.areaNo,
+                buildNo = record.buildNo,
+                dormNo = record.dormNo,
                 lockNo = record.lockNo,
-                userName = record.userName,
+                // 官方传的是用户 id（getUser().id），不是登录名；服务端按 id 关联账号。
+                userName = userId,
                 lockDevice = deviceId,
                 lockSuccess = if (record.success) 1 else 0,
                 lockResult = record.resultJson,
                 lockDuration = record.durationSeconds,
                 lockType = 1,
                 appVersion = BuildConfig.VERSION_NAME,
+                lockLog = record.lockLog,
                 el = record.battery,
+                voltage = record.voltage,
                 lockTime = record.lockTime,
                 newPwd = record.newPwd,
+                location = record.location,
                 phoneBrand = Build.MANUFACTURER.orEmpty(),
                 phoneModel = Build.MODEL.orEmpty(),
                 phonePlatform = "Android",
@@ -305,8 +339,15 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         school.school?.serverUrl?.takeIf { it.isNotBlank() }
             ?: throw YunMeiException(appContext.getString(R.string.school_server_missing))
 
+    /**
+     * 切到某所学校的会话：学校 token + 学校编号。
+     *
+     * `adminSchoolNo` 是官方前端对学校域接口统一附带的头，服务端用它定位学校上下文；
+     * 取码接口只传 `lockNo`，少了这个头服务端无法判断是哪所学校的门锁。
+     */
     private fun applySchoolAuth(school: SchoolEntry, userId: String) {
         client.token = school.token
         client.userId = userId
+        client.adminSchoolNo = school.schoolNo
     }
 }

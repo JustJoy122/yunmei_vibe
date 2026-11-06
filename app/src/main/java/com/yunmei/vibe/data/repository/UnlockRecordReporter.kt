@@ -14,15 +14,13 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 开门记录上报。
+ * 开门记录上报与本地电量回写。
  *
  * 官方客户端在收到门锁 A7 确认后立即异步上报 `lockrecord/savelockrecord`，
- * 本类按同样的时机与字段结构上报，差异有两点（都在报告里写明了原因）：
- * - `newPwd` 恒为空串：本应用不生成一次性临时密码；
- * - 楼栋/房间等字段本应用没有，交给仓库层传空串。
- *
- * 失败只打日志、不做本地补传（与「不引入离线队列」的取舍一致）；
+ * 本类按同样的时机与字段结构上报；失败只打日志、不做本地补传（与「不引入离线队列」的取舍一致），
  * 用户在设置里关掉开关后直接跳过，不影响开门本身。
+ *
+ * 无论是否上报成功，都会把这次回传的电量与时间写回本地门锁，界面据此显示「上次更新」。
  */
 class UnlockRecordReporter(context: Context) {
 
@@ -32,13 +30,31 @@ class UnlockRecordReporter(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
-     * 上报一次成功开门。
+     * 上报一次成功开门，并把电量写回本地。
      *
-     * @param startedAtMillis 发起本次开门的时刻（[System.currentTimeMillis]），用于算时长。
      * @param battery 本次从门锁回传的 AA/AB 电量；没收到时为 null，上报时按 0 处理（与官方一致）。
+     * @param voltage AB 回传的原始电压值；没收到时为 null，上报时按 0 处理。
+     * @param lockLog 本次开门的阶段流水，官方原样作为 lockLog 上报。
+     * @param newPwd 本次生成的一次性临时密码。
      */
-    fun report(lock: Lock, startedAtMillis: Long, battery: Int?) {
+    fun report(
+        lock: Lock,
+        startedAtMillis: Long,
+        battery: Int?,
+        voltage: Int?,
+        lockLog: String,
+        newPwd: String,
+    ) {
         val container = YunMeiApp.app.container
+        val now = System.currentTimeMillis()
+        val lockTime = SimpleDateFormat(TIME_PATTERN, Locale.CHINA).format(Date(now))
+
+        // 电量回写与会话无关，先做本地更新，保证关掉上报开关时界面也能刷新。
+        scope.launch {
+            runCatching { container.lockStore.setBattery(lock.label, battery, lockTime) }
+                .onFailure { error -> Log.d(TAG, "unlock battery save failed=" + error.message) }
+        }
+
         if (!container.settingsRepository.enableRecordUpload) return
         // 没有学校/门锁号时服务端无法登记，直接跳过，避免刷无效请求。
         if (lock.schoolNo.isBlank() || lock.lockNo.isBlank()) return
@@ -46,19 +62,22 @@ class UnlockRecordReporter(context: Context) {
         scope.launch {
             runCatching {
                 val deviceId = container.lockStore.getOrCreateDeviceId()
-                val userName = container.accountStore.getByUsernameMd5(lock.usernameMd5)?.username.orEmpty()
-                val now = System.currentTimeMillis()
                 val record = UnlockRecord(
                     schoolNo = lock.schoolNo,
                     lockNo = lock.lockNo,
-                    userName = userName,
+                    areaNo = lock.areaNo,
+                    buildNo = lock.buildNo,
+                    dormNo = lock.dormNo,
                     success = true,
-                    // 官方把 AA/AB 解析结果塞进 lockResult；本应用只解析出电量，保持同样的 JSON 形状。
-                    resultJson = "{\"aa\":" + (battery ?: 0) + "}",
+                    // 官方用 resultToJson 的输出：{"aa":电量, "ab":电压}。
+                    resultJson = "{\"aa\":" + (battery ?: 0) + ",\"ab\":" + (voltage ?: 0) + "}",
                     durationSeconds = ((now - startedAtMillis) / 1000L).toInt().coerceAtLeast(0),
                     battery = battery ?: 0,
-                    lockTime = SimpleDateFormat(TIME_PATTERN, Locale.CHINA).format(Date(now)),
-                    newPwd = "",
+                    voltage = voltage ?: 0,
+                    lockLog = lockLog,
+                    lockTime = lockTime,
+                    newPwd = newPwd,
+                    location = "",
                 )
                 val uploaded = container.repository.saveUnlockRecord(record, deviceId)
                 Log.d(TAG, "unlock record lock=" + lock.label + " uploaded=" + uploaded)

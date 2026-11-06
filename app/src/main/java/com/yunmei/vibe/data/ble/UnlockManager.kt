@@ -18,8 +18,12 @@ import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.data.repository.UnlockRecordReporter
 import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
 /**
  * BLE 开门逻辑，1:1 复刻 zxy19/yunmei_unintelligent 的 UnlockService：
@@ -79,6 +83,11 @@ class UnlockManager(context: Context) {
     // 成功时交给 UnlockRecordReporter 组装并上报（失败只打日志，不补传）。
     private var attemptStartMs = 0L
     private var lastBattery: Int? = null
+    private var lastVoltage: Int? = null
+    /** 本次开门的阶段流水，官方把它作为 lockLog 上报（时间 + 阶段描述，逐条分号分隔）。 */
+    private val attemptLog = StringBuilder()
+    /** 本次开门生成的一次性临时密码（官方 createPwd 的 6 位数字），随记录一起上报。 */
+    private var attemptNewPwd = ""
     private val recordReporter = UnlockRecordReporter(appContext)
 
     // ── 看门狗 ───────────────────────────────────────────────────────────────
@@ -95,6 +104,7 @@ class UnlockManager(context: Context) {
         override fun onProgress(percent: Int, message: String) {
             if (completed) return
             armWatchdog()
+            appendLog(message)
             delegate.onProgress(percent, message)
         }
 
@@ -172,9 +182,12 @@ class UnlockManager(context: Context) {
 
         completed = false
         resetIoState()
-        // 记录本次开门起点与电量：成功上报时用来算时长、填 el 字段。
+        // 记录本次开门起点、临时密码与电量：成功上报时用来算时长、填 el / newPwd 字段。
         attemptStartMs = System.currentTimeMillis()
         lastBattery = null
+        lastVoltage = null
+        attemptLog.setLength(0)
+        attemptNewPwd = (1..PWD_LENGTH).map { Random.nextInt(10) }.joinToString("")
         val guarded = GuardedListener(listener)
         activeGuarded = guarded
         // 起点即计时：即使第一个回调就丢，也不会永久停在 20%。
@@ -440,7 +453,14 @@ class UnlockManager(context: Context) {
                 // 门锁已执行开门：打冷却点（所有入口共用）并异步上报记录。
                 UnlockCooldown.markSuccess()
                 if (opened != null) {
-                    recordReporter.report(opened, attemptStartMs, lastBattery)
+                    recordReporter.report(
+                        lock = opened,
+                        startedAtMillis = attemptStartMs,
+                        battery = lastBattery,
+                        voltage = lastVoltage,
+                        lockLog = attemptLog.toString(),
+                        newPwd = attemptNewPwd,
+                    )
                 }
                 listener.onProgress(UnlockProgress.ACK, appContext.getString(R.string.unlock_progress_ack))
                 listener.onSuccess()
@@ -468,6 +488,12 @@ class UnlockManager(context: Context) {
         return frame
     }
 
+    /**
+     * 解析回传里的 AA（电量百分比）与 AB（电压原始值）。
+     *
+     * 官方把电压按 `100 * (ab - 40) / 24` 换算成电量，并在满足条件时用换算值覆盖 AA；
+     * 超过该阈值直接取 AA。这里把 AB 也一并留下，上报记录时作为 `voltage` 字段。
+     */
     private fun parseBattery(data: ByteArray): Int? {
         var posAA = -1
         var posAB = -1
@@ -480,6 +506,7 @@ class UnlockManager(context: Context) {
         val aa = if (posAA == -1) -1 else parseAsciiInt(data, posAA + 1)
         val ab = if (posAB == -1) -1 else parseAsciiInt(data, posAB + 1)
         if (aa == -1 && ab == -1) return null
+        if (ab > 0) lastVoltage = ab
 
         var battery = aa
         if (ab != -1) {
@@ -493,7 +520,22 @@ class UnlockManager(context: Context) {
         return String(data, offset, 2, Charsets.US_ASCII).toIntOrNull() ?: -1
     }
 
+    /** 追加一行阶段流水：`HH:mm:ss.SSS 阶段描述;`，与官方 lockLog 的拼接方式一致。 */
+    private fun appendLog(message: String) {
+        if (attemptLog.isNotEmpty()) attemptLog.append('\n')
+        attemptLog.append(SimpleDateFormat(LOG_TIME_PATTERN, Locale.CHINA).format(Date()))
+            .append(' ')
+            .append(message)
+            .append(';')
+    }
+
     private companion object {
+        /** 临时密码位数：官方 createPwd 用 basicdata 下发的 pwdLength，宿舍锁固定 6 位。 */
+        const val PWD_LENGTH = 6
+
+        /** lockLog 每行的时间格式。 */
+        const val LOG_TIME_PATTERN = "HH:mm:ss.SSS"
+
         /** 某阶段超过该时间没有任何回调即判定失败：扫描本身 10s，这里留足余量。 */
         const val STALL_TIMEOUT_MS = 15_000L
 

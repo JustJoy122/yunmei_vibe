@@ -48,10 +48,3 @@ data class ApiMessage(
     val success: Boolean = false,
     val msg: String? = null,
 )
-
-@Serializable
-data class LockPasswordResponse(
-    @SerialName("lockPwd") val lockPwd: String? = null,
-    val success: Boolean? = null,
-    val msg: String? = null,
-)

@@ -243,10 +243,20 @@ private fun UnlockActionCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            state.battery?.let { battery ->
+            // 电量优先用本次蓝牙回传值，没有时退回服务端记录值；更新时间同样来自服务端。
+            val shownBattery = state.battery ?: state.lock?.lockElectricity
+            val updatedAt = state.lock?.updateTime
+            if (shownBattery != null) {
                 Text(
-                    text = stringResource(R.string.unlock_battery) + "：$battery%",
+                    text = stringResource(R.string.unlock_battery) + "：$shownBattery%",
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
+            if (!updatedAt.isNullOrBlank()) {
+                Text(
+                    text = stringResource(R.string.unlock_battery_updated, updatedAt),
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                 )
             }

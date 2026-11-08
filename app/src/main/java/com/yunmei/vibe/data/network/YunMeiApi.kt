@@ -109,6 +109,21 @@ interface YunMeiApi {
     ): JsonElement
 
     /**
+     * 同宿舍的学生名单（学校服务，官方「我的群组」页 `student/getbydormloginuser`）。
+     *
+     * 按宿舍而不是按门锁定位：`dormuser/getbyloginuser` 给的是「谁能开这把锁」，
+     * 这个接口给的是「这些人是谁」——学院、班级、电话、头像都在这份数据里。
+     */
+    @FormUrlEncoded
+    @POST("student/getbydormloginuser")
+    suspend fun getDormStudents(
+        @Field("schoolNo") schoolNo: String,
+        @Field("areaNo") areaNo: String,
+        @Field("buildNo") buildNo: String,
+        @Field("dormNo") dormNo: String,
+    ): JsonElement
+
+    /**
      * 开门记录列表（学校服务，官方 `lockrecord/getrecordbyschool`）。
      *
      * 官方只传 `schoolNo` 与 `pageSize`：没有按门锁、按用户或按时间段的筛选参数，

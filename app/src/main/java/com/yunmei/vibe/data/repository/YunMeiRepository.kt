@@ -2,6 +2,7 @@ package com.yunmei.vibe.data.repository
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import com.yunmei.vibe.BuildConfig
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.local.StoredUser
@@ -289,16 +290,95 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         val school = findSchool(lock.schoolNo)
         val userId = requireUserId()
         val serverUrl = requireServerUrl(school)
-        val element = mutex.withLock {
+        val members = mutex.withLock {
             applySchoolAuth(school, userId)
-            client.api(serverUrl).getDormUsers(
-                schoolNo = lock.schoolNo,
-                areaNo = lock.areaNo,
-                buildNo = lock.buildNo,
-                dormNo = lock.dormNo,
+            parseDormMembers(
+                client.api(serverUrl).getDormUsers(
+                    schoolNo = lock.schoolNo,
+                    areaNo = lock.areaNo,
+                    buildNo = lock.buildNo,
+                    dormNo = lock.dormNo,
+                )
             )
         }
-        // 真机抓到的形状是裸数组，但同样兼容 `data` / `o` 包裹的写法。
+        return enrichWithDormStudents(
+            members = members,
+            lock = lock,
+            school = school,
+            userId = userId,
+            serverUrl = serverUrl,
+        )
+    }
+
+    /**
+     * 用同宿舍的学生名单补齐每位成员的学院/班级。
+     *
+     * 权限接口 `dormuser/getbyloginuser` 只给住宿关系，学籍在 `student/getbydormloginuser`
+     * （同样按 areaNo/buildNo/dormNo 定位宿舍）里，官方「我的群组」页就是这么拼出来的：
+     * 前者决定「谁能开这把锁」，后者决定「这个人是谁、哪个学院哪个班」。
+     *
+     * 学籍接口失败不影响成员列表本身——住宿关系才是这个页面的主体。
+     */
+    private suspend fun enrichWithDormStudents(
+        members: List<DormMember>,
+        lock: Lock,
+        school: SchoolEntry,
+        userId: String,
+        serverUrl: String,
+    ): List<DormMember> {
+        if (members.isEmpty()) return members
+        val students = runCatching {
+            mutex.withLock {
+                applySchoolAuth(school, userId)
+                client.api(serverUrl).getDormStudents(
+                    schoolNo = lock.schoolNo,
+                    areaNo = lock.areaNo,
+                    buildNo = lock.buildNo,
+                    dormNo = lock.dormNo,
+                )
+            }
+        }.getOrNull() ?: return members
+        val list = when (students) {
+            is JsonArray -> students
+            is JsonObject -> (students["data"] as? JsonArray) ?: (students["o"] as? JsonArray) ?: JsonArray(emptyList())
+            else -> JsonArray(emptyList())
+        }
+        if (list.isEmpty()) return members
+        // 首次接入时把真实字段名打出来：服务端字段若有差异，看这一行即可定位。
+        (list.firstOrNull() as? JsonObject)?.let { first ->
+            Log.i("YunMei", "dorm students keys=" + first.keys)
+        }
+        val byUserId = HashMap<String, JsonObject>()
+        val byTel = HashMap<String, JsonObject>()
+        list.mapNotNull { it as? JsonObject }.forEach { item ->
+            item.jsonText("userId")?.takeIf { it.isNotBlank() }?.let { byUserId[it] = item }
+            item.jsonText("userTel")?.takeIf { it.isNotBlank() }?.let { byTel[it] = item }
+        }
+        return members.map { member ->
+            val student = byUserId[member.userId] ?: byTel[member.loginUserInfo.userTel]
+            if (student == null) {
+                member
+            } else {
+                member.copy(
+                    college = member.college ?: student.jsonText("collegeName", "college")
+                        ?.takeIf { it.isNotBlank() },
+                    className = member.className ?: student.jsonText("className", "class")
+                        ?.takeIf { it.isNotBlank() },
+                    loginUserInfo = member.loginUserInfo.copy(
+                        realName = member.loginUserInfo.realName.ifBlank {
+                            student.jsonText("realName").orEmpty()
+                        },
+                        userTel = member.loginUserInfo.userTel.ifBlank {
+                            student.jsonText("userTel").orEmpty()
+                        },
+                    ),
+                )
+            }
+        }
+    }
+
+    /** 成员列表 JSON 解析：真机抓到的形状是裸数组，同时兼容 `data` / `o` 包裹。 */
+    private fun parseDormMembers(element: JsonElement): List<DormMember> {
         val array = when (element) {
             is JsonArray -> element
             is JsonObject -> {
@@ -329,6 +409,11 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
                 areaName = item.jsonText("areaName").orEmpty(),
                 buildName = item.jsonText("buildName").orEmpty(),
                 dormName = item.jsonText("dormName").orEmpty(),
+                // 成员接口目前不带学籍字段，服务端若将来补上也能直接接住。
+                college = item.jsonText("collegeName", "college")?.takeIf { it.isNotBlank() }
+                    ?: info?.jsonText("collegeName")?.takeIf { it.isNotBlank() },
+                className = item.jsonText("className", "class")?.takeIf { it.isNotBlank() }
+                    ?: info?.jsonText("className")?.takeIf { it.isNotBlank() },
                 loginUserInfo = LoginUserInfo(
                     id = info?.jsonText("id").orEmpty(),
                     userId = info?.jsonText("userId").orEmpty(),
@@ -341,6 +426,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             )
         }
     }
+
 
     /** 取整数字段，兼容服务端把数字写成字符串的情况。 */
     private fun JsonObject.jsonInt(key: String): Int? =

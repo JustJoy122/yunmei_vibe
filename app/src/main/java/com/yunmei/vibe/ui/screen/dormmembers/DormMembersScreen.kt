@@ -3,7 +3,6 @@ package com.yunmei.vibe.ui.screen.dormmembers
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +24,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +49,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -69,6 +68,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import top.yukonga.miuix.kmp.basic.Card
@@ -81,8 +81,19 @@ import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.ContactsContract
+import android.widget.Toast
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.rounded.Call
+import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.ui.platform.LocalContext
+import com.yunmei.vibe.ui.component.ActionMenuItem
+import com.yunmei.vibe.ui.component.material.ActionMenuBottomSheet
+import com.yunmei.vibe.ui.component.miuix.ActionMenuDialog
 
 /**
  * 群组成员页。
@@ -116,8 +127,9 @@ private fun DormMembersMaterial(
     onRetry: () -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
-    var selected by remember { mutableStateOf<DormMember?>(null) }
     val colorScheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    var menuMember by remember { mutableStateOf<DormMember?>(null) }
 
     Scaffold(
         containerColor = colorScheme.surfaceContainer,
@@ -176,46 +188,75 @@ private fun DormMembersMaterial(
                     }
                 } else {
                     items(state.members, key = { it.userId + "#" + it.roleType }) { member ->
-                        MemberCardMaterial(member) { selected = member }
+                        MemberCardMaterial(member) { menuMember = member }
                     }
                 }
             }
         }
     }
-    selected?.let { member ->
-        MemberDialogMaterial(member) { selected = null }
+
+    menuMember?.let { target ->
+        ActionMenuBottomSheet(
+            items = memberMenuItems(target, context) { menuMember = null },
+            onDismiss = { menuMember = null },
+        )
     }
 }
 
 @Composable
 private fun MemberCardMaterial(member: DormMember, onClick: () -> Unit) {
     val colorScheme = MaterialTheme.colorScheme
+    val phone = member.userTel
     TonalCard(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .fillMaxWidth(),
-        onClick = onClick,
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
         ) {
             MemberAvatar(
                 member = member,
-                size = 48.dp,
+                size = 44.dp,
                 containerColor = colorScheme.primaryContainer,
                 contentColor = colorScheme.onPrimaryContainer,
             )
             Spacer(Modifier.width(14.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // 「姓名 · 电话」同一行；电话为空时只留姓名，也不挂点击（没有可拨的号码）。
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(if (phone.isBlank()) Modifier else Modifier.clickable(onClick = onClick)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
                         text = member.displayName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
+                    if (phone.isNotBlank()) {
+                        // 分隔符与号码分开渲染：下划线只属于号码本身，不会串到「·」上。
+                        Text(
+                            text = " · ",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                        )
+                        Text(
+                            text = phone,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            // 下划线作为「可点」的视觉提示，避免用户以为电话只是文本。
+                            textDecoration = TextDecoration.Underline,
+                        )
+                    }
                     if (member.isAdmin) {
                         Spacer(Modifier.width(6.dp))
                         MemberTag(
@@ -234,60 +275,26 @@ private fun MemberCardMaterial(member: DormMember, onClick: () -> Unit) {
                     }
                 }
                 Text(
-                    text = member.userTel.ifBlank { stringResource(R.string.lock_label_unknown) },
+                    text = stringResource(R.string.dorm_members_location) + "：" +
+                        member.location.ifBlank { stringResource(R.string.lock_label_unknown) },
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = validityText(member),
+                    text = stringResource(R.string.dorm_members_valid) + "：" + validityText(member),
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                 )
+                val education = educationText(member)
+                if (education.isNotBlank()) {
+                    Text(
+                        text = education,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
-    }
-}
-
-@Composable
-private fun MemberDialogMaterial(member: DormMember, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(member.displayName) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DetailRowMaterial(
-                    stringResource(R.string.dorm_members_role),
-                    stringResource(
-                        if (member.isAdmin) R.string.dorm_members_admin else R.string.dorm_members_member,
-                    ),
-                )
-                DetailRowMaterial(
-                    stringResource(R.string.dorm_members_phone),
-                    member.userTel.ifBlank { stringResource(R.string.lock_label_unknown) },
-                )
-                DetailRowMaterial(stringResource(R.string.dorm_members_location), member.location.ifBlank { stringResource(R.string.lock_label_unknown) })
-                DetailRowMaterial(stringResource(R.string.dorm_members_valid), validityText(member))
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
-        },
-    )
-}
-
-@Composable
-private fun DetailRowMaterial(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(start = 12.dp),
-        )
     }
 }
 
@@ -298,7 +305,8 @@ private fun DormMembersMiuix(
     onRetry: () -> Unit,
 ) {
     val scrollBehavior = MiuixScrollBehavior()
-    var selected by remember { mutableStateOf<DormMember?>(null) }
+    val context = LocalContext.current
+    var menuMember by remember { mutableStateOf<DormMember?>(null) }
 
     MiuixScaffold(
         topBar = {
@@ -363,71 +371,71 @@ private fun DormMembersMiuix(
                     }
                 } else {
                     items(state.members, key = { it.userId + "#" + it.roleType }) { member ->
-                        MemberCardMiuix(member) { selected = member }
+                        MemberCardMiuix(member) { menuMember = member }
                     }
                 }
             }
         }
     }
-    selected?.let { member ->
-        OverlayDialog(
+
+    menuMember?.let { target ->
+        ActionMenuDialog(
             show = true,
-            title = member.displayName,
-            onDismissRequest = { selected = null },
-            content = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    DetailRowMiuix(
-                        stringResource(R.string.dorm_members_role),
-                        stringResource(
-                            if (member.isAdmin) R.string.dorm_members_admin else R.string.dorm_members_member,
-                        ),
-                    )
-                    DetailRowMiuix(
-                        stringResource(R.string.dorm_members_phone),
-                        member.userTel.ifBlank { stringResource(R.string.lock_label_unknown) },
-                    )
-                    DetailRowMiuix(
-                        stringResource(R.string.dorm_members_location),
-                        member.location.ifBlank { stringResource(R.string.lock_label_unknown) },
-                    )
-                    DetailRowMiuix(stringResource(R.string.dorm_members_valid), validityText(member))
-                    MiuixTextButton(
-                        text = stringResource(R.string.close),
-                        onClick = { selected = null },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            },
+            title = target.displayName,
+            items = memberMenuItems(target, context) { menuMember = null },
+            onDismissRequest = { menuMember = null },
         )
     }
 }
 
 @Composable
 private fun MemberCardMiuix(member: DormMember, onClick: () -> Unit) {
+    val phone = member.userTel
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth(),
         insideMargin = PaddingValues(16.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.Top) {
             MemberAvatar(
                 member = member,
-                size = 48.dp,
+                size = 44.dp,
                 containerColor = colorScheme.primaryContainer,
                 contentColor = colorScheme.onPrimaryContainer,
             )
             Spacer(Modifier.width(14.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(if (phone.isBlank()) Modifier else Modifier.clickable(onClick = onClick)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     MiuixText(
                         text = member.displayName,
-                        fontSize = 17.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight(550),
                         color = colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
+                    if (phone.isNotBlank()) {
+                        // 分隔符与号码分开渲染：下划线只属于号码本身。
+                        MiuixText(
+                            text = " · ",
+                            fontSize = 14.sp,
+                            color = colorScheme.onSurfaceVariantSummary,
+                            maxLines = 1,
+                        )
+                        MiuixText(
+                            text = phone,
+                            fontSize = 14.sp,
+                            color = colorScheme.onSurfaceVariantSummary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textDecoration = TextDecoration.Underline,
+                        )
+                    }
                     if (member.isAdmin) {
                         Spacer(Modifier.width(6.dp))
                         MemberTag(
@@ -446,34 +454,26 @@ private fun MemberCardMiuix(member: DormMember, onClick: () -> Unit) {
                     }
                 }
                 MiuixText(
-                    text = member.userTel.ifBlank { stringResource(R.string.lock_label_unknown) },
-                    fontSize = 13.sp,
+                    text = stringResource(R.string.dorm_members_location) + "：" +
+                        member.location.ifBlank { stringResource(R.string.lock_label_unknown) },
+                    fontSize = 12.sp,
                     color = colorScheme.onSurfaceVariantSummary,
                 )
                 MiuixText(
-                    text = validityText(member),
-                    fontSize = 13.sp,
+                    text = stringResource(R.string.dorm_members_valid) + "：" + validityText(member),
+                    fontSize = 12.sp,
                     color = colorScheme.onSurfaceVariantSummary,
                 )
+                val education = educationText(member)
+                if (education.isNotBlank()) {
+                    MiuixText(
+                        text = education,
+                        fontSize = 12.sp,
+                        color = colorScheme.onSurfaceVariantSummary,
+                    )
+                }
             }
         }
-    }
-}
-
-@Composable
-private fun DetailRowMiuix(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        MiuixText(
-            text = label,
-            fontSize = 13.sp,
-            color = colorScheme.onSurfaceVariantSummary,
-        )
-        MiuixText(
-            text = value,
-            fontSize = 13.sp,
-            color = colorScheme.onSurface,
-            modifier = Modifier.padding(start = 12.dp),
-        )
     }
 }
 
@@ -546,13 +546,19 @@ private fun rememberAvatarImage(url: String): ImageBitmap? {
     var bitmap by remember(url) { mutableStateOf(avatarCache[url]) }
     LaunchedEffect(url) {
         if (url.isBlank()) return@LaunchedEffect
-        if (avatarCache.containsKey(url)) {
-            bitmap = avatarCache[url]
+        avatarCache[url]?.let { cached ->
+            bitmap = cached
             return@LaunchedEffect
         }
+        // 已经失败过的地址不再重试，避免列表每次重组都打一遍超时请求。
+        if (url in avatarFailures) return@LaunchedEffect
         val loaded = withContext(Dispatchers.IO) { downloadAvatar(url) }
-        avatarCache[url] = loaded
-        bitmap = loaded
+        if (loaded == null) {
+            avatarFailures.add(url)
+        } else {
+            avatarCache[url] = loaded
+            bitmap = loaded
+        }
     }
     return bitmap
 }
@@ -564,8 +570,15 @@ private val avatarClient: OkHttpClient by lazy {
         .build()
 }
 
-/** 进程内头像缓存；失败也缓存 null，避免列表每次重组都重试。 */
-private val avatarCache = ConcurrentHashMap<String, ImageBitmap?>()
+/**
+ * 进程内头像缓存，外加一个「已失败地址」集合。
+ *
+ * 失败的地址不能以 null 值塞进 [avatarCache]：`ConcurrentHashMap` 不允许 null 值，
+ * `put(url, null)` 会抛 NPE，而这里跑在 Compose 的协程里，异常直接带崩整个进程
+ * （表现为进入群组成员页立刻退回桌面）。所以成功与失败分开存。
+ */
+private val avatarCache = ConcurrentHashMap<String, ImageBitmap>()
+private val avatarFailures: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
 private fun downloadAvatar(url: String): ImageBitmap? = runCatching {
     val request = Request.Builder().url(url).build()
@@ -594,6 +607,19 @@ private fun formatDate(raw: String): String {
     return if (date.length >= 10) date else raw
 }
 
+/**
+ * 「学院：X · 班级：Y」一行；两项都没有时返回空串，调用方不渲染。
+ *
+ * 成员接口本身不含学籍字段，目前只有当前登录账号自己那一条能从个人资料接口补到值。
+ */
+@Composable
+private fun educationText(member: DormMember): String = listOfNotNull(
+    member.college?.takeIf { it.isNotBlank() }
+        ?.let { stringResource(R.string.dorm_members_college) + "：" + it },
+    member.className?.takeIf { it.isNotBlank() }
+        ?.let { stringResource(R.string.dorm_members_class) + "：" + it },
+).joinToString(" · ")
+
 @Composable
 private fun validityText(member: DormMember): String {
     val start = formatDate(member.startTime)
@@ -603,5 +629,58 @@ private fun validityText(member: DormMember): String {
         end.isBlank() -> start
         start.isBlank() -> end
         else -> stringResource(R.string.dorm_members_valid_range, start, end)
+    }
+}
+
+/** 成员操作菜单：拨号与保存到通讯录，两端主题共用同一份条目。 */
+@Composable
+private fun memberMenuItems(
+    member: DormMember,
+    context: Context,
+    onDone: () -> Unit,
+): List<ActionMenuItem> = listOf(
+    ActionMenuItem(
+        icon = Icons.Rounded.Call,
+        label = stringResource(R.string.dorm_members_dial),
+        onClick = {
+            onDone()
+            context.dialPhone(member.userTel)
+        },
+    ),
+    ActionMenuItem(
+        icon = Icons.Rounded.PersonAdd,
+        label = stringResource(R.string.dorm_members_save_contact),
+        onClick = {
+            onDone()
+            context.saveContact(member.displayName, member.userTel)
+        },
+    ),
+)
+
+/** 拨号只填号码不直接拨出，用户仍可在拨号盘里取消。 */
+private fun Context.dialPhone(phone: String) {
+    launchOrToast(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone)))
+}
+
+/** 拉起系统「新建联系人」界面并预填姓名与号码。 */
+private fun Context.saveContact(name: String, phone: String) {
+    val intent = Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI).apply {
+        putExtra(ContactsContract.Intents.Insert.NAME, name)
+        putExtra(ContactsContract.Intents.Insert.PHONE, phone)
+    }
+    launchOrToast(intent)
+}
+
+/**
+ * 隐式 Intent 兜底：设备没有拨号/联系人应用时 `startActivity` 会抛
+ * ActivityNotFoundException，这里统一转成一句提示，避免直接崩溃。
+ */
+private fun Context.launchOrToast(intent: Intent) {
+    val launched = runCatching {
+        startActivity(intent)
+        true
+    }.getOrDefault(false)
+    if (!launched) {
+        Toast.makeText(this, getString(R.string.dorm_members_action_failed), Toast.LENGTH_SHORT).show()
     }
 }

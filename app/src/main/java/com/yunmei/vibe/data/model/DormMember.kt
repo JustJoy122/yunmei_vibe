@@ -26,6 +26,14 @@ data class DormMember(
     val areaName: String = "",
     val buildName: String = "",
     val dormName: String = "",
+    /**
+     * 学院名称。成员接口 `dormuser/getbyloginuser` 不返回这一项，
+     * 官方是在「个人资料」页用 `student/getbyloginuser` 取到 `collegeName`；
+     * 因此只有当前登录账号自己那一条能补上，其余成员为 null。
+     */
+    val college: String? = null,
+    /** 班级名称，来源与 [college] 相同。 */
+    val className: String? = null,
     /** 人员信息，接口里是嵌套对象，缺字段时退化为空串。 */
     val loginUserInfo: LoginUserInfo = LoginUserInfo(),
 ) {

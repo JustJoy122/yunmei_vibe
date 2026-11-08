@@ -47,7 +47,12 @@
     <string name="dorm_members_valid">有效期</string>
     <string name="dorm_members_valid_range">%1$s 至 %2$s</string>
     <string name="dorm_members_location">宿舍</string>
+    <string name="dorm_members_college">学院</string>
+    <string name="dorm_members_class">班级</string>
     <string name="dorm_members_role">成员身份</string>
+    <string name="dorm_members_dial">拨打电话</string>
+    <string name="dorm_members_save_contact">保存到通讯录</string>
+    <string name="dorm_members_action_failed">没有可以处理该操作的应用</string>
     <string name="dorm_members_empty">暂无成员</string>
     <string name="dorm_members_failed">成员加载失败</string>
     <string name="dorm_members_lock_missing">门锁不存在，请返回重试</string>
@@ -361,9 +366,9 @@
     <string name="settings_group_lock_behavior">门锁行为</string>
     <string name="unlock_records">开门记录</string>
     <string name="unlock_records_back">返回</string>
-    <string name="unlock_records_source">以下数据从学校服务获取</string>
+    <string name="unlock_records_source">以下数据从单位服务获取</string>
     <string name="unlock_records_upload">上传本软件记录</string>
-    <string name="unlock_records_upload_summary">开门成功后上传到学校服务</string>
+    <string name="unlock_records_upload_summary">开门成功后上传到单位服务</string>
     <string name="unlock_records_empty">暂无开门记录</string>
     <string name="unlock_records_failed_generic">记录加载失败</string>
     <string name="unlock_aes_key_required">该门锁需要 AES 密钥，请先在门锁详情页设置</string>

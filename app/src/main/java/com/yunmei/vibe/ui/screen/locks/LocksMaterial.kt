@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.locks
 
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.twotone.ContentPaste
 import com.yunmei.vibe.data.local.StoredUser
 import androidx.compose.material.icons.twotone.Person
@@ -142,6 +143,7 @@ fun LocksPagerMaterial(
                             },
                             supportingContent = { Text(stringResource(R.string.settings_account_hint)) },
                             leadingContent = { Icon(Icons.AutoMirrored.TwoTone.Login, null) },
+                            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
                         )
                     }
                     state.accounts.forEach { user ->
@@ -161,6 +163,7 @@ fun LocksPagerMaterial(
                             headlineContent = { Text(stringResource(R.string.locks_add_scan)) },
                             supportingContent = { Text(stringResource(R.string.locks_add_scan_hint)) },
                             leadingContent = { Icon(Icons.TwoTone.QrCodeScanner, null) },
+                            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
                         )
                     },
                     {
@@ -169,6 +172,7 @@ fun LocksPagerMaterial(
                             headlineContent = { Text(stringResource(R.string.scan_paste_link)) },
                             supportingContent = { Text(stringResource(R.string.scan_paste_link_hint)) },
                             leadingContent = { Icon(Icons.TwoTone.ContentPaste, null) },
+                            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
                         )
                     },
                 )

@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.about
 
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding

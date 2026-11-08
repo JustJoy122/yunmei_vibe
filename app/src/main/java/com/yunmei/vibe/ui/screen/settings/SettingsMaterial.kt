@@ -187,6 +187,7 @@ fun SettingPagerMaterial(
                                     stringResource(id = R.string.send_log)
                                 )
                             },
+                            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
                         )
                     },
                     {
@@ -202,6 +203,7 @@ fun SettingPagerMaterial(
                                     stringResource(id = R.string.settings_about)
                                 )
                             },
+                            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
                         )
                     }
                 )

@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.locks
 
+import top.yukonga.miuix.kmp.preference.ArrowPreference
 import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.automirrored.rounded.Login
@@ -148,7 +149,7 @@ fun LocksPagerMiuix(
                         // 账号（登录/切换账号 + 已保存账号；原「设置 → 账号」分组整体迁入）
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column {
-                                BasicComponent(
+                                ArrowPreference(
                                     title = stringResource(
                                         if (state.accounts.isEmpty()) R.string.locks_add_login
                                         else R.string.settings_account_login
@@ -171,7 +172,7 @@ fun LocksPagerMiuix(
 
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column {
-                                BasicComponent(
+                                ArrowPreference(
                                     title = stringResource(R.string.locks_add_scan),
                                     summary = stringResource(R.string.locks_add_scan_hint),
                                     startAction = {
@@ -183,7 +184,7 @@ fun LocksPagerMiuix(
                                     },
                                     onClick = actions.onAddScan,
                                 )
-                                BasicComponent(
+                                ArrowPreference(
                                     title = stringResource(R.string.scan_paste_link),
                                     summary = stringResource(R.string.scan_paste_link_hint),
                                     startAction = {

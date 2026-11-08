@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircleOutline
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Key
@@ -195,6 +196,7 @@ state.lockCount == 0 -> {
                     containerColor = warningCardContainerColor(),
                     contentColor = warningCardContentColor(),
                     pressFeedback = PressFeedbackType.Sink,
+                    showChevron = true,
                     onClick = actions.onOpenLocks,
                 )
             }
@@ -209,6 +211,7 @@ else -> {
                     containerColor = warningCardContainerColor(),
                     contentColor = warningCardContentColor(),
                     pressFeedback = PressFeedbackType.Sink,
+                    showChevron = true,
                     onClick = actions.onOpenLocks,
                 )
             }
@@ -404,6 +407,8 @@ private fun MiuixStatusCard(
     containerColor: Color,
     contentColor: Color? = null,
     pressFeedback: PressFeedbackType = PressFeedbackType.Tilt,
+    /** 未就绪的两种状态整卡可点去门锁页，给它一个右箭头让「可点」可见（与 Material 侧一致）。 */
+    showChevron: Boolean = false,
     onClick: () -> Unit,
 ) {
     // 首页三种状态共用这一种版式：左侧标题/副标题/底部补充信息，右侧一个巨大圆图标被卡片右边缘裁切。
@@ -459,18 +464,28 @@ private fun MiuixStatusCard(
                         .padding(16.dp, 14.dp),
                     contentAlignment = Alignment.TopStart,
                 ) {
-                    Column {
-                        Text(
-                            text = title,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        if (subtitle != null) {
-                            Spacer(Modifier.height(1.dp))
+                    Row(verticalAlignment = Alignment.Top) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = subtitle,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium,
+                                text = title,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            if (subtitle != null) {
+                                Spacer(Modifier.height(1.dp))
+                                Text(
+                                    text = subtitle,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            }
+                        }
+                        if (showChevron) {
+                            Icon(
+                                imageVector = Icons.Rounded.ChevronRight,
+                                contentDescription = null,
+                                tint = contentColor ?: colorScheme.onSurfaceVariantSummary,
+                                modifier = Modifier.padding(start = 8.dp, top = 2.dp),
                             )
                         }
                     }

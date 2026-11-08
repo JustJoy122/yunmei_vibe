@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.lockdetail
 
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -105,6 +106,7 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 
@@ -320,6 +322,7 @@ private fun LockDetailScreenMaterial(
                                     )
                                 },
                                 leadingContent = { Icon(Icons.TwoTone.Key, null) },
+                                trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
                             )
                         }
                     }
@@ -359,6 +362,7 @@ private fun LockDetailScreenMaterial(
                             onClick = onToggleQr,
                             headlineContent = { Text(stringResource(R.string.lock_detail_generate_qr)) },
                             leadingContent = { Icon(Icons.TwoTone.QrCode2, null) },
+                            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
                         )
                     },
                 ),
@@ -545,7 +549,7 @@ private fun LockDetailScreenMiuix(
                         onCheckedChange = actions.onSetDefault,
                     )
                     if (lock.aesSupport == true) {
-                        BasicComponent(
+                        ArrowPreference(
                             title = stringResource(R.string.lock_detail_aes_key),
                             summary = stringResource(
                                 if (lock.customAesKey.isNullOrBlank()) R.string.lock_detail_aes_key_unset
@@ -607,7 +611,7 @@ private fun LockDetailScreenMiuix(
                         },
                         onClick = actions.onCopyLink,
                     )
-                    BasicComponent(
+                    ArrowPreference(
                         title = stringResource(R.string.lock_detail_generate_qr),
                         startAction = {
                             MiuixIcon(

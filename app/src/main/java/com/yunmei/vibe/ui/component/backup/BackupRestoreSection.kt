@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.component.backup
 
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -241,6 +242,7 @@ fun BackupRestoreEntry() {
             onClick = { showChooser = true },
             headlineContent = { Text(stringResource(R.string.backup_restore_title)) },
             leadingContent = { Icon(Icons.TwoTone.Save, null) },
+            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
         )
     }
 

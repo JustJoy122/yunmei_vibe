@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.LocalMainPagerState
+import com.yunmei.vibe.ui.LocalSelectMainPage
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.SignLocationMode
 import com.yunmei.vibe.ui.UiMode
@@ -51,6 +52,8 @@ fun HomePager(
     val confirmDialog = rememberConfirmDialog()
     val scope = rememberCoroutineScope()
     val mainPagerState = LocalMainPagerState.current
+    // CompositionLocal 只能在 Composable 上下文读取：这里先取值，再交给下面的 lambda 使用。
+    val selectMainPage = LocalSelectMainPage.current
 
     var hasActivated by remember { mutableStateOf(false) }
     if (isCurrentPage) hasActivated = true
@@ -125,10 +128,15 @@ fun HomePager(
     // 「自动开门」+「开门后自动退出」同时开启：三重危险确认（原项目行为，随开关迁至首页）。
 
 
-    val actions = remember(viewModel, uiState, navigator, mainPagerState, bleRequester, locationRequester) {
+    val actions = remember(viewModel, uiState, navigator, mainPagerState, selectMainPage, bleRequester, locationRequester) {
         HomeActions(
         onOpenDetail = { lock -> navigator.push(Route.LockDetail(lock.label)) },
-        onOpenLocks = { mainPagerState.animateToPage(MainPagerConfig.PAGE_LOCKS) },
+        // 未设置默认门锁时点「状态卡」跳到门锁页：主状态走 ViewModel（跨重建可靠），
+        // 同时直接驱动一次 Pager，避免 selectedMainPage 恰好已经是门锁页时没有状态变化可用。
+        onOpenLocks = {
+            selectMainPage(MainPagerConfig.PAGE_LOCKS)
+            mainPagerState.animateToPage(MainPagerConfig.PAGE_LOCKS)
+        },
         onOpenDoor = {
             if (hasAllPermissions(BLE_PERMISSIONS)) {
                 viewModel.openDoor()

@@ -210,6 +210,7 @@ class MainActivity : ComponentActivity() {
                 LocalEnableFloatingBottomBar provides uiState.enableFloatingBottomBar,
                 LocalEnableFloatingBottomBarBlur provides uiState.enableFloatingBottomBarBlur,
                 LocalUiMode provides uiMode,
+                LocalSelectMainPage provides viewModel::setSelectedMainPage,
             ) {
                 val currentSelectedPage by rememberUpdatedState(selectedMainPage)
                 val mainScreenEntry = @Composable {
@@ -408,6 +409,14 @@ private fun InstallerNavEntry(
 
 val LocalMainPagerState = staticCompositionLocalOf<MainPagerState> { error("LocalMainPagerState not provided") }
 
+/**
+ * 由主界面之外的页面（首页 Banner、深链导入等）请求切换底栏页。
+ *
+ * 底栏三个页面是同级 Pager 而不是路由栈，「切页」必须走 ViewModel 的 selectedMainPage，
+ * 再让 `MainScreen` 观测到变化后驱动 Pager；直接拿 MainPagerState 滚动在跨屏重建后容易失联。
+ */
+val LocalSelectMainPage = staticCompositionLocalOf<(Int) -> Unit> { {} }
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun MainScreen(
@@ -424,6 +433,15 @@ fun MainScreen(
     val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { MainPagerConfig.PAGE_COUNT })
     val mainPagerState = rememberMainPagerState(pagerState)
+    // 外部入口（首页 Banner、深链导入）改写 ViewModel 的 selectedMainPage 后，
+    // MainScreen 以新的 initialPage 重组：这里把 Pager 跟过去。只在两者不一致时动作，
+    // 用户滑动与底栏点击仍走各自原有的路径，不会互相覆盖。
+    LaunchedEffect(initialPage) {
+        val target = MainPagerConfig.coercePage(initialPage)
+        if (mainPagerState.pagerState.currentPage != target) {
+            mainPagerState.animateToPage(target)
+        }
+    }
     var userScrollEnabled by remember { mutableStateOf(true) }
     // 页面切换手势：跨轴拦截（CrossAxisInterceptor）档需要按 miuix 官方示例配套调整 pager
     // （见 ui-reference/miuix-0.9.4/example/shared/src/commonMain/kotlin/AppContent.kt:758-768）

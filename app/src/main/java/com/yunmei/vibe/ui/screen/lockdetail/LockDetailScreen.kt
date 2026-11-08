@@ -40,8 +40,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -69,7 +67,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -78,6 +75,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -96,7 +95,6 @@ import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.SegmentedSwitchItem
-import com.yunmei.vibe.ui.component.material.TonalCard
 import com.yunmei.vibe.ui.navigation.LocalNavigator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -124,8 +122,6 @@ fun LockDetailScreen(label: String) {
     // 数据读取全部下沉到 LockDetailViewModel：页面只消费 UiState。
     val viewModel = viewModel<LockDetailViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    // 群组成员验证结果（原始 JSON 或异常文本），点按钮后回填，弹窗展示。
-    val memberDump by viewModel.memberDumpText.collectAsStateWithLifecycle()
 
     var showQr by rememberSaveable { mutableStateOf(false) }
     var showAesKey by rememberSaveable { mutableStateOf(false) }
@@ -133,11 +129,6 @@ fun LockDetailScreen(label: String) {
     LifecycleResumeEffect(Unit) {
         viewModel.refresh(label)
         onPauseOrDispose { }
-    }
-
-    // 门锁数据加载完成后再自动跑一次群组成员查询：结果同时落盘到 files/dorm_debug.txt。
-    LaunchedEffect(uiState.lock?.label) {
-        if (uiState.lock != null) viewModel.autoDumpOnce()
     }
 
     fun shareLock(current: Lock) {
@@ -153,11 +144,6 @@ fun LockDetailScreen(label: String) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("yunmei", current.toShareUrl()))
         Toast.makeText(context, R.string.lock_detail_copied, Toast.LENGTH_SHORT).show()
-    }
-
-    // 调试弹窗放在早退分支之前：门锁数据还没读到或已失效时也要能把结果展示出来。
-    memberDump?.let { text ->
-        MemberDumpDialog(text = text, onDismiss = { viewModel.clearDormMemberDump() })
     }
 
     // 只有「已读取完成且确实找不到该门锁」时才返回，避免首帧误弹。
@@ -192,10 +178,6 @@ fun LockDetailScreen(label: String) {
         onCopyLink = { copyLink(current) },
         onShowAesKey = { showAesKey = true },
         onSaveAesKey = { value -> viewModel.setCustomAesKey(value) },
-        onDumpDormMembers = {
-            viewModel.dumpDormMembers()
-            Toast.makeText(context, context.getString(R.string.lock_detail_member_dump_loading), Toast.LENGTH_SHORT).show()
-        },
     )
 
     when (LocalUiMode.current) {
@@ -217,31 +199,37 @@ fun LockDetailScreen(label: String) {
 }
 
 /**
- * 群组成员验证结果弹窗：内容可滚动、可长按全选复制。
- *
- * 定位服务端返回结构时，Logcat 可能因机型日志过滤拿不到，所以把结果同时留在界面上，
- * 用户可以直接复制整段 JSON 或异常文本发回来。确认结构后连同入口一起删除。
+ * 「位置」行文案：areaName + buildName + dormName 直接拼接，三个名字都为空时整行隐藏。
  */
 @Composable
-private fun MemberDumpDialog(text: String, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.lock_detail_member_dump_title)) },
-        text = {
-            SelectionContainer {
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .heightIn(max = 420.dp)
-                        .verticalScroll(rememberScrollState()),
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
-        },
+private fun locationTextOf(lock: Lock): String =
+    listOf(lock.areaName, lock.buildName, lock.dormName)
+        .filter { it.isNotBlank() }
+        .joinToString("")
+
+/**
+ * 「协议能力」行文案：`加密：是 · 密码：支持（6 位）`。
+ *
+ * 能力为 null 表示型号未知（没拉到 locktype/all，或型号不在表里），一律显示「未知」，
+ * 不要显示成「否」——那会把「不知道」误报成「不支持」。
+ */
+@Composable
+private fun protocolTextOf(lock: Lock): String {
+    val aes = stringResource(
+        when (lock.aesSupport) {
+            true -> R.string.lock_detail_flag_yes
+            false -> R.string.lock_detail_flag_no
+            null -> R.string.lock_detail_flag_unknown
+        }
     )
+    val pwd = when (lock.pwdSupport) {
+        true -> lock.pwdLength?.let { stringResource(R.string.lock_detail_flag_supported_n, it) }
+            ?: stringResource(R.string.lock_detail_flag_yes)
+        false -> stringResource(R.string.lock_detail_flag_no)
+        null -> stringResource(R.string.lock_detail_flag_unknown)
+    }
+    return stringResource(R.string.lock_detail_protocol_aes, aes) +
+        " · " + stringResource(R.string.lock_detail_protocol_pwd, pwd)
 }
 
 private data class LockDetailActions(
@@ -253,8 +241,6 @@ private data class LockDetailActions(
     val onShowAesKey: () -> Unit,
     /** 提交 AES 密钥（32 位十六进制，空串表示清除）。 */
     val onSaveAesKey: (String) -> Unit,
-    /** 临时验证入口：拉取宿舍成员原始 JSON 并打到 Logcat（确认服务端结构后即移除）。 */
-    val onDumpDormMembers: () -> Unit,
 )
 
 @Composable
@@ -297,123 +283,61 @@ private fun LockDetailScreenMaterial(
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(8.dp))
+
+            val actionsTitle = stringResource(R.string.lock_detail_actions_group)
+            val infoTitle = stringResource(R.string.lock_detail_info_group)
+            val unknownText = stringResource(R.string.lock_label_unknown)
+            val unitName = lock.schoolName.ifBlank { UnitCodes.format(lock.schoolNo) }
+            val lockNoText = lock.mac.ifBlank { lock.lockNo }
+            val locationText = locationTextOf(lock)
+            val protocolText = protocolTextOf(lock)
+
+            // 第一组「操作」：设为默认 / 删除；AES 型号额外多一个密钥入口。
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                content = listOf(
-                    {
-                        SegmentedListItem(
-                            headlineContent = { Text(stringResource(R.string.lock_detail_mac)) },
-                            supportingContent = { Text(lock.mac) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            headlineContent = { Text(stringResource(R.string.lock_detail_service_uuid)) },
-                            supportingContent = { Text(lock.serviceUuid) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            headlineContent = { Text(stringResource(R.string.lock_detail_write_uuid)) },
-                            supportingContent = { Text(lock.writeUuid) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            headlineContent = { Text(stringResource(R.string.lock_detail_school)) },
-                            supportingContent = { Text(UnitCodes.format(lock.schoolNo)) },
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            headlineContent = { Text(stringResource(R.string.lock_detail_lock_no)) },
-                            supportingContent = { Text(lock.lockNo) },
-                        )
-                    },
-                    {
-                        // 电量用服务端记录值，更新时间来自 getuserlock 的 updateTime；
-                        // 蓝牙开门成功后本地会写回最新的电量与时间。
-                        val battery = lock.lockElectricity
-                        val updated = lock.updateTime
-                        if (battery != null || !updated.isNullOrBlank()) {
-                            SegmentedListItem(
-                                headlineContent = { Text(stringResource(R.string.lock_detail_battery)) },
-                                supportingContent = {
-                                    Text(
-                                        buildString {
-                                            if (battery != null) append(battery).append('%')
-                                            if (!updated.isNullOrBlank()) {
-                                                if (isNotEmpty()) append('\n')
-                                                append(stringResource(R.string.unlock_battery_updated, updated))
-                                            }
-                                        }
-                                    )
-                                },
-                            )
-                        }
-                    },
-                    {
-                        SegmentedListItem(
-                            headlineContent = { Text(stringResource(R.string.lock_detail_user_hash)) },
-                            supportingContent = {
-                                Text(
-                                    lock.usernameMd5 +
-                                        if (lock.usernameMd5.isBlank()) {
-                                            ""
-                                        } else {
-                                            " · " + stringResource(
-                                                if (accountSaved) {
-                                                    R.string.lock_detail_account_saved
-                                                } else {
-                                                    R.string.lock_detail_account_unsaved
-                                                }
-                                            )
-                                        }
-                                )
-                            },
-                        )
-                    },
-                )
-            )
-
-            SegmentedColumn(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                content = listOf {
-                    SegmentedSwitchItem(
-                        icon = if (isDefault) Icons.TwoTone.Star else Icons.TwoTone.StarBorder,
-                        title = stringResource(R.string.locks_set_default),
-                        checked = isDefault,
-                        onCheckedChange = actions.onSetDefault,
-                    )
-                }
-            )
-
-            // AES 型号门锁的密钥入口：只在服务端标记 aesSupport 时出现，
-            // 官方把这对 Key/IV 写死在客户端里，本应用改为由用户填写本机保存。
-            if (lock.aesSupport == true) {
-                SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    content = listOf {
-                        SegmentedListItem(
-                            onClick = actions.onShowAesKey,
-                            headlineContent = { Text(stringResource(R.string.lock_detail_aes_key)) },
-                            supportingContent = {
-                                val configured = !lock.customAesKey.isNullOrBlank()
-                                Text(
-                                    stringResource(
-                                        if (configured) R.string.lock_detail_aes_key_configured
-                                        else R.string.lock_detail_aes_key_unset
-                                    )
-                                )
-                            },
-                            leadingContent = { Icon(Icons.TwoTone.Key, null) },
+                title = actionsTitle,
+                content = buildList {
+                    add {
+                        SegmentedSwitchItem(
+                            icon = if (isDefault) Icons.TwoTone.Star else Icons.TwoTone.StarBorder,
+                            title = stringResource(R.string.locks_set_default),
+                            checked = isDefault,
+                            onCheckedChange = actions.onSetDefault,
                         )
                     }
-                )
-            }
+                    if (lock.aesSupport == true) {
+                        add {
+                            SegmentedListItem(
+                                onClick = actions.onShowAesKey,
+                                headlineContent = { Text(stringResource(R.string.lock_detail_aes_key)) },
+                                supportingContent = {
+                                    Text(
+                                        stringResource(
+                                            if (lock.customAesKey.isNullOrBlank()) {
+                                                R.string.lock_detail_aes_key_unset
+                                            } else {
+                                                R.string.lock_detail_aes_key_configured
+                                            }
+                                        )
+                                    )
+                                },
+                                leadingContent = { Icon(Icons.TwoTone.Key, null) },
+                            )
+                        }
+                    }
+                    add {
+                        SegmentedListItem(
+                            onClick = actions.onDelete,
+                            headlineContent = { Text(stringResource(R.string.locks_delete)) },
+                            leadingContent = {
+                                Icon(Icons.TwoTone.Delete, null, tint = MaterialTheme.colorScheme.error)
+                            },
+                        )
+                    }
+                },
+            )
 
-            // 「分享」分组（组标题：分享）：系统分享 / 复制链接 / 生成二维码。
-            // 生成二维码行必须紧贴下方二维码面板（手风琴式），因此把三行合并到同一组后再放面板。
+            // 第二组「分享」：系统分享 / 复制链接 / 生成二维码，二维码面板紧随其后。
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 title = stringResource(R.string.lock_detail_share_group),
@@ -439,39 +363,112 @@ private fun LockDetailScreenMaterial(
                             leadingContent = { Icon(Icons.TwoTone.QrCode2, null) },
                         )
                     },
-                )
+                ),
             )
 
             // 展开/折叠动画：复用 InstallerX Revived 各页面通用的手风琴写法
             // （fadeIn + expandVertically 自顶向下展开，fadeOut + shrinkVertically 向上收起）。
-            // 卡片圆角、底色、内边距仍由主题组件 TonalCard 提供，不硬编码。
             QrDialogMaterial(show = showQr, lock = lock, onToggle = onToggleQr, onShare = actions.onShare, onCopyLink = actions.onCopyLink)
 
-            // 删除单独置底成组：与分享类操作分隔开，避免误触。
+            // 第三组「信息」：电量置顶突出，其余字段为空时整行不出现。
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                content = listOf(
-                    {
+                title = infoTitle,
+                content = buildList {
+                    val battery = lock.lockElectricity
+                    val updated = lock.updateTime
+                    if (battery != null || !updated.isNullOrBlank()) {
+                        add {
+                            SegmentedListItem(
+                                headlineContent = {
+                                    Text(
+                                        text = stringResource(R.string.lock_detail_battery) + "：" +
+                                            (battery?.let { "$it%" } ?: unknownText),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                },
+                                supportingContent = {
+                                    if (!updated.isNullOrBlank()) {
+                                        Text(stringResource(R.string.unlock_battery_updated, updated))
+                                    }
+                                },
+                            )
+                        }
+                    }
+                    if (unitName.isNotBlank()) {
+                        add {
+                            SegmentedListItem(
+                                headlineContent = { Text(stringResource(R.string.lock_detail_school)) },
+                                supportingContent = { Text(unitName) },
+                            )
+                        }
+                    }
+                    if (locationText.isNotBlank()) {
+                        add {
+                            SegmentedListItem(
+                                headlineContent = { Text(stringResource(R.string.lock_detail_location)) },
+                                supportingContent = { Text(locationText) },
+                            )
+                        }
+                    }
+                    add {
                         SegmentedListItem(
-                            onClick = actions.onDelete,
-                            headlineContent = { Text(stringResource(R.string.locks_delete)) },
-                            leadingContent = {
-                                Icon(
-                                    Icons.TwoTone.Delete,
-                                    null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            },
+                            headlineContent = { Text(stringResource(R.string.lock_detail_protocol)) },
+                            supportingContent = { Text(protocolText) },
                         )
-                    },
-                    {
-                        SegmentedListItem(
-                            onClick = actions.onDumpDormMembers,
-                            headlineContent = { Text(stringResource(R.string.lock_detail_member_dump_title)) },
-                            leadingContent = { Icon(Icons.TwoTone.Key, null) },
-                        )
-                    },
-                )
+                    }
+                    if (lock.lockTypeName.isNotBlank()) {
+                        add {
+                            SegmentedListItem(
+                                headlineContent = { Text(stringResource(R.string.lock_detail_type_name)) },
+                                supportingContent = { Text(lock.lockTypeName) },
+                            )
+                        }
+                    }
+                    if (lockNoText.isNotBlank()) {
+                        add {
+                            SegmentedListItem(
+                                headlineContent = { Text(stringResource(R.string.lock_detail_lock_no)) },
+                                supportingContent = { Text(lockNoText) },
+                            )
+                        }
+                    }
+                    if (lock.serviceUuid.isNotBlank()) {
+                        add {
+                            SegmentedListItem(
+                                headlineContent = { Text(stringResource(R.string.lock_detail_service_uuid)) },
+                                supportingContent = { Text(lock.serviceUuid) },
+                            )
+                        }
+                    }
+                    if (lock.writeUuid.isNotBlank()) {
+                        add {
+                            SegmentedListItem(
+                                headlineContent = { Text(stringResource(R.string.lock_detail_write_uuid)) },
+                                supportingContent = { Text(lock.writeUuid) },
+                            )
+                        }
+                    }
+                    if (lock.usernameMd5.isNotBlank()) {
+                        add {
+                            SegmentedListItem(
+                                headlineContent = { Text(stringResource(R.string.lock_detail_user_hash)) },
+                                supportingContent = {
+                                    Text(
+                                        lock.usernameMd5 + " · " + stringResource(
+                                            if (accountSaved) {
+                                                R.string.lock_detail_account_saved
+                                            } else {
+                                                R.string.lock_detail_account_unsaved
+                                            }
+                                        )
+                                    )
+                                },
+                            )
+                        }
+                    }
+                },
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -519,59 +516,20 @@ private fun LockDetailScreenMiuix(
                     .padding(innerPadding)
                     .padding(horizontal = 12.dp),
             ) {
-                Card(
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-                        .fillMaxWidth(),
-                ) {
-                    BasicComponent(
-                        title = stringResource(R.string.lock_detail_mac),
-                        summary = lock.mac,
-                    )
-                    BasicComponent(
-                        title = stringResource(R.string.lock_detail_service_uuid),
-                        summary = lock.serviceUuid,
-                    )
-                    BasicComponent(
-                        title = stringResource(R.string.lock_detail_write_uuid),
-                        summary = lock.writeUuid,
-                    )
-                    BasicComponent(
-                        title = stringResource(R.string.lock_detail_school),
-                        summary = UnitCodes.format(lock.schoolNo),
-                    )
-                    BasicComponent(
-                        title = stringResource(R.string.lock_detail_lock_no),
-                        summary = lock.lockNo,
-                    )
-                    // 电量与更新时间：服务端记录值，蓝牙开门后被本地写回的最新值覆盖。
-                    (lock.lockElectricity ?: lock.updateTime?.takeIf { it.isNotBlank() })?.let {
-                        BasicComponent(
-                            title = stringResource(R.string.lock_detail_battery),
-                            summary = listOfNotNull(
-                                lock.lockElectricity?.let { value -> "$value%" },
-                                lock.updateTime?.takeIf { time -> time.isNotBlank() }
-                                    ?.let { time -> stringResource(R.string.unlock_battery_updated, time) },
-                            ).joinToString("\n"),
-                        )
-                    }
-                    BasicComponent(
-                        title = stringResource(R.string.lock_detail_user_hash),
-                        summary = lock.usernameMd5 +
-                            if (lock.usernameMd5.isBlank()) {
-                                ""
-                            } else {
-                                " · " + stringResource(
-                                    if (accountSaved) {
-                                        R.string.lock_detail_account_saved
-                                    } else {
-                                        R.string.lock_detail_account_unsaved
-                                    }
-                                )
-                            },
-                    )
-                }
+                val actionsTitle = stringResource(R.string.lock_detail_actions_group)
+                val infoTitle = stringResource(R.string.lock_detail_info_group)
+                val shareTitle = stringResource(R.string.lock_detail_share_group)
+                val unknownText = stringResource(R.string.lock_label_unknown)
+                val unitName = lock.schoolName.ifBlank { UnitCodes.format(lock.schoolNo) }
+                val lockNoText = lock.mac.ifBlank { lock.lockNo }
+                val locationText = locationTextOf(lock)
+                val protocolText = protocolTextOf(lock)
 
+                // 第一组「操作」：设为默认 / 删除；AES 型号额外多一个密钥入口。
+                SmallTitle(
+                    text = actionsTitle,
+                    insideMargin = PaddingValues(start = 16.dp, top = 12.dp, end = 28.dp, bottom = 0.dp),
+                )
                 Card(
                     modifier = Modifier
                         .padding(top = 12.dp)
@@ -590,15 +548,7 @@ private fun LockDetailScreenMiuix(
                         checked = isDefault,
                         onCheckedChange = actions.onSetDefault,
                     )
-                }
-
-                // AES 门锁的密钥入口（仅 aesSupport 门锁显示），与 Material 分支同一条件。
-                if (lock.aesSupport == true) {
-                    Card(
-                        modifier = Modifier
-                            .padding(top = 12.dp)
-                            .fillMaxWidth(),
-                    ) {
+                    if (lock.aesSupport == true) {
                         BasicComponent(
                             title = stringResource(R.string.lock_detail_aes_key),
                             summary = stringResource(
@@ -616,11 +566,22 @@ private fun LockDetailScreenMiuix(
                             onClick = actions.onShowAesKey,
                         )
                     }
+                    BasicComponent(
+                        title = stringResource(R.string.locks_delete),
+                        startAction = {
+                            MiuixIcon(
+                                imageVector = Icons.Filled.Delete,
+                                tint = colorScheme.error,
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = actions.onDelete,
+                    )
                 }
 
-                // 「分享」分组小标题（间距规则：标题上 12 / 下 12，与卡片 top=12 的节奏一致）。
+                // 第二组「分享」：系统分享 / 复制链接 / 生成二维码。
                 SmallTitle(
-                    text = stringResource(R.string.lock_detail_share_group),
+                    text = shareTitle,
                     insideMargin = PaddingValues(start = 16.dp, top = 12.dp, end = 28.dp, bottom = 0.dp),
                 )
                 Card(
@@ -666,33 +627,92 @@ private fun LockDetailScreenMiuix(
                 // 与 Material 分支完全相同的展开/折叠动画；卡片圆角、底色、内边距由 Miuix 主题 Card 提供。
                 QrDialogMiuix(show = showQr, lock = lock, onToggle = onToggleQr, onShare = actions.onShare, onCopyLink = actions.onCopyLink)
 
-                // 删除单独置底成卡：与分享类操作分隔开，避免误触。
+                // 第三组「信息」：电量置顶突出，字段为空时整行不出现。
+                SmallTitle(
+                    text = infoTitle,
+                    insideMargin = PaddingValues(start = 16.dp, top = 12.dp, end = 28.dp, bottom = 0.dp),
+                )
                 Card(
                     modifier = Modifier
                         .padding(top = 12.dp)
                         .fillMaxWidth(),
                 ) {
-                    BasicComponent(
-                        title = stringResource(R.string.locks_delete),
-                        startAction = {
-                            MiuixIcon(
-                                imageVector = Icons.Filled.Delete,
-                                tint = colorScheme.error,
-                                contentDescription = null,
+                    val battery = lock.lockElectricity
+                    val updated = lock.updateTime
+                    if (battery != null || !updated.isNullOrBlank()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                        ) {
+                            MiuixText(
+                                text = stringResource(R.string.lock_detail_battery) + "：" +
+                                    (battery?.let { "$it%" } ?: unknownText),
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colorScheme.onSurface,
                             )
-                        },
-                        onClick = actions.onDelete,
-                    )
+                            if (!updated.isNullOrBlank()) {
+                                MiuixText(
+                                    text = stringResource(R.string.unlock_battery_updated, updated),
+                                    fontSize = 12.sp,
+                                    color = colorScheme.onSurfaceVariantSummary,
+                                )
+                            }
+                        }
+                    }
+                    if (unitName.isNotBlank()) {
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_school),
+                            summary = unitName,
+                        )
+                    }
+                    if (locationText.isNotBlank()) {
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_location),
+                            summary = locationText,
+                        )
+                    }
                     BasicComponent(
-                        title = stringResource(R.string.lock_detail_member_dump_title),
-                        startAction = {
-                            MiuixIcon(
-                                imageVector = Icons.Filled.Key,
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = actions.onDumpDormMembers,
+                        title = stringResource(R.string.lock_detail_protocol),
+                        summary = protocolText,
                     )
+                    if (lock.lockTypeName.isNotBlank()) {
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_type_name),
+                            summary = lock.lockTypeName,
+                        )
+                    }
+                    if (lockNoText.isNotBlank()) {
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_lock_no),
+                            summary = lockNoText,
+                        )
+                    }
+                    if (lock.serviceUuid.isNotBlank()) {
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_service_uuid),
+                            summary = lock.serviceUuid,
+                        )
+                    }
+                    if (lock.writeUuid.isNotBlank()) {
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_write_uuid),
+                            summary = lock.writeUuid,
+                        )
+                    }
+                    if (lock.usernameMd5.isNotBlank()) {
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_user_hash),
+                            summary = lock.usernameMd5 + " · " + stringResource(
+                                if (accountSaved) {
+                                    R.string.lock_detail_account_saved
+                                } else {
+                                    R.string.lock_detail_account_unsaved
+                                }
+                            ),
+                        )
+                    }
                 }
                 Spacer(Modifier.height(16.dp))
             }

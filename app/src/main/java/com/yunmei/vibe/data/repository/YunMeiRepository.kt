@@ -159,12 +159,14 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         val aesSupport: Boolean? = null,
         val pwdSupport: Boolean? = null,
         val pwdLength: Int? = null,
+        val typeName: String? = null,
     )
 
     private fun JsonObject.capabilityOf(): LockCapability = LockCapability(
         aesSupport = flagOf("aesSupport"),
         pwdSupport = flagOf("pwdSupport"),
         pwdLength = this["pwdLength"]?.jsonPrimitive?.contentOrNull?.toIntOrNull(),
+        typeName = this["typeName"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() },
     )
 
     private fun JsonObject.aesSupportOf(): Boolean? = flagOf("aesSupport")
@@ -240,6 +242,10 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             areaNo = str("areaNo").orEmpty(),
             buildNo = str("buildNo").orEmpty(),
             dormNo = str("dormNo").orEmpty(),
+            areaName = str("areaName").orEmpty(),
+            buildName = str("buildName").orEmpty(),
+            dormName = str("dormName").orEmpty(),
+            lockTypeName = typeId?.let { capabilities[it]?.typeName }.orEmpty(),
         )
     }
 

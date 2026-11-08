@@ -35,31 +35,43 @@ class MainPagerState(
     private var navJob: Job? = null
 
     fun animateToPage(targetIndex: Int) {
-        if (targetIndex == selectedPage) return
+        // 以 Pager 真实页为准判断「已经在目标页」：selectedPage 只是镜像状态，
+        // 若拿它做早退条件，镜像与真实页错位时点击会被静默吞掉（首页 Banner / 底栏都受影响）。
+        val target = targetIndex.coerceIn(0, (pagerState.pageCount - 1).coerceAtLeast(0))
+        val alreadyThere = target == pagerState.currentPage && pagerState.currentPageOffsetFraction == 0f
+        if (alreadyThere) {
+            selectedPage = target
+            return
+        }
 
         navJob?.cancel()
 
-        selectedPage = targetIndex
+        selectedPage = target
         isNavigating = true
 
-        val distance = abs(targetIndex - pagerState.currentPage).coerceAtLeast(2)
+        val distance = abs(target - pagerState.currentPage).coerceAtLeast(2)
         val duration = 100 * distance + 100
         val layoutInfo = pagerState.layoutInfo
         val pageSize = layoutInfo.pageSize + layoutInfo.pageSpacing
-        val currentDistanceInPages = targetIndex - pagerState.currentPage - pagerState.currentPageOffsetFraction
+        val currentDistanceInPages = target - pagerState.currentPage - pagerState.currentPageOffsetFraction
         val scrollPixels = currentDistanceInPages * pageSize
 
         navJob = coroutineScope.launch {
             val myJob = coroutineContext.job
             try {
-                pagerState.animateScrollBy(
-                    value = scrollPixels,
-                    animationSpec = tween(easing = EaseInOut, durationMillis = duration)
-                )
+                if (pageSize > 0) {
+                    pagerState.animateScrollBy(
+                        value = scrollPixels,
+                        animationSpec = tween(easing = EaseInOut, durationMillis = duration)
+                    )
+                } else {
+                    // 首帧尚未测量出页宽时按像素滚动会滚 0 像素，改用官方按页滚动。
+                    pagerState.animateScrollToPage(target)
+                }
             } finally {
                 if (navJob == myJob) {
                     isNavigating = false
-                    if (pagerState.currentPage != targetIndex) {
+                    if (pagerState.currentPage != target) {
                         selectedPage = pagerState.currentPage
                     }
                 }

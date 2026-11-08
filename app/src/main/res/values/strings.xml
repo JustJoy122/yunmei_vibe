@@ -56,12 +56,23 @@
     <string name="lock_detail_school">单位编号</string>
     <string name="lock_detail_lock_no">门锁编号</string>
     <string name="lock_detail_user_hash">用户名（HASH）</string>
+    <string name="lock_detail_location">位置</string>
+    <string name="lock_detail_protocol">协议能力</string>
+    <string name="lock_detail_type_name">型号</string>
+    <string name="lock_detail_protocol_aes">加密：%1$s</string>
+    <string name="lock_detail_protocol_pwd">密码：%1$s</string>
+    <string name="lock_detail_flag_yes">是</string>
+    <string name="lock_detail_flag_no">否</string>
+    <string name="lock_detail_flag_unknown">未知</string>
+    <string name="lock_detail_flag_supported_n">支持（%1$d 位）</string>
     <string name="lock_detail_account_saved">已保存账号</string>
     <string name="lock_detail_account_unsaved">未保存账号</string>
     <string name="lock_detail_share_qr">分享二维码</string>
     <string name="lock_detail_share_qr_hint">对方扫码即可添加此门锁</string>
     <string name="lock_detail_share">系统分享</string>
+    <string name="lock_detail_actions_group">操作</string>
     <string name="lock_detail_share_group">分享</string>
+    <string name="lock_detail_info_group">信息</string>
     <string name="lock_detail_generate_qr">生成二维码</string>
     <string name="lock_detail_copy_link">复制链接</string>
     <string name="lock_detail_copied">分享链接已复制</string>
@@ -344,8 +355,5 @@
     <string name="lock_detail_aes_key_configured">已设置</string>
     <string name="lock_detail_aes_key_unset">未设置，该门锁暂时无法开门</string>
 <string name="lock_detail_aes_key_hint">32 位十六进制密钥</string>
-    <string name="lock_detail_member_dump_title">获取群组成员（测试）</string>
-    <string name="lock_detail_member_dump_loading">正在获取群组成员，请稍候</string>
-    <string name="lock_detail_member_dump">群组数据已打印至 Logcat</string>
     <string name="unlock_cooldown_wait">开门成功后再次开门间隔不能小于 %1$d 秒</string>
 </resources>

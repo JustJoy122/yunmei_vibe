@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.twotone.History
 import androidx.compose.material.icons.twotone.Key
 import androidx.compose.material.icons.twotone.LocationOn
@@ -155,7 +156,16 @@ private fun LockStatusCard(
                     backgroundColor = MaterialTheme.colorScheme.primary
                 )
             }
-        } else null
+        } else {
+            // 未就绪时给一个右箭头：整张卡片可点、点了去门锁页，这里让「可点」可见。
+            {
+                Icon(
+                    imageVector = Icons.Rounded.ChevronRight,
+                    contentDescription = null,
+                    tint = contentColor,
+                )
+            }
+        }
 
         Surface(
             modifier = Modifier.fillMaxWidth(),

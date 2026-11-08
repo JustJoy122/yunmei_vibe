@@ -130,9 +130,15 @@ class LockStore(private val secureStore: SecureStore) {
             lockElectricity = fresh.lockElectricity ?: current.lockElectricity,
             updateTime = fresh.updateTime ?: current.updateTime,
             schoolName = fresh.schoolName.ifBlank { current.schoolName },
+            pwdSupport = fresh.pwdSupport ?: current.pwdSupport,
+            pwdLength = fresh.pwdLength ?: current.pwdLength,
             areaNo = fresh.areaNo.ifBlank { current.areaNo },
             buildNo = fresh.buildNo.ifBlank { current.buildNo },
             dormNo = fresh.dormNo.ifBlank { current.dormNo },
+            areaName = fresh.areaName.ifBlank { current.areaName },
+            buildName = fresh.buildName.ifBlank { current.buildName },
+            dormName = fresh.dormName.ifBlank { current.dormName },
+            lockTypeName = fresh.lockTypeName.ifBlank { current.lockTypeName },
         )
         if (merged == current) return
         secureStore.putJson(KEY_LOCKS, all.map { lock -> if (lock.label == fresh.label) merged else lock })

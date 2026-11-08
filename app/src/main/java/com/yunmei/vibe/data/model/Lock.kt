@@ -57,6 +57,16 @@ data class Lock(
     val areaNo: String = "",
     val buildNo: String = "",
     val dormNo: String = "",
+    /**
+     * 上面三个编号对应的显示名（getuserlock 的 areaName / buildName / dormName）。
+     *
+     * 编号本身对人没有意义，详情页的「位置」行拼的是这三个名字。
+     */
+    val areaName: String = "",
+    val buildName: String = "",
+    val dormName: String = "",
+    /** 型号名称（locktype/all 的 typeName，如 "APP"），仅用于详情页展示。 */
+    val lockTypeName: String = "",
 ) {
 
     val isUsable: Boolean

@@ -54,7 +54,7 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
 material-kolor = { group = "com.materialkolor", name = "material-kolor", version.ref = "materialKolor" }
-hiddenapibypass = { module = "org.lsposed.hiddenapibypass:hiddenapibypass", version = "6.1" }
+hiddenapibypass = { module = "org.lsposed.hiddenapibypass:hiddenapibypass", version = "6.2" }
 haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui-android", version.ref = "miuix" }
 miuix-icons = { module = "top.yukonga.miuix.kmp:miuix-icons-android", version.ref = "miuix" }

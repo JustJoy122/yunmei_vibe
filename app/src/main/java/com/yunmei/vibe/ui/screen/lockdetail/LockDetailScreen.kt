@@ -75,8 +75,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -370,7 +368,7 @@ private fun LockDetailScreenMaterial(
             // （fadeIn + expandVertically 自顶向下展开，fadeOut + shrinkVertically 向上收起）。
             QrDialogMaterial(show = showQr, lock = lock, onToggle = onToggleQr, onShare = actions.onShare, onCopyLink = actions.onCopyLink)
 
-            // 第三组「信息」：电量置顶突出，其余字段为空时整行不出现。
+            // 第三组「信息」：字段为空时整行不出现。
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 title = infoTitle,
@@ -380,18 +378,16 @@ private fun LockDetailScreenMaterial(
                     if (battery != null || !updated.isNullOrBlank()) {
                         add {
                             SegmentedListItem(
-                                headlineContent = {
-                                    Text(
-                                        text = stringResource(R.string.lock_detail_battery) + "：" +
-                                            (battery?.let { "$it%" } ?: unknownText),
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                },
+                                headlineContent = { Text(stringResource(R.string.lock_detail_battery)) },
                                 supportingContent = {
-                                    if (!updated.isNullOrBlank()) {
-                                        Text(stringResource(R.string.unlock_battery_updated, updated))
-                                    }
+                                    Text(
+                                        text = (battery?.let { "$it%" } ?: unknownText) +
+                                            if (updated.isNullOrBlank()) {
+                                                ""
+                                            } else {
+                                                " · " + stringResource(R.string.unlock_battery_updated, updated)
+                                            }
+                                    )
                                 },
                             )
                         }
@@ -640,26 +636,15 @@ private fun LockDetailScreenMiuix(
                     val battery = lock.lockElectricity
                     val updated = lock.updateTime
                     if (battery != null || !updated.isNullOrBlank()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                        ) {
-                            MiuixText(
-                                text = stringResource(R.string.lock_detail_battery) + "：" +
-                                    (battery?.let { "$it%" } ?: unknownText),
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colorScheme.onSurface,
-                            )
-                            if (!updated.isNullOrBlank()) {
-                                MiuixText(
-                                    text = stringResource(R.string.unlock_battery_updated, updated),
-                                    fontSize = 12.sp,
-                                    color = colorScheme.onSurfaceVariantSummary,
-                                )
-                            }
-                        }
+                        BasicComponent(
+                            title = stringResource(R.string.lock_detail_battery),
+                            summary = (battery?.let { "$it%" } ?: unknownText) +
+                                if (updated.isNullOrBlank()) {
+                                    ""
+                                } else {
+                                    " · " + stringResource(R.string.unlock_battery_updated, updated)
+                                },
+                        )
                     }
                     if (unitName.isNotBlank()) {
                         BasicComponent(

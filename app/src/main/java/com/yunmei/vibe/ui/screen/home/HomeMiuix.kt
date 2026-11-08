@@ -1,9 +1,7 @@
 package com.yunmei.vibe.ui.screen.home
 
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -251,11 +249,8 @@ private fun UnlockActionCard(
                         strokeWidth = 8.dp,
                     )
                 } else {
-                    Box(
-                        modifier = Modifier
-                            .size(112.dp)
-                            .border(width = 8.dp, color = colorScheme.outline, shape = CircleShape),
-                    )
+                    // 禁用态直接不画环：只保留同尺寸空白占位，避免卡片高度变化、文字偏移。
+                    Box(modifier = Modifier.size(112.dp))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (enabled) {

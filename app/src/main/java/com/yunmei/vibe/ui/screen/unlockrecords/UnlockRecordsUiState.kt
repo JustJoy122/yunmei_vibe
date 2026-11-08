@@ -13,7 +13,8 @@ import com.yunmei.vibe.data.model.UnlockRecordItem
 data class UnlockRecordsUiState(
     val isLoading: Boolean = true,
     val records: List<UnlockRecordItem> = emptyList(),
-    val error: String? = null,
+    /** 请求失败时的可读错误（HTTP 码 / 服务端 msg），直接展示在列表区域，不让页面只剩空白。 */
+    val errorMessage: String? = null,
     /** 与设置项 enableRecordUpload 绑定的开关状态。 */
     val recordUpload: Boolean = true,
 )

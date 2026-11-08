@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CloudUpload
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -119,15 +120,17 @@ private fun UnlockRecordsMaterial(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 24.dp),
         ) {
+
             item {
-                // 提示条：照 KernelSU 的 WarningCard（errorContainer 底 + 16dp 内边距）。
+                // 提示条：只陈述数据来源，用 tertiaryContainer（提示而非错误）区分于真正的失败态。
                 TonalCard(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 ) {
                     Text(
                         text = stringResource(R.string.unlock_records_source),
                         style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     )
                 }
@@ -147,8 +150,18 @@ private fun UnlockRecordsMaterial(
                 )
             }
             when {
-                state.error != null -> item {
-                    RecordHint(state.error)
+                state.errorMessage != null -> item {
+                    RecordErrorCard(state.errorMessage)
+                }
+                state.isLoading -> item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
                 state.records.isEmpty() && !state.isLoading -> item {
                     RecordHint(stringResource(R.string.unlock_records_empty))
@@ -177,6 +190,26 @@ private fun UnlockRecordsMaterial(
                 }
             }
         }
+    }
+}
+
+/**
+ * 请求失败的显性反馈：用错误色卡片贴在列表位置，而不是让页面只剩空白。
+ *
+ * 内容来自 ViewModel 翻译过的异常（HTTP 码 / 服务端 msg），用户不必连电脑抓日志也能看到原因。
+ */
+@Composable
+private fun RecordErrorCard(message: String) {
+    TonalCard(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        containerColor = MaterialTheme.colorScheme.errorContainer,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
     }
 }
 
@@ -234,18 +267,20 @@ private fun UnlockRecordsMiuix(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             overscrollEffect = null,
         ) {
+
             item {
-                // 提示条：对齐 KernelSU 的 WarningCard（默认卡片 + errorContainer 底色）。
+                // 提示条：与 Material 侧同色（tertiaryContainer），语义是「数据来源提示」。
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.defaultColors(
-                        color = colorScheme.errorContainer,
-                        contentColor = colorScheme.onErrorContainer,
+                        color = colorScheme.tertiaryContainer,
+                        contentColor = colorScheme.onTertiaryContainer,
                     ),
                 ) {
                     MiuixText(
                         text = stringResource(R.string.unlock_records_source),
                         fontSize = 14.sp,
+                        color = colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(16.dp),
                     )
                 }
@@ -255,13 +290,32 @@ private fun UnlockRecordsMiuix(
                     SwitchPreference(
                         title = stringResource(R.string.unlock_records_upload),
                         summary = stringResource(R.string.unlock_records_upload_summary),
+                        // 与 Material 侧同图标，保持两套主题视觉一致。
+                        startAction = {
+                            Icon(
+                                Icons.Rounded.CloudUpload,
+                                modifier = Modifier.padding(end = 6.dp),
+                                contentDescription = stringResource(R.string.unlock_records_upload),
+                                tint = colorScheme.onBackground,
+                            )
+                        },
                         checked = state.recordUpload,
                         onCheckedChange = actions.onSetRecordUpload,
                     )
                 }
             }
             when {
-                state.error != null -> item { MiuixHint(state.error) }
+                state.errorMessage != null -> item { MiuixErrorCard(state.errorMessage) }
+                state.isLoading -> item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(color = colorScheme.primary)
+                    }
+                }
                 state.records.isEmpty() && !state.isLoading -> item {
                     MiuixHint(stringResource(R.string.unlock_records_empty))
                 }
@@ -270,6 +324,24 @@ private fun UnlockRecordsMiuix(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MiuixErrorCard(message: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.defaultColors(
+            color = colorScheme.errorContainer,
+            contentColor = colorScheme.onErrorContainer,
+        ),
+    ) {
+        MiuixText(
+            text = message,
+            fontSize = 14.sp,
+            color = colorScheme.onErrorContainer,
+            modifier = Modifier.padding(16.dp),
+        )
     }
 }
 

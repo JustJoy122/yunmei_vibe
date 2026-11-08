@@ -301,9 +301,20 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         // 真机抓到的形状是裸数组，但同样兼容 `data` / `o` 包裹的写法。
         val array = when (element) {
             is JsonArray -> element
-            is JsonObject -> (element["data"] as? JsonArray)
-                ?: (element["o"] as? JsonArray)
-                ?: JsonArray(emptyList())
+            is JsonObject -> {
+                // 官方失败时给的是 {"success":false,"msg":"…"}：不能静默当成「没有记录」，
+                // 否则页面只剩空白，排查时看不出是权限、登录态还是接口问题。
+                val success = element["success"]?.jsonPrimitive?.booleanOrNull
+                if (success == false) {
+                    val msg = element["msg"]?.jsonPrimitive?.contentOrNull.orEmpty()
+                    throw YunMeiException(
+                        if (msg.isBlank()) appContext.getString(R.string.unlock_records_failed_generic) else msg
+                    )
+                }
+                (element["data"] as? JsonArray)
+                    ?: (element["o"] as? JsonArray)
+                    ?: JsonArray(emptyList())
+            }
             else -> JsonArray(emptyList())
         }
         return array.mapNotNull { item -> item as? JsonObject }.map { item ->
@@ -353,9 +364,20 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         }
         val array = when (element) {
             is JsonArray -> element
-            is JsonObject -> (element["data"] as? JsonArray)
-                ?: (element["o"] as? JsonArray)
-                ?: JsonArray(emptyList())
+            is JsonObject -> {
+                // 官方失败时给的是 {"success":false,"msg":"…"}：不能静默当成「没有记录」，
+                // 否则页面只剩空白，排查时看不出是权限、登录态还是接口问题。
+                val success = element["success"]?.jsonPrimitive?.booleanOrNull
+                if (success == false) {
+                    val msg = element["msg"]?.jsonPrimitive?.contentOrNull.orEmpty()
+                    throw YunMeiException(
+                        if (msg.isBlank()) appContext.getString(R.string.unlock_records_failed_generic) else msg
+                    )
+                }
+                (element["data"] as? JsonArray)
+                    ?: (element["o"] as? JsonArray)
+                    ?: JsonArray(emptyList())
+            }
             else -> JsonArray(emptyList())
         }
         return array.mapNotNull { item -> item as? JsonObject }.map { item ->

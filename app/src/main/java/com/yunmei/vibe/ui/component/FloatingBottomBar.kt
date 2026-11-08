@@ -211,7 +211,9 @@ fun FloatingBottomBar(
         }
     }
 
-    var currentIndex by remember(selectedIndex) { mutableIntStateOf(selectedIndex()) }
+    // 不把 selectedIndex 这个 lambda 当 key：它在每次重组时都是新实例，会让 currentIndex
+    // 被反复重置，进而把外部选中也当成一次「用户拖动」再回灌给调用方。
+    var currentIndex by remember { mutableIntStateOf(selectedIndex()) }
 
     class DampedDragAnimationHolder {
         var instance: DampedDragAnimation? = null
@@ -264,13 +266,17 @@ fun FloatingBottomBar(
         ).also { holder.instance = it }
     }
 
-    LaunchedEffect(selectedIndex) {
+    LaunchedEffect(Unit) {
         snapshotFlow { selectedIndex() }.collectLatest { currentIndex = it }
     }
     LaunchedEffect(dampedDragAnimation) {
         snapshotFlow { currentIndex }.drop(1).collectLatest { index ->
             dampedDragAnimation.animateToValue(index.toFloat())
-            onSelected(index)
+            // 只有「用户拖动」引起的切换才需要回灌：外部把 selectedIndex 改成目标页时
+            // 这里会再发一次同样的选中，让调用方重复切页、把滚动动画打断成瞬跳。
+            if (index != selectedIndex()) {
+                onSelected(index)
+            }
         }
     }
 

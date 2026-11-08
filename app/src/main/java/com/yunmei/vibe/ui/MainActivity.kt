@@ -354,7 +354,10 @@ class MainActivity : ComponentActivity() {
                                     LockDetailScreen(route.label)
                                 }
                             }
-                            entry<Route.DormMembers>(swipeDismiss = swipeBackDirection) { route ->
+                            // 这个页面的入口是门锁卡片左下角的小胶囊按钮，紧贴屏幕左侧；
+                            // 开启横移返回后，点按时的轻微横向抖动会被当成返回手势，表现为
+                            // 「一进页面就自动退回」。群组成员不是高频滑动返回的页面，单独关掉。
+                            entry<Route.DormMembers>(swipeDismiss = NavSwipeDirection.None) { route ->
                                 InstallerNavEntry(interceptPredictiveBack, navOnBack) {
                                     DormMembersScreen(route.label)
                                 }

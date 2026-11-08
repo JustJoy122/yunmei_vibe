@@ -1,6 +1,5 @@
 package com.yunmei.vibe.ui.screen.home
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -241,17 +239,9 @@ private fun UnlockActionCard(
                         strokeWidth = 8.dp,
                     )
                 } else {
-                    // 禁用态不再用「主题色 + 半透明」：半透明色叠在卡片底色上会整体变暗发黑。
-                    // 改成规范里的描边色画一圈静态环，观感稳定且与启用态区分明显。
-                    Box(
-                        modifier = Modifier
-                            .size(112.dp)
-                            .border(
-                                width = 8.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                                shape = CircleShape,
-                            ),
-                    )
+                    // 禁用态直接不画环：环的取色在置灰卡片上怎么调都会发灰/发脏，
+                    // 这里只用同尺寸的空白占位，保证卡片高度与「开锁」文字居中不塌陷。
+                    Box(modifier = Modifier.size(112.dp))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (enabled) {

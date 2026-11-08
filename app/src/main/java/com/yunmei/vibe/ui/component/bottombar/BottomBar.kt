@@ -69,12 +69,14 @@ class MainPagerState(
                 // 动画被外部手势/状态变化打断时不让调用方感知失败，交给下面的兜底纠正。
                 Log.i("YunMei", "animateToPage interrupted: " + error.message)
             } finally {
-                // 兜底：动画结束仍不在目标页（被打断、页宽为 0 等）就硬切过去。
-                // 否则点击 Banner/底栏会「看起来没反应」——这是首页跳转最隐蔽的失败路径。
-                if (pagerState.currentPage != target) {
-                    runCatching { pagerState.scrollToPage(target) }
-                }
+                // 只有「本次仍是最后一次导航」时才收尾：被后来的 animateToPage 顶掉的任务
+                // 不能再硬切页面，否则会把新任务的滚动动画瞬间打断（表现为切页没有过渡）。
                 if (navJob == myJob) {
+                    // 兜底：动画结束仍不在目标页（被打断、页宽为 0 等）就硬切过去。
+                    // 否则点击 Banner/底栏会「看起来没反应」——这是首页跳转最隐蔽的失败路径。
+                    if (pagerState.currentPage != target) {
+                        runCatching { pagerState.scrollToPage(target) }
+                    }
                     isNavigating = false
                     selectedPage = pagerState.currentPage
                 }

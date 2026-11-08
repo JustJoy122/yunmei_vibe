@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.DormMember
@@ -63,6 +64,7 @@ import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.component.material.TonalCard
 import com.yunmei.vibe.ui.navigation.LocalNavigator
+import com.yunmei.vibe.ui.navigation.Route
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -96,7 +98,11 @@ fun DormMembersScreen(label: String) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(label) { viewModel.load(label) }
     val navigator = LocalNavigator.current
-    val onBack: () -> Unit = { navigator.pop() }
+    // 只在「当前就是本页」且 Activity 处于 RESUMED 时返回：避免生命周期切换或重复点击
+    // 把栈底的主界面也弹掉（那种情况会表现为页面一闪而过）。
+    val onBack: () -> Unit = dropUnlessResumed {
+        if (navigator.current() is Route.DormMembers) navigator.pop()
+    }
     when (LocalUiMode.current) {
         UiMode.Material -> DormMembersMaterial(uiState, onBack, viewModel::retry)
         UiMode.Miuix -> DormMembersMiuix(uiState, onBack, viewModel::retry)

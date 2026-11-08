@@ -1,7 +1,6 @@
 package com.yunmei.vibe.ui.component.dialog
 
 import android.os.Parcelable
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -175,8 +174,7 @@ private class ConfirmDialogHandleImpl(
         private val callback: ConfirmCallback
     ) : FlowCollector<ConfirmResult> {
         fun handleResult(result: ConfirmResult) {
-            Log.d(TAG, "handleResult: ${result.javaClass.simpleName}")
-            when (result) {
+                when (result) {
                 ConfirmResult.Confirmed -> onConfirm()
                 ConfirmResult.Canceled -> onDismiss()
             }
@@ -288,8 +286,7 @@ private class ConfirmDialogHandleImpl(
                 it.visuals
             },
             restore = {
-                Log.d(TAG, "ConfirmDialog restore, visuals: $it")
-                ConfirmDialogHandleImpl(visible, coroutineScope, callback, it, resultChannel)
+                            ConfirmDialogHandleImpl(visible, coroutineScope, callback, it, resultChannel)
             }
         )
     }

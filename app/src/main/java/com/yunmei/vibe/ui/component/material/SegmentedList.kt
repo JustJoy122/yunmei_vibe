@@ -28,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.SwitchDefaults
@@ -352,37 +351,6 @@ fun SegmentedDropdownItem(
                 }
             }
         }
-    )
-}
-
-@Composable
-fun SegmentedRadioItem(
-    title: String,
-    summary: String? = null,
-    colors: ListItemColors = defaultSegmentedColors(),
-    selected: Boolean,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
-    val haptic = LocalHapticFeedback.current
-
-    SegmentedListItem(
-        selected = selected,
-        onClick = {
-            haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-            onClick()
-        },
-        enabled = enabled,
-        colors = colors,
-        headlineContent = { Text(title) },
-        leadingContent = {
-            RadioButton(
-                selected = selected,
-                onClick = null,
-                enabled = enabled
-            )
-        },
-        supportingContent = summary?.let { { Text(it) } }
     )
 }
 

@@ -11,27 +11,27 @@
 | UI | Material 3 | 1.5.0-alpha26 |
 | UI | Miuix（`top.yukonga.miuix.kmp`） | 0.9.4 |
 | 取色 | materialKolor（Monet 动态取色） | 5.0.0 |
-| 导航 | miuix-nav（`top.yukonga.miuix.kmp:miuix-nav-android`） / NavigationEvent | 0.9.4 / 1.1.2 |
-| 架构组件 | AndroidX Lifecycle / Activity Compose / Core KTX | 2.10.0 / 1.13.0 / 1.16.0 |
+| 导航 | miuix-nav（`top.yukonga.miuix.kmp:miuix-nav-android`） / NavigationEvent | 0.9.4 / 1.1.1 |
+| 架构组件 | AndroidX Lifecycle / Activity Compose / Core KTX | 2.10.0 / 1.13.0 / 1.19.1 |
 
 ### 数据与网络
 
 | 类别 | 技术 | 版本 |
 | --- | --- | --- |
-| 网络 | Retrofit + OkHttp + kotlinx-serialization | 2.11.0 / 4.12.0 / 1.11.0 |
+| 网络 | Retrofit + OkHttp + kotlinx-serialization | 3.0.0 / 5.5.1 / 1.12.0 |
 | 并发 | kotlinx-coroutines | 1.11.0 |
 | 加密存储 | AndroidX Security Crypto | 1.1.0 |
 | 偏好存储 | DataStore Preferences | 1.1.1 |
 | 蓝牙 | FastBleLib（本地 AAR） | 2.3.4 |
-| 二维码 | ZXing Core（静态图解码 + 二维码生成） | 3.5.3 |
-| 系统反射 | HiddenApiBypass | 6.1 |
+| 二维码 | ZXing Core（静态图解码 + 二维码生成） | 3.5.4 |
+| 系统反射 | HiddenApiBypass | 6.2 |
 
 ### 构建工具链
 
 | 项目 | 版本 |
 | --- | --- |
 | Gradle | 9.8.1 |
-| Android Gradle Plugin (AGP) | 9.3.2 |
+| Android Gradle Plugin (AGP) | 9.5.0 |
 | JDK | 21 |
 
 ## 软件运行要求
@@ -91,7 +91,7 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 
 ### 版本基线说明
 
-版本基线：**AGP 9.3.2 / Kotlin 2.4.10 / compileSdk 37 / minSdk 26**。
+版本基线：**AGP 9.5.0 / Kotlin 2.4.10 / compileSdk 37 / minSdk 26**。
 
 UI 依赖组合（compose-bom 2026.08.00 → Compose 1.12.0 稳定版、material3 1.5.0-alpha26、
 miuix 0.9.4 正式版、materialKolor 5.0.0、NavigationEvent 1.1.2）为设备实测可用组合，模板组件零修改编译。
@@ -183,10 +183,12 @@ app/src/main/java/com/yunmei/vibe/
 ├── YunMeiApp.kt             # Application：崩溃捕获、AppContainer、快捷方式同步
 ├── core/di/AppContainer.kt  # 轻量手动依赖容器
 ├── data/
-│   ├── network/             # Retrofit 接口（login / userschool / getuserlock / sign / lockpassword）
-│   ├── model/               # 数据模型（Lock、登录与打卡相关 DTO）
-│   ├── repository/          # YunMeiRepository：鉴权、会话、业务聚合
-│   ├── ble/UnlockManager.kt # BLE 开门状态机与进度回调
+│   ├── network/             # Retrofit 接口（login / userschool / getuserlock / locktype / lockpassword /
+│   │                        #   lockrecord / dormuser / student / sign）
+│   ├── model/               # 数据模型（Lock、DormMember、UnlockRecord、UnlockRecordItem、登录与打卡 DTO）
+│   ├── repository/          # YunMeiRepository（鉴权、会话、业务聚合）、UnlockRecordReporter（开门记录上报）
+│   ├── ble/                 # UnlockManager（开门状态机与进度回调）、AesFrameCodec（D2D3 AES 帧）、
+│   │                        #   UnlockCooldown（8 秒开门冷却）
 │   ├── local/               # SecureStore（EncryptedSharedPreferences）/ AccountStore / LockStore
 │   ├── location/            # LocationManager 封装（打卡定位）
 │   ├── qrcode/              # ZXing 二维码编解码
@@ -196,16 +198,19 @@ app/src/main/java/com/yunmei/vibe/
 └── ui/
     ├── MainActivity.kt      # 主导航容器（miuix-nav 返回栈 + tab Pager + 预测性返回过渡）
     ├── theme/               # TemplateTheme 与 UiMode（Material / Miuix）、语义色
-    ├── component/           # 通用组件（dialog/ 对话框、material/ 含 ScaleDialogMaterial.kt、miuix/、liquid/）
+    ├── component/           # 通用组件（dialog/、material/、miuix/、liquid/、bottombar/）
     ├── navigation/          # Route 定义（@Serializable）与 Navigator，构建在 miuix-nav 之上
     ├── animation/           # 预测性返回过渡
     ├── util/                # 权限、日志、模糊、角标等工具；跳板基类 TrampolineActivity.kt、前台通知工具 ForegroundNotification.kt
     ├── viewmodel/           # MainActivityViewModel、SettingsViewModel 等
     ├── sign/                # 打卡：快捷方式、跳板（含 SignSettingsTrampolineActivity.kt）、定位方式弹窗、通知、前台服务
     ├── unlock/              # 开门：快捷方式、令牌校验、通知、前台服务、小米超级岛
-    └── screen/              # 各页面（home / locks / settings / themesettings / subsettings / login / lockdetail / about / license）
+    └── screen/              # 各页面（home / locks / settings / themesettings / subsettings / login /
+                             #   lockdetail / dormmembers / unlockrecords / about / license）
                              #   · subsettings/ = 二级设置页（开锁 / 取码与打卡）
                              #   · lockdetail/ = 门锁详情 + LockDetailViewModel.kt
+                             #   · dormmembers/ = 群组成员（头像、身份、宿舍、学院班级、有效期）
+                             #   · unlockrecords/ = 开门记录（列表 + 来源提示 + 上传开关）
 ```
 
 页面遵循 `Screen + UiState/Actions + Material/Miuix 双实现 + ViewModel` 的分层；跨页共享状态由 ViewModel 与 CompositionLocal（`LocalUiMode`、`LocalEnableBlur` 等）承担。
@@ -222,7 +227,10 @@ app/src/main/java/com/yunmei/vibe/
 
 - 分享协议：`https://yunmeiui.xypp.cc/#/lock_info/<Base64>`（9 段 `|` 格式）可双向解析，
   支持 `addlock/`、`lock_id/`、`lock_info/`、`lockInfo/` 前缀与 4 段旧格式。
-- 开门帧：`0xD0 | 总长(secret+14) | secret | 0xA5 | 6位密码逆序 | "ID01" | 0xA7`；
+- 开门帧（`data/ble/UnlockManager.kt`）：默认一帧同时携带临时密码与开门指令
+  `0xD0 | 总长 | secret | 0xA5 | 6位ASCII密码 | "ID01" | 0xA7`；型号能力表显示不支持密码时降级为
+  `0xD0 | 总长 | secret | 0xA7`，并在 5 秒无回传时自动降级重试一次。AES 型号按官方外层封装
+  `0xD2 0xD3 | 总长 | 密文hex`（AES/CBC/PKCS5Padding，密钥由用户在门锁详情页填写）。
   notify 特征 = 写特征 UUID 替换 `6E400002 → 6E400003`；电量按 `0xAA`（直接百分比）
   与 `0xAB`（`round(100*(ab-40)/24)`，优先）解析；扫描模式开门成功后写回真实 MAC。
 - 接口：`https://base.yunmeitech.com/` + 学校 `serverUrl`，鉴权头
@@ -257,7 +265,10 @@ app/src/main/java/com/yunmei/vibe/
 
 ### 未在真机验证
 
-- **Android 10（API 29）启动稳定性**：已为此加了两处版本守卫（`ui/component/liquid/InnerShadow.kt` 的 `RenderEffect`/`BlurEffect` 仅 API 31+ 使用、`ui/component/liquid/Lens.kt` 改用本机版本判断以避开 minSdk 33 的 `miuix-blur`），但**没有设备验证**是否已彻底解决启动崩溃。
+- **Android 10（API 29）启动稳定性**：已修复并在真机验证。两处根因分别是
+  `ui/component/miuix/animation/InteractiveHighlight.kt` 无条件构造 API 33 才有的 `RuntimeShader`
+  （改为懒加载 + 纯色叠加降级），以及 `ui/theme/DynamicColorCompat.kt` 对 `android.R.color.system_accent*`
+  低版本缺失的防护；`ui/component/liquid/{InnerShadow,Lens}.kt` 的 `RenderEffect`/`miuix-blur` 守卫继续保留。
 - **小米超级岛**：`ui/unlock/MiIslandNotification.kt` 的整条路径（设备判定、`miui.focus.param` 渲染、短文本槽位）未在小米机型上验证；打卡侧的超级岛 extras 已接入（`ui/sign/SignNotifications.kt` 的 progress 分支复用同一套 `MiIslandNotification.extras`），同样待真机验证。
 - **通知实况结束态**：见下方「已知问题」，结束状态仍会回落为普通通知。
 - **开门通知的「重试」**：在部分 ROM 上"通知动作启动 Activity"可能被拦截；「完成」按钮行为正常。

@@ -30,7 +30,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/yunmei/vibe/ui/sign/SignService.kt"
-            line="135"
+            line="134"
             column="13"/>
     </issue>
 
@@ -239,19 +239,8 @@
         errorLine2="                  ~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="11"
+            line="10"
             column="19"/>
-    </issue>
-
-    <issue
-        id="ModifierParameter"
-        message="Modifier parameter should be the first optional parameter"
-        errorLine1="    modifier: Modifier = Modifier,"
-        errorLine2="    ~~~~~~~~">
-        <location
-            file="src/main/java/com/yunmei/vibe/ui/component/miuix/DropdownItem.kt"
-            line="24"
-            column="5"/>
     </issue>
 
     <issue

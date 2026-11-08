@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
@@ -194,7 +193,6 @@ class UnlockService : Service() {
 
     private fun updateProgress(text: String, percent: Int) {
         if (finished.get()) return
-        Log.d(TAG, "unlock progress=$percent text=$text")
         // 固定 ID 原地更新同一个通知：进度条由真实的进度字段驱动，不靠改标题/正文代替。
         lastPercent = percent
         UnlockNotifications.post(this, UnlockNotifications.progress(this, text, percent))

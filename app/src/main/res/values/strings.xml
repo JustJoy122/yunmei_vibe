@@ -24,7 +24,6 @@
     <string name="home_status_add_action">去添加</string>
     <string name="home_status_no_default_title">未设置默认门锁</string>
     <string name="home_status_set_default_action">去设置</string>
-    <string name="home_mac">门锁号</string>
 
     <!-- 门锁列表 -->
     <string name="locks_empty">还没有门锁</string>
@@ -41,15 +40,12 @@
     <string name="locks_default_tag">默认</string>
     <string name="dorm_members">群组成员</string>
     <string name="dorm_members_admin">管理员</string>
-    <string name="dorm_members_member">普通成员</string>
     <string name="dorm_members_disabled">已停用</string>
-    <string name="dorm_members_phone">手机号</string>
     <string name="dorm_members_valid">有效期</string>
     <string name="dorm_members_valid_range">%1$s 至 %2$s</string>
     <string name="dorm_members_location">宿舍</string>
     <string name="dorm_members_college">学院</string>
     <string name="dorm_members_class">班级</string>
-    <string name="dorm_members_role">成员身份</string>
     <string name="dorm_members_dial">拨打电话</string>
     <string name="dorm_members_save_contact">保存到通讯录</string>
     <string name="dorm_members_action_failed">没有可以处理该操作的应用</string>

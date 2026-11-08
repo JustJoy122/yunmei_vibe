@@ -14,20 +14,25 @@
 </div>
 
 云莓氛围是一款：
-- [Java 原项目](https://github.com/zxy19/yunmei_unintelligent) 为主菜
+- 以 [早期 Java 项目](https://github.com/zxy19/yunmei_unintelligent) 的起步经验为灵感
 - [DeepSeek API](https://platform.deepseek.com) 为燃料
 - [Deepseek 网页端](https://chat.deepseek.com/) 任产品经理
 - [DeepSeek Harness](https://www.deepseek.com/harness/) 掌勺
 - [Miuix](https://github.com/compose-miuix-ui/miuix) / [Material 3 Expressive](https://developer.android.com/develop/ui/compose/designsystems/material3) 双 UI 风格摆盘
 
-的云莓智能第三方 Android 客户端
+的云莓智能第三方 Android 客户端。当前版本的 UI、架构与 BLE 通信协议均已完全重写，不再依赖任何早期实现。
 
 ## 功能特性
 
 - [x] **三页信息架构**：首页 / 门锁 / 设置，开门操作已并入首页。
-- [x] **一键开门**：BLE 快速连接 / 扫描自动回退、进度环、门锁电量解析。
+- [x] **一键开门**：BLE 快速连接 / 扫描自动回退、进度环；按官方节奏 20 字节分片 + 100 ms 间隔写入，并以门锁回传帧判定成败。
+- [x] **加密门锁**：支持 `D2D3` 封装的 AES 型号门锁（在门锁详情页填写 32 位十六进制密钥）。
+- [x] **临时密码闭环**：能力表判定支持时，一帧同时写入 6 位临时密码（`A5`）与开门指令（`A7`），并把本次密码纳入开门记录。
+- [x] **电量同步**：开锁回传的 `AA/AB` 电量与电压会写回本地并上报服务端；首页、门锁列表与详情页展示「电量 + 上次更新」。
 - [x] **云端取码与打卡**：获取 6 位开门密码；定位打卡支持「每次询问 / 重新定位并保存 / 使用上次位置」三种方式。
-- [x] **门锁管理**：列表、设为默认、删除、详情、扫码添加、登录拉取。
+- [x] **门锁管理**：列表（KernelSU 风格卡片）、设为默认、删除、详情、扫码 / 粘贴链接 / 深链添加、登录拉取。
+- [x] **开门记录**：独立页面按账户拉取学校服务记录，内置「上传本软件记录」开关。
+- [x] **群组成员**：独立页面展示同宿舍成员的头像、身份、宿舍、学院 / 班级与有效期，点击姓名可拨号或存入通讯录。
 - [x] **账号管理**：登录、保存账号、切换账号。
 - [x] **双 UI 风格与主题**：Material 3 Expressive / Miuix 实时切换；Monet 动态取色、AMOLED 纯黑、页面缩放、背景毛玻璃、悬浮底栏、液态玻璃等。
 - [x] **兼容旧客户端**：分享二维码 / 链接双向解析。
@@ -78,7 +83,8 @@
 
 - 在部分设备或系统版本上，通知的「实况 / 流体云」形态可能显示不完整（例如只显示百分比、或某些阶段没有文字）。
 - 小米手机上的「超级岛」支持尚未经过真机验证，可能显示异常或回落到普通通知。
-- Android 10 及更低版本上，部分外观设置（模糊、玻璃等）不会出现或不可用；应用在该版本上的启动稳定性也尚未经过真机确认。
+- Android 12（API 31）以下不支持背景模糊 / 液态玻璃，Android 13（API 33）以下不支持「渐进」顶栏模糊；这些选项在低版本会隐藏或按系统能力降级。
+- Android 10 已知的启动闪退（`RuntimeShader` 与系统动态取色资源缺失）已修复，并在 Android 10 真机上验证过启动。
 - 打卡的「选择定位方式」弹窗目前只能点击空白处或按返回键关闭，暂不支持下滑关闭。
 
 ## 相关文档
@@ -88,14 +94,14 @@
 - [发布规范](docs/RELEASE.md)：版本号、签名、产物命名、更新日志、CI 发布与许可证说明
 
 ## 致谢
-- 感谢原项目 [yunmei_unintelligent](https://github.com/zxy19/yunmei_unintelligent) ，本项目不仅受其启发而开发，核心逻辑也全部依赖于此
-- 感谢 [@PhoenixTreeZh](https://github.com/PhoenixTreeZh) 对官方 BLE 通信协议的逆向分析与验证，其提供的核心实现代码与协议解析方案，为本项目门锁兼容性重构提供了关键支持
+- 感谢早期开源项目 [yunmei_unintelligent](https://github.com/zxy19/yunmei_unintelligent) 在项目起步阶段提供的灵感与启发。当前项目的 UI、架构及 BLE 通信协议均已完全重构。
+- 感谢 [@PhoenixTreeZh](https://github.com/PhoenixTreeZh) 在早期针对官方 BLE 协议的逆向分析与测试验证。其探索为项目提供了重要参考，当前云莓的 BLE 模块（包括 A5 闭环、AES 支持等）已完全基于官方协议独立实现。
 - 感谢 [KernelSU-Style-UI-Kit](https://github.com/chenaizhang/KernelSU-Style-UI-Kit) 、[KernelSU](https://github.com/tiann/KernelSU) 和 [InstallerX-Revived](https://github.com/wxxsfxyzm/InstallerX-Revived) 的前端框架，没有你们本项目的 UI 无以成型
 - 本项目使用了 [这些第三方库和框架](./docs/DEPENDENCIES.md)
 
 ## 相关活跃项目
 
-- [云莓 Lite](https://github.com/PhoenixTreeZh/yunmei-lite) - 由 [@PhoenixTreeZh](https://github.com/PhoenixTreeZh) 独立逆向开发的开源极简客户端。本项目 BLE 通信协议的重构与兼容性修复，得益于其对官方协议的逆向分析与验证。
+- [云莓 Lite](https://github.com/PhoenixTreeZh/yunmei-lite) - 由 [@PhoenixTreeZh](https://github.com/PhoenixTreeZh) 独立逆向开发的开源极简客户端。本项目早期曾参考其协议分析结论，当前 BLE 实现已独立完成。
 - [CloessyHarmony](https://github.com/Hannyueh/CloessyHarmony) - 基于云莓 Lite 核心逻辑开发的鸿蒙原生客户端版本。
 
 ## 隐私处理
@@ -117,6 +123,6 @@
 - 除非相关页面另有明确说明，本项目未获得任何相关主体的赞助、授权、委托运营或官方认可，与其不存在代理、隶属、合资、雇佣、合作伙伴关系或其他形式的从属、关联关系。本项目发布的内容亦不代表相关品牌方、厂商或服务提供商的立场
 - Android、DeepSeek、云莓智能，以及本项目提及的其他品牌名称、产品名称、服务名称、商标、标识与图形，均可能为其各自权利人所有的商标或注册商标
 - 本项目对上述名称、商标及标识的使用，仅限于对相关产品或服务进行识别、介绍、说明或提供兼容性信息，不表示本项目拥有相关商标权，也不意味着相关权利人对本项目提供任何形式的认可、授权、赞助或背书
-- 本项目与 GitHub, Inc. 、Google Inc. 、Microsoft Corp. 、杭州深度求索人工智能基础技术研究有限公司以及杭州云莓科技有限公司没有从属关系
+- 本项目与 GitHub, Inc. 、Google Inc. 、Microsoft Corp. 、杭州深度求索人工智能基础技术研究有限公司以及杭州云莓科技有限公司等实体、机构、企业、组织或个人没有从属关系
 
 </details>

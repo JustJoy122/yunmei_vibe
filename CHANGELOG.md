@@ -11,6 +11,40 @@
 ---
 ## [Unreleased]
 
+> 版本号与发布日期在发版时补齐，条目沿用 Keep a Changelog 分类。
+
+### 添加
+- AES 加密门锁：门锁详情页新增「设置 AES 密钥」（32 位十六进制），开锁时按官方 `D2D3` 外层封装（AES/CBC/PKCS5Padding）加密发送，回传帧解密后按普通帧判定结果。
+- `A5` 临时密码闭环：拉取型号能力表（`pwdSupport` / `pwdLength` / `aesSupport`），支持时一帧同时写入 6 位临时密码与开门指令，并把本次密码纳入开门记录。
+- 开门记录页：按账户拉取学校服务记录（`lockrecord/getrecordbyschool`），内置「上传本软件记录」开关与数据来源提示。
+- 群组成员页：展示同宿舍成员头像、身份、宿舍、学院 / 班级与有效期；点击姓名可拨号或存入通讯录，数据来自 `dormuser/getbyloginuser` 与 `student/getbydormloginuser`。
+- 电量与更新时间同步：`getuserlock` 的 `lockElectricity` / `updateTime` 落库，首页、门锁列表与详情页展示；开锁回传的 `AA/AB` 电量与电压写回本地并随记录上报。
+- 开门冷却：成功开门后 8 秒内再次开门直接提示，不发起蓝牙连接。
+- 顶栏模糊样式：新增「高斯 / 渐进」两档（渐进需要 API 33 的 `RuntimeShader`）。
+- 全局跳转箭头：所有可进入下一级页面或弹出二级菜单的卡片统一右箭头。
+
+### 更改
+- AGP 9.5.0、Retrofit 3.0.0、OkHttp 5.5.1、kotlinx-serialization 1.12.0、core-ktx 1.19.1、hiddenapibypass 6.2；移除未使用的 `logging-interceptor`、`coil`、`haze`、`navigation-compose`。
+- 门锁列表卡片按 KernelSU `ModuleItem` 重写：单位 / 电量副标题、默认标签、底部动作按钮，默认门锁置顶。
+- 门锁详情页拆为「信息 / 操作 / 分享」三组，补齐位置、型号、协议能力（加密 / 密码位）、电量与上次更新时间。
+- Material 取色 Token 对齐 KernelSU：页面 `surfaceContainer`、卡片 `surfaceBright`、开关 `expressiveSwitchColors()`。
+- 设置页不再被 `SDK>=34` 整块包裹：横移返回、页面切换手势、预测性返回与外观项按各自 API 门槛独立显示。
+- 开门记录上报字段对齐官方：`userName` 改传用户 ID，补齐 `areaNo` / `buildNo` / `dormNo` / `lockLog` / `voltage` / `location`。
+- 文案统一：「学校」改为「单位」；模糊与预测性返回补充分档说明。
+
+### 修复
+- Android 10 启动闪退：`RuntimeShader` 改为 API 33+ 懒加载（低版本降级为纯色高光），系统动态取色资源在 API 31 以下不再被读取。
+- 低版本强调色不生效：API 31 以下改用自定义色板强制覆盖 Miuix 的取色结果。
+- Miuix「关于」页闪退：自适应图标改为矢量前景图。
+- `Mutex` 自锁导致取码 / 上报 / 群组成员请求永久挂起（`findSchool` 等挂起函数移出 `withLock`）。
+- 开门记录静默失败与记录页空白：区分登录 / 学校 token、失败原因显性展示、初始化不再被 `isLoading` 自守卫吃掉。
+- 群组成员页闪退：头像失败缓存不再向 `ConcurrentHashMap` 写入 `null`。
+- 首页 Banner 点击无反应、底栏切页先闪设置页：改由 ViewModel 状态驱动 Pager，并移除切页兜底里的硬跳。
+- 禁用态展示：不再显示 0% 进度环，改用静态灰边；Material 禁用容器不再叠加 38% 透明。
+
+### 移除
+- 未使用的 UI 组件与文案（`SearchBar`、`DropdownItem`、`SuperEditArrow`、`SegmentedRadioItem`、`SearchBarFake` 等）与纯调试日志。
+
 ## [0.4.8] - 2026-10-29
 
 **Full changelog**: [v0.4.7...v0.4.8](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.7...v0.4.8)

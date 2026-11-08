@@ -51,7 +51,6 @@ class SignService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         SignNotifications.ensureChannel(this)
         val action = intent?.action ?: ACTION_START
-        Log.d(TAG, "onStartCommand action=$action")
 
         when (action) {
             // 通知按钮：使用上次位置，直接后台执行

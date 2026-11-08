@@ -22,7 +22,6 @@ import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType

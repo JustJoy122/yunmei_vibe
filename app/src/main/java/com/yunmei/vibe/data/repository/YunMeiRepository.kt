@@ -100,8 +100,6 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             client.token = loginToken
             client.adminSchoolNo = null
             val schools = client.api(YunMeiApiClient.BASE_URL).getSchools(userId)
-            // 安全：只打印学校数量与编号，不打印 serverUrl/token
-            android.util.Log.i("YunMei", "schools=" + schools.joinToString { s -> s.schoolNo ?: "" })
             schools
         } finally {
             client.token = schoolToken
@@ -114,12 +112,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         val serverUrl = school.school?.serverUrl?.takeIf { it.isNotBlank() }
             ?: throw YunMeiException(appContext.getString(R.string.school_server_missing))
         applySchoolAuth(school, userId)
-        android.util.Log.i(
-            "YunMei",
-            "getLocks url=$serverUrl schoolNo=${school.schoolNo} userId=$userId token=${client.token?.take(24)}…"
-        )
         val element = client.api(serverUrl).getLocks(school.schoolNo.orEmpty(), userId)
-        android.util.Log.i("YunMei", "getLocks raw=$element")
         // 型号能力表在基础服务上；取不到只影响 aesSupport（保持 null → 按普通协议处理）。
         val capabilities = fetchLockTypeCapabilities()
         extractArray(element).mapNotNull { it.toLock(school, capabilities) }
@@ -150,7 +143,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             throw error
         } catch (error: Exception) {
             // 型号能力表属于增强信息：失败不阻断门锁列表，按普通协议继续。
-            android.util.Log.i("YunMei", "locktype/all failed: " + (error.message ?: ""))
+            android.util.Log.w("YunMei", "locktype/all failed: " + (error.message ?: ""))
             emptyMap()
         } finally {
             client.token = schoolToken
@@ -344,10 +337,6 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             else -> JsonArray(emptyList())
         }
         if (list.isEmpty()) return members
-        // 首次接入时把真实字段名打出来：服务端字段若有差异，看这一行即可定位。
-        (list.firstOrNull() as? JsonObject)?.let { first ->
-            Log.i("YunMei", "dorm students keys=" + first.keys)
-        }
         val byUserId = HashMap<String, JsonObject>()
         val byTel = HashMap<String, JsonObject>()
         list.mapNotNull { it as? JsonObject }.forEach { item ->
@@ -582,7 +571,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             }
         }.getOrElse { error ->
             if (error is CancellationException) throw error
-            android.util.Log.i("YunMei", "saveUnlockRecord failed=" + (error.message ?: ""))
+            android.util.Log.w("YunMei", "saveUnlockRecord failed=" + (error.message ?: ""))
             false
         }
     }

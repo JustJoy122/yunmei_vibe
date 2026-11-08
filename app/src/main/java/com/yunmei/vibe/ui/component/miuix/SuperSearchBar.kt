@@ -65,7 +65,6 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.yunmei.vibe.ui.component.SearchStatus
 import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.basic.Search
@@ -306,32 +305,3 @@ fun SearchBar(
     }
 }
 
-@Composable
-fun SearchBarFake(
-    label: String,
-    searchBarTopPadding: Dp = 12.dp,
-) {
-    InputField(
-        query = "",
-        onQueryChange = { },
-        label = label,
-        leadingIcon = {
-            Icon(
-                imageVector = MiuixIcons.Basic.Search,
-                contentDescription = "Clean",
-                modifier = Modifier
-                    .size(44.dp)
-                    .padding(start = 16.dp, end = 8.dp),
-                tint = colorScheme.onSurfaceContainerHigh,
-            )
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .padding(top = searchBarTopPadding, bottom = 6.dp),
-        onSearch = { },
-        enabled = false,
-        expanded = false,
-        onExpandedChange = { }
-    )
-}

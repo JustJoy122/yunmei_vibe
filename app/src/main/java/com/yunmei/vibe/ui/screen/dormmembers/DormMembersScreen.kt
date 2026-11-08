@@ -84,7 +84,7 @@ import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import android.provider.ContactsContract
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -659,7 +659,7 @@ private fun memberMenuItems(
 
 /** 拨号只填号码不直接拨出，用户仍可在拨号盘里取消。 */
 private fun Context.dialPhone(phone: String) {
-    launchOrToast(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone)))
+    launchOrToast(Intent(Intent.ACTION_DIAL, "tel:$phone".toUri()))
 }
 
 /** 拉起系统「新建联系人」界面并预填姓名与号码。 */

@@ -220,7 +220,20 @@ private fun UnlockActionCard(
     actions: HomeActions,
 ) {
     // 仅在存在默认门锁时可用；未就绪时置灰且不响应点击（原因由顶部 Banner 说明）。
-    TonalCard(enabled = state.defaultLock != null, onClick = actions.onOpenDoor) {
+    val enabled = state.defaultLock != null
+    // 禁用时进度环改成整圈静态灰环：0% 时只剩极淡的轨道，看起来像「环消失了」。
+    val ringColor = if (enabled) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outlineVariant
+    }
+    val ringProgress = if (enabled) state.progress / 100f else 1f
+    val ringTrack = if (enabled) {
+        MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        Color.Transparent
+    }
+    TonalCard(enabled = enabled, onClick = actions.onOpenDoor) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -230,10 +243,10 @@ private fun UnlockActionCard(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
-                    progress = { state.progress / 100f },
+                    progress = { ringProgress },
                     modifier = Modifier.size(112.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    color = ringColor,
+                    trackColor = ringTrack,
                     strokeWidth = 8.dp,
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -254,20 +267,12 @@ private fun UnlockActionCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            // 电量优先用本次蓝牙回传值，没有时退回服务端记录值；更新时间同样来自服务端。
+            // 电量优先用本次蓝牙回传值，没有时退回服务端记录值。
             val shownBattery = state.battery ?: state.lock?.lockElectricity
-            val updatedAt = state.lock?.updateTime
             if (shownBattery != null) {
                 Text(
                     text = stringResource(R.string.unlock_battery) + "：$shownBattery%",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            }
-            if (!updatedAt.isNullOrBlank()) {
-                Text(
-                    text = stringResource(R.string.unlock_battery_updated, updatedAt),
-                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                 )
             }
@@ -357,7 +362,17 @@ private fun CodeCard(
                             },
                         )
                     },
-                    leadingContent = { Icon(Icons.TwoTone.Key, null) },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.TwoTone.Key,
+                            contentDescription = null,
+                            tint = if (state.defaultLock != null) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            },
+                        )
+                    },
                 )
             },
         )
@@ -381,7 +396,17 @@ private fun SignCard(
                         color = MaterialTheme.colorScheme.outline,
                     )
                 },
-                leadingContent = { Icon(Icons.TwoTone.WhereToVote, null) },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.TwoTone.WhereToVote,
+                        contentDescription = null,
+                        tint = if (state.defaultLock != null) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        },
+                    )
+                },
             )
         }
     )

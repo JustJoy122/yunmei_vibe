@@ -20,7 +20,9 @@ import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
+import android.util.Log
 import kotlin.math.abs
+import kotlinx.coroutines.CancellationException
 
 class MainPagerState(
     val pagerState: PagerState,
@@ -68,12 +70,20 @@ class MainPagerState(
                     // 首帧尚未测量出页宽时按像素滚动会滚 0 像素，改用官方按页滚动。
                     pagerState.animateScrollToPage(target)
                 }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                // 动画被外部手势/状态变化打断时不让调用方感知失败，交给下面的兜底纠正。
+                Log.i("YunMei", "animateToPage interrupted: " + error.message)
             } finally {
+                // 兜底：动画结束仍不在目标页（被打断、页宽为 0 等）就硬切过去。
+                // 否则点击 Banner/底栏会「看起来没反应」——这是首页跳转最隐蔽的失败路径。
+                if (pagerState.currentPage != target) {
+                    runCatching { pagerState.scrollToPage(target) }
+                }
                 if (navJob == myJob) {
                     isNavigating = false
-                    if (pagerState.currentPage != target) {
-                        selectedPage = pagerState.currentPage
-                    }
+                    selectedPage = pagerState.currentPage
                 }
             }
         }

@@ -83,7 +83,8 @@ private fun expressiveSwitchColors(): SwitchColors = SwitchDefaults.colors(
 private fun defaultSegmentedColors(): ListItemColors = ListItemDefaults.segmentedColors().copy(
     // 与 KernelSU `defaultSegmentedColors()` 逐字一致：卡片底色 surfaceBright、说明文字 onSurfaceVariant。
     containerColor = colorScheme.surfaceBright,
-    disabledContainerColor = colorScheme.surfaceBright,
+    // 禁用项不能和可用项同底色，否则「不可用」只体现在文字上、卡片背景仍然是白的。
+    disabledContainerColor = colorScheme.surfaceContainerHighest,
     supportingContentColor = colorScheme.onSurfaceVariant
 )
 

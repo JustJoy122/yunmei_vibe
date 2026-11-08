@@ -12,16 +12,24 @@ import androidx.compose.ui.graphics.Shape
 fun TonalCard(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
+    disabledContainerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     shape: Shape = MaterialTheme.shapes.large,
     enabled: Boolean = true,
     onClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
+    // 显式指定禁用态配色：Material3 默认把容器色压到 38% 透明，
+    // 叠在 surfaceContainer 页面上会发灰发脏，与页面里其它卡片的层级对不上。
     Card(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = disabledContainerColor,
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+        ),
         shape = shape
     ) {
         content()

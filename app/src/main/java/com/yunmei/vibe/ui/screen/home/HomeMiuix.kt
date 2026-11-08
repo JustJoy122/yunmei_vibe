@@ -238,11 +238,12 @@ private fun UnlockActionCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
+                // 禁用时画整圈静态灰环：0% 只剩轨道，视觉上像「进度环不见了」。
                 CircularProgressIndicator(
-                    progress = { state.progress / 100f },
+                    progress = { if (enabled) state.progress / 100f else 1f },
                     modifier = Modifier.size(112.dp),
-                    color = colorScheme.primary,
-                    trackColor = colorScheme.secondaryContainer,
+                    color = if (enabled) colorScheme.primary else colorScheme.outline,
+                    trackColor = if (enabled) colorScheme.secondaryContainer else Color.Transparent,
                     strokeWidth = 8.dp,
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -265,21 +266,13 @@ private fun UnlockActionCard(
                 fontWeight = FontWeight.SemiBold,
                 color = colorScheme.onSurface,
             )
-            // 电量优先用本次蓝牙回传值，没有时退回服务端记录值；更新时间同样来自服务端。
+            // 电量优先用本次蓝牙回传值，没有时退回服务端记录值。
             val shownBattery = state.battery ?: state.lock?.lockElectricity
-            val updatedAt = state.lock?.updateTime
             if (shownBattery != null) {
                 Text(
                     text = stringResource(R.string.unlock_battery) + "：$shownBattery%",
                     fontSize = MiuixTheme.textStyles.body2.fontSize,
                     color = colorScheme.onSurfaceVariantSummary,
-                )
-            }
-            if (!updatedAt.isNullOrBlank()) {
-                Text(
-                    text = stringResource(R.string.unlock_battery_updated, updatedAt),
-                    fontSize = MiuixTheme.textStyles.footnote1.fontSize,
-                    color = colorScheme.onSurfaceVariantActions,
                 )
             }
         }
@@ -319,10 +312,13 @@ private fun CodeCard(
     state: HomeUiState,
     actions: HomeActions,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        // 获取密码：仅在存在默认门锁时可用。Miuix 的 BasicComponent 在 enabled = false 时
-        // 不会挂 clickable，所以既没有按压涟漪也没有点击行为，文字走组件自带禁用色。
-        val enabled = state.defaultLock != null
+    val enabled = state.defaultLock != null
+    // 禁用态与开锁卡同一处理：整卡降透明度，图标额外置灰，三张卡的「不可用」观感一致。
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else DISABLED_CARD_ALPHA)
+    ) {
         BasicComponent(
             title = stringResource(R.string.unlock_get_code),
             summary = state.code ?: state.codeError
@@ -335,7 +331,11 @@ private fun CodeCard(
             startAction = {
                 Icon(
                     Icons.Rounded.Key,
-                    tint = colorScheme.onSurface,
+                    tint = if (enabled) {
+                        colorScheme.onSurface
+                    } else {
+                        colorScheme.onSurface.copy(alpha = 0.38f)
+                    },
                     contentDescription = null,
                 )
             },
@@ -353,14 +353,22 @@ private fun SignCard(
     // 仅在存在默认门锁时可用；未就绪时由 BasicComponent 自带的禁用配色灰显、
     // 且不挂 clickable（无涟漪无点击），原因由顶部 Banner 说明。
     val enabled = state.defaultLock != null
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else DISABLED_CARD_ALPHA)
+    ) {
         BasicComponent(
             title = stringResource(R.string.unlock_sign),
             summary = state.signMessage ?: signLocationLabel(state.settings.signLocationMode),
             startAction = {
                 Icon(
                     Icons.Rounded.WhereToVote,
-                    tint = colorScheme.onSurface,
+                    tint = if (enabled) {
+                        colorScheme.onSurface
+                    } else {
+                        colorScheme.onSurface.copy(alpha = 0.38f)
+                    },
                     contentDescription = null,
                 )
             },

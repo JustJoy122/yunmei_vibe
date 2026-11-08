@@ -30,8 +30,10 @@ class LocksViewModel : ViewModel() {
         viewModelScope.launch {
             // 存储读取移到 IO 线程，避免页面首次组合被主线程解密阻塞。
             val data = withContext(Dispatchers.IO) {
-                val locks = container.lockStore.getAll()
                 val defaultLabel = container.lockStore.getDefault()?.label
+                // 默认门锁置顶：只调整展示顺序，存储顺序保持不变（sortedBy 是稳定排序）。
+                val locks = container.lockStore.getAll()
+                    .sortedBy { lock -> if (lock.label == defaultLabel) 0 else 1 }
                 val accounts = container.accountStore.getAll()
                 Triple(locks, defaultLabel, accounts)
             }

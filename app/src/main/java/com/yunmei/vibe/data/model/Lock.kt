@@ -23,6 +23,8 @@ data class Lock(
     /** 用户名 MD5（用于找回保存的账号）。 */
     val usernameMd5: String = "",
     val schoolNo: String = "",
+    /** 学校名称（getuserlock 的 schoolName），门锁列表卡片上作为副标题展示。 */
+    val schoolName: String = "",
     val lockNo: String = "",
     /** 服务端门锁型号 id（getuserlock 返回的 lockTypeId）；null 表示服务端没有给出。 */
     val lockTypeId: Int? = null,

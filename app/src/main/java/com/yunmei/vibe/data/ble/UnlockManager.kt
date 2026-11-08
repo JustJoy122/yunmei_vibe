@@ -194,6 +194,7 @@ class UnlockManager(context: Context) {
         // 官方闭环：本地生成随机密码 → A5 写入门锁 → A7 开门 → 上报同一个值。
         // 型号能力未知（老锁/离线导入）时保守地只发 A7，既不上报密码也不污染服务端存档。
         attemptUsesPwdCommand = lock.pwdSupport == true
+        logI("openDoor label=" + lock.label + " quick=" + quickConnect + " aes=" + lock.aesSupport + " pwdSupport=" + lock.pwdSupport)
         retriedWithoutPwd = false
         attemptNewPwd = if (attemptUsesPwdCommand) generatePwd(lock.pwdLength) else ""
         val guarded = GuardedListener(listener)
@@ -221,6 +222,7 @@ class UnlockManager(context: Context) {
 
             override fun onConnectSuccess(bleDevice: BleDevice, gatt: BluetoothGatt, status: Int) {
                 connectedDevice = bleDevice
+                logI("快速连接成功 " + bleDevice.mac)
                 listener.onProgress(UnlockProgress.CONNECTED, appContext.getString(R.string.unlock_connected))
                 notifyAndSend(lock, bleDevice, listener)
             }
@@ -231,6 +233,7 @@ class UnlockManager(context: Context) {
                 gatt: BluetoothGatt,
                 status: Int,
             ) {
+                logI("断开 active=" + isActiveDisConnected + " status=" + status)
                 // 原实现是空实现：一旦连接中途断开且没有后续回调，流程就会永久卡住。
                 listener.onFailure(appContext.getString(R.string.unlock_disconnected))
             }
@@ -276,6 +279,7 @@ class UnlockManager(context: Context) {
 
             override fun onConnectSuccess(bleDevice: BleDevice, gatt: BluetoothGatt, status: Int) {
                 connectedDevice = bleDevice
+                logI("扫描后连接成功 " + bleDevice.mac)
                 listener.onProgress(UnlockProgress.CONNECTED, appContext.getString(R.string.unlock_connected))
                 notifyAndSend(lock, bleDevice, listener)
             }
@@ -286,6 +290,7 @@ class UnlockManager(context: Context) {
                 gatt: BluetoothGatt,
                 status: Int,
             ) {
+                logI("断开(扫描分支) active=" + isActiveDisConnected + " status=" + status)
                 listener.onFailure(appContext.getString(R.string.unlock_disconnected))
             }
         })
@@ -295,15 +300,18 @@ class UnlockManager(context: Context) {
         val notifyUuid = lock.writeUuid.replace("6E400002", "6E400003")
         bleManager.notify(device, lock.serviceUuid, notifyUuid, object : BleNotifyCallback() {
             override fun onNotifySuccess() {
+                logI("notify 订阅成功")
                 listener.onProgress(UnlockProgress.SUBSCRIBED, appContext.getString(R.string.unlock_connected))
                 sendMessage(lock, device, listener)
             }
 
             override fun onNotifyFailure(exception: BleException) {
+                logI("notify 订阅失败: " + exception.toString())
                 listener.onFailure(appContext.getString(R.string.unlock_error_subscribe))
             }
 
             override fun onCharacteristicChanged(data: ByteArray) {
+                logI("收到回传 " + data.size + " 字节：" + toHexString(data))
                 parseBattery(data)?.let { percent ->
                     // 记下本次电量：开门记录上报的 el 字段要用。
                     lastBattery = percent
@@ -319,6 +327,7 @@ class UnlockManager(context: Context) {
         writeDevice = device
         pendingFrame = buildFrame(lock)
         pendingOffset = 0
+        logI("待发送帧 " + pendingFrame.size + " 字节：" + toHexString(pendingFrame))
         listener.onProgress(UnlockProgress.SENDING, appContext.getString(R.string.unlock_sending))
         sendNextChunk(listener)
     }
@@ -343,12 +352,14 @@ class UnlockManager(context: Context) {
         bleManager.write(device, lock.serviceUuid, lock.writeUuid, chunk, object : BleWriteCallback() {
             override fun onWriteSuccess(current: Int, total: Int, justWrite: ByteArray) {
                 if (completed) return
+                logI("写入成功 " + current + "/" + total + " 偏移=" + end)
                 pendingOffset = end
                 handler.postDelayed({ sendNextChunk(listener) }, WRITE_INTERVAL_MS)
             }
 
             override fun onWriteFailure(exception: BleException) {
                 if (completed) return
+                logI("写入失败: " + exception.toString())
                 listener.onFailure(appContext.getString(R.string.unlock_failed))
             }
         })
@@ -438,6 +449,7 @@ class UnlockManager(context: Context) {
     /** 解析一帧完整回传：AES 型号的 D2D3 外层先解出明文 D0 帧，再按普通帧处理。 */
     private fun dispatchFrame(frame: ByteArray, listener: Listener) {
         if (completed) return
+        logI("解析帧 " + toHexString(frame))
         val plainFrame = if ((frame[0].toInt() and 0xFF) == 0xD2) {
             // 收到加密响应：必须用本把门锁的密钥解出明文，否则无法判断动作结果。
             val key = writeLock?.customAesKey.orEmpty()
@@ -488,6 +500,7 @@ class UnlockManager(context: Context) {
                         newPwd = attemptNewPwd,
                     )
                 }
+                logI("A7 开门成功")
                 listener.onProgress(UnlockProgress.ACK, appContext.getString(R.string.unlock_progress_ack))
                 listener.onSuccess()
             }
@@ -585,6 +598,23 @@ class UnlockManager(context: Context) {
     private fun parseAsciiInt(data: ByteArray, offset: Int): Int {
         if (offset + 2 > data.size) return -1
         return String(data, offset, 2, Charsets.US_ASCII).toIntOrNull() ?: -1
+    }
+
+    /**
+     * 开门链路的诊断日志。
+     *
+     * 用 [android.util.Log.i] 而不是 Log.d：部分国产 ROM（实测 ColorOS）默认把第三方应用的
+     * Debug 级日志丢弃，导致真机上排障时什么都抓不到。
+     */
+    private fun logI(message: String) {
+        android.util.Log.i("YunMei", message)
+    }
+
+    /** 十六进制打印（仅用于诊断日志）。 */
+    private fun toHexString(bytes: ByteArray): String {
+        val out = StringBuilder(bytes.size * 2)
+        for (byte in bytes) out.append(String.format("%02X", byte.toInt() and 0xFF))
+        return out.toString()
     }
 
     /** 追加一行阶段流水：`HH:mm:ss.SSS 阶段描述;`，与官方 lockLog 的拼接方式一致。 */

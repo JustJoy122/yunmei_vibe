@@ -40,8 +40,12 @@ interface YunMeiApi {
         @Field("location") location: String,
     ): ApiMessage
 
-    /** 门锁型号能力表（基础服务）：返回 [{ id, aesSupport }, ...]，不需要额外请求参数。 */
-    @FormUrlEncoded
+    /**
+     * 门锁型号能力表（基础服务）：返回 [{ id, aesSupport, pwdSupport, pwdLength }, ...]。
+     *
+     * 官方前端用空 body 的 POST 调用因此这里不能加 `@FormUrlEncoded`：Retrofit 要求表单方法
+     * 至少有一个 `@Field`，加了会直接抛「Form-encoded method must contain at least one @Field」。
+     */
     @POST("locktype/all")
     suspend fun getLockTypes(): JsonElement
     /**
@@ -88,4 +92,19 @@ interface YunMeiApi {
         @Field("phonePlatform") phonePlatform: String,
         @Field("phonePlatformVersion") phonePlatformVersion: String,
     ): ApiMessage
+
+    /**
+     * 宿舍成员列表（学校服务，官方「我的群组」页 `dormuser/getbyloginuser`）。
+     *
+     * 官方按「校区/楼栋/房间」而不是按门锁取成员，因此入参是宿舍四元组；
+     * 返回原始 JSON 由仓库层透出——服务端真实层级（是否再包一层 `data`）尚未实测。
+     */
+    @FormUrlEncoded
+    @POST("dormuser/getbyloginuser")
+    suspend fun getDormUsers(
+        @Field("schoolNo") schoolNo: String,
+        @Field("areaNo") areaNo: String,
+        @Field("buildNo") buildNo: String,
+        @Field("dormNo") dormNo: String,
+    ): JsonElement
 }

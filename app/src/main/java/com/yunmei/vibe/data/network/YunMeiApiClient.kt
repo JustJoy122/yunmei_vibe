@@ -1,8 +1,11 @@
 package com.yunmei.vibe.data.network
 
+import android.util.Log
+import com.yunmei.vibe.BuildConfig
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
@@ -49,7 +52,19 @@ class YunMeiApiClient {
             adminSchoolNo?.takeIf { it.isNotBlank() }?.let {
                 request.header("adminSchoolNo", it)
             }
-            chain.proceed(request.build())
+            val built = request.build()
+            // 兼容排查开关：取码/开门记录这类「静默失败」的学校接口在 debug 包里打印真实请求与响应，
+            // release 包不受影响（BuildConfig.DEBUG 恒为 false）。
+            if (BuildConfig.DEBUG && LOGGED_PATHS.any { built.url.encodedPath.contains(it) }) {
+                Log.i(HTTP_TAG, "→ " + built.method + " " + built.url + " school=" + adminSchoolNo)
+                val response = chain.proceed(built)
+                val body = response.body.string()
+                Log.i(HTTP_TAG, "← " + response.code + " " + body)
+                return@addInterceptor response.newBuilder()
+                    .body(body.toResponseBody(response.body.contentType()))
+                    .build()
+            }
+            chain.proceed(built)
         }
         .build()
 
@@ -66,5 +81,10 @@ class YunMeiApiClient {
 
     companion object {
         const val BASE_URL = "https://base.yunmeitech.com/"
+
+        private const val HTTP_TAG = "YunMeiHttp"
+
+        /** 只对会被服务端静默拒绝的接口打日志，避免把登录等敏感请求也写进日志。 */
+        private val LOGGED_PATHS = listOf("/lockrecord/", "/lockpassword/")
     }
 }

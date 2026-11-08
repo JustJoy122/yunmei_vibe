@@ -63,6 +63,23 @@ class HomeViewModel : ViewModel() {
                 loadLockAndSettings()
             }
         }
+        // 冷启动时向服务端同步一次门锁列表：电量与更新时间会被别人的开门记录刷新，
+        // 只读本地快照会一直显示自己上次开门时的旧值。
+        viewModelScope.launch {
+            syncLocksFromServer()
+        }
+    }
+
+    /** 后台同步一次门锁（失败静默）：仅在已保存账号或已有登录会话时发起。 */
+    private suspend fun syncLocksFromServer() {
+        val anyLock = withContext(Dispatchers.IO) { container.lockStore.getAll().firstOrNull() } ?: return
+        if (anyLock.schoolNo.isBlank()) return
+        val account = withContext(Dispatchers.IO) { container.accountStore.getAll().firstOrNull() } ?: return
+        runCatching {
+            container.repository.locksOf(anyLock.schoolNo, account)?.forEach { fresh ->
+                container.lockStore.updateFromServer(fresh)
+            }
+        }
     }
 
     fun refresh() {

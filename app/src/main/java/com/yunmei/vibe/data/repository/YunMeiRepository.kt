@@ -8,6 +8,7 @@ import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.data.model.LoginUser
 import com.yunmei.vibe.data.model.SchoolEntry
+import com.yunmei.vibe.data.model.UnitCodes
 import com.yunmei.vibe.data.model.UnlockRecord
 import com.yunmei.vibe.data.network.YunMeiApiClient
 import com.yunmei.vibe.data.security.Md5
@@ -77,12 +78,31 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         safeUser
     }
 
+    /**
+     * 拉取当前账号所属的学校（基础服务 `userschool/getbyuserid`）。
+     *
+     * 基础服务只认登录 token：调用方可能刚切到学校会话（例如开完门紧接着取学校信息），
+     * 若直接用 `client.token` 请求，服务端会回 `{"error":true,"msg":"未登录或登录超时…"}`，
+     * 解析数组时再抛异常——这正是开门记录上报长期失败的真正原因。
+     * 因此这里固定切回 [baseToken] 再请求，结束后恢复调用方的会话。
+     */
     suspend fun fetchSchools(): List<SchoolEntry> = mutex.withLock {
         val userId = requireUserId()
-        val schools = client.api(YunMeiApiClient.BASE_URL).getSchools(userId)
-        // 安全：只打印学校数量与编号，不打印 serverUrl/token
-        android.util.Log.d("YunMei", "schools=" + schools.joinToString { s -> s.schoolNo ?: "" })
-        schools
+        val loginToken = baseToken
+            ?: throw YunMeiException(appContext.getString(R.string.login_error_not_logged_in))
+        val schoolToken = client.token
+        val schoolNo = client.adminSchoolNo
+        try {
+            client.token = loginToken
+            client.adminSchoolNo = null
+            val schools = client.api(YunMeiApiClient.BASE_URL).getSchools(userId)
+            // 安全：只打印学校数量与编号，不打印 serverUrl/token
+            android.util.Log.i("YunMei", "schools=" + schools.joinToString { s -> s.schoolNo ?: "" })
+            schools
+        } finally {
+            client.token = schoolToken
+            client.adminSchoolNo = schoolNo
+        }
     }
 
     suspend fun fetchLocks(school: SchoolEntry): List<Lock> = mutex.withLock {
@@ -90,12 +110,12 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         val serverUrl = school.school?.serverUrl?.takeIf { it.isNotBlank() }
             ?: throw YunMeiException(appContext.getString(R.string.school_server_missing))
         applySchoolAuth(school, userId)
-        android.util.Log.d(
+        android.util.Log.i(
             "YunMei",
-            "getLocks url=$serverUrl schoolNo=${school.schoolNo} userId=$userId token=${client.token?.take(220)}"
+            "getLocks url=$serverUrl schoolNo=${school.schoolNo} userId=$userId token=${client.token?.take(24)}…"
         )
         val element = client.api(serverUrl).getLocks(school.schoolNo.orEmpty(), userId)
-        android.util.Log.d("YunMei", "getLocks raw=$element")
+        android.util.Log.i("YunMei", "getLocks raw=$element")
         // 型号能力表在基础服务上；取不到只影响 aesSupport（保持 null → 按普通协议处理）。
         val capabilities = fetchLockTypeCapabilities()
         extractArray(element).mapNotNull { it.toLock(school, capabilities) }
@@ -126,7 +146,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             throw error
         } catch (error: Exception) {
             // 型号能力表属于增强信息：失败不阻断门锁列表，按普通协议继续。
-            android.util.Log.d("YunMei", "locktype/all failed: " + (error.message ?: ""))
+            android.util.Log.i("YunMei", "locktype/all failed: " + (error.message ?: ""))
             emptyMap()
         } finally {
             client.token = schoolToken
@@ -203,6 +223,12 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             secret = str("lockSecret", "secret").orEmpty(),
             usernameMd5 = usernameMd5.orEmpty(),
             schoolNo = school.schoolNo.orEmpty(),
+            // getuserlock 不返回 schoolName，userschool 的 school 子对象也只有一个 serverUrl；
+            // 名称用内置的单位对照表按 schoolNo 反查（001 → 中国计量大学），完全不发请求。
+            schoolName = str("schoolName")?.takeIf { it.isNotBlank() }
+                ?: UnitCodes.name(school.schoolNo.orEmpty())
+                ?: school.school?.schoolName?.takeIf { it.isNotBlank() }
+                .orEmpty(),
             lockNo = lockNo,
             lockTypeId = typeId,
             aesSupport = typeId?.let { capabilities[it]?.aesSupport },
@@ -241,8 +267,31 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         throw YunMeiException(message ?: appContext.getString(R.string.unlock_code_failed))
     }
 
-    /** 依次尝试多个字段名，取到第一个非空字符串。 */
-    private fun JsonObject.jsonText(vararg keys: String): String? =
+    /**
+     * 拉取门锁所在宿舍的成员列表（官方 `dormuser/getbyloginuser`）。
+     *
+     * 官方「我的群组」是按宿舍（校区/楼栋/房间）取人、不是按 lockNo 取，
+     * 这四个值都来自本地保存的 [Lock]，此前为上报开门记录已经存了下来。
+     * 返回原始 JSON：服务端是否再包一层 `data` 尚未实测，解析交给调用方。
+     */
+    suspend fun getDormMembers(lock: Lock): JsonElement {
+        // findSchool 内部还会取一次 mutex（fetchSchools），必须放在 withLock 之外，
+        // 否则同一协程重入不可重入的 Mutex 会永久挂起——表现为点了没有任何反应。
+        val school = findSchool(lock.schoolNo)
+        val userId = requireUserId()
+        val serverUrl = requireServerUrl(school)
+        return mutex.withLock {
+            applySchoolAuth(school, userId)
+            client.api(serverUrl).getDormUsers(
+                schoolNo = lock.schoolNo,
+                areaNo = lock.areaNo,
+                buildNo = lock.buildNo,
+                dormNo = lock.dormNo,
+            )
+        }
+    }
+
+    /** 依次尝试多个字段名，取到第一个非空字符串。 */    private fun JsonObject.jsonText(vararg keys: String): String? =
         keys.firstNotNullOfOrNull { key -> this[key]?.jsonPrimitive?.contentOrNull }
 
     /** 用已保存账号重新登录后获取开门密码（供主界面长期使用）。 */
@@ -301,56 +350,83 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         if (error is CancellationException) throw error
         null
     }
-
     /**
-     * 上报一次开门记录（学校服务 `lockrecord/savelockrecord`）。
+     * 上报一次开门记录（基础服务 `lockrecord/savelockrecord`）。
      *
-     * 与签到/取码一样先切到学校 token 再调用；整体放在 `runCatching` 里，
-     * 网络/服务端失败只返回 false，绝不影响已经成功的开门结果。
-     *
-     * @return 服务端是否接受（`success` 字段）；任何异常都返回 false。
+     * 官方前端把所有接口分成两类：命中 `BaseServerUrl` 前缀的走学校域并带学校 token，
+     * 其余一律走基础服务、用登录 token，学校只体现在 `schoolNo` 参数里。开门记录属于后者——
+     * 实测（设备上导出的 BaseServerUrl 共 25 条）里没有 lockrecord，所以早期实现用学校会话
+     * 请求时，服务端稳定回 `{"error":true,"msg":"未登录或登录超时,请重新登录！"}`。
      */
-    suspend fun saveUnlockRecord(record: UnlockRecord, deviceId: String): Boolean = mutex.withLock {
-        val school = findSchool(record.schoolNo)
-        val userId = requireUserId()
-        applySchoolAuth(school, userId)
-        runCatching {
-            client.api(requireServerUrl(school)).saveLockRecord(
-                isDel = 0,
-                schoolNo = record.schoolNo,
-                areaNo = record.areaNo,
-                buildNo = record.buildNo,
-                dormNo = record.dormNo,
-                lockNo = record.lockNo,
-                // 官方传的是用户 id（getUser().id），不是登录名；服务端按 id 关联账号。
-                userName = userId,
-                lockDevice = deviceId,
-                lockSuccess = if (record.success) 1 else 0,
-                lockResult = record.resultJson,
-                lockDuration = record.durationSeconds,
-                lockType = 1,
-                appVersion = BuildConfig.VERSION_NAME,
-                lockLog = record.lockLog,
-                el = record.battery,
-                voltage = record.voltage,
-                lockTime = record.lockTime,
-                newPwd = record.newPwd,
-                location = record.location,
-                phoneBrand = Build.MANUFACTURER.orEmpty(),
-                phoneModel = Build.MODEL.orEmpty(),
-                phonePlatform = "Android",
-                phonePlatformVersion = Build.VERSION.RELEASE.orEmpty(),
-            ).success
+    suspend fun saveUnlockRecord(record: UnlockRecord, deviceId: String): Boolean {
+        return runCatching {
+            // findSchool 内部会再抢一次 mutex（fetchSchools），必须放在 withLock 之外。
+            val school = findSchool(record.schoolNo)
+            val userId = requireUserId()
+            mutex.withLock {
+                // 记录接口在学校域上，官方对学校域请求统一用学校 token + adminSchoolNo
+                // （实测：学校服务 + 学校 token 返回 {"success":true,"msg":"保存成功！","o":{"el":38,"sign":-1}}，
+                //  基础服务上是 404，换成登录 token 则报「用户验证错误」）。
+                applySchoolAuth(school, userId)
+                client.api(requireServerUrl(school)).saveLockRecord(
+                    isDel = 0,
+                    schoolNo = record.schoolNo,
+                    areaNo = record.areaNo,
+                    buildNo = record.buildNo,
+                    dormNo = record.dormNo,
+                    lockNo = record.lockNo,
+                    // 官方的 userName 是用户 id（getUser().id），不是登录名；服务端按 id 关联账号。
+                    userName = userId,
+                    lockDevice = deviceId,
+                    lockSuccess = if (record.success) 1 else 0,
+                    lockResult = record.resultJson,
+                    lockDuration = record.durationSeconds,
+                    lockType = 1,
+                    appVersion = BuildConfig.VERSION_NAME,
+                    lockLog = record.lockLog,
+                    el = record.battery,
+                    voltage = record.voltage,
+                    lockTime = record.lockTime,
+                    newPwd = record.newPwd,
+                    location = record.location,
+                    phoneBrand = Build.MANUFACTURER.orEmpty(),
+                    phoneModel = Build.MODEL.orEmpty(),
+                    phonePlatform = "Android",
+                    phonePlatformVersion = Build.VERSION.RELEASE.orEmpty(),
+                ).success
+            }
         }.getOrElse { error ->
             if (error is CancellationException) throw error
+            android.util.Log.i("YunMei", "saveUnlockRecord failed=" + (error.message ?: ""))
             false
         }
     }
 
-    private suspend fun findSchool(schoolNo: String): SchoolEntry {
-        return fetchSchools().firstOrNull { it.schoolNo == schoolNo }
-            ?: throw YunMeiException(appContext.getString(R.string.school_info_missing))
+    /**
+     * 重新拉一次门锁列表，用于把服务端最新的电量/更新时间同步到本地。
+     *
+     * 官方把「开门者当时读到的电量」随记录上报，服务端再把它写回门锁；
+     * 因此刚上报完立刻重拉一次，其他手机（以及本机的门锁列表）才能看到同一个数。
+     *
+     * @return 拉取成功时返回门锁列表；未登录/网络失败返回 null，调用方保持本地值。
+     */
+    suspend fun locksOf(
+        schoolNo: String,
+        account: StoredUser? = null,
+    ): List<com.yunmei.vibe.data.model.Lock>? = runCatching {
+        if (client.token == null) {
+            account ?: return@runCatching null
+            login(account.username, account.passwordMd5)
+        }
+        fetchLocks(findSchool(schoolNo))
+    }.getOrElse { error ->
+        if (error is CancellationException) throw error
+        null
     }
+
+    private suspend fun findSchool(schoolNo: String): SchoolEntry =
+        fetchSchools().firstOrNull { it.schoolNo == schoolNo }
+            ?: throw YunMeiException(appContext.getString(R.string.school_info_missing))
 
     private fun requireUserId(): String =
         client.userId ?: throw YunMeiException(appContext.getString(R.string.login_error_not_logged_in))

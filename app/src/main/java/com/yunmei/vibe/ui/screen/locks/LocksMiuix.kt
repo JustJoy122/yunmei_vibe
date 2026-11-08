@@ -4,8 +4,14 @@ import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.automirrored.rounded.Login
 import com.yunmei.vibe.data.local.StoredUser
+import com.yunmei.vibe.ui.theme.isInDarkTheme
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,16 +22,28 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.People
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
+import top.yukonga.miuix.kmp.basic.IconButton
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Delete
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.QrCodeScanner
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,12 +126,12 @@ fun LocksPagerMiuix(
                                 )
                             }
                         } else {
-                            Card(modifier = Modifier.fillMaxWidth()) {
-                                Column {
-                                    state.locks.forEach { lock ->
-                                        LockRow(lock, state.defaultLabel, actions)
-                                    }
-                                }
+                            state.locks.forEach { lock ->
+                                LockCard(
+                                    lock = lock,
+                                    isDefault = lock.label == state.defaultLabel,
+                                    actions = actions,
+                                )
                             }
                         }
 
@@ -178,39 +196,136 @@ fun LocksPagerMiuix(
 }
 
 @Composable
-private fun LockRow(
+private fun LockCard(
     lock: Lock,
-    defaultLabel: String?,
+    isDefault: Boolean,
     actions: LocksActions,
 ) {
-    val isDefault = lock.label == defaultLabel
-    BasicComponent(
-        title = lock.label,
-        summary = stringResource(R.string.home_mac) + "：" + lock.mac,
-        startAction = {
-            Icon(
-                imageVector = if (isDefault) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                tint = if (isDefault) colorScheme.primary else colorScheme.onSurfaceVariantActions,
-                contentDescription = stringResource(R.string.locks_set_default),
-                modifier = Modifier
-                    .clickable { actions.onSetDefault(lock) }
-                    .padding(4.dp),
+    val secondaryContainer = colorScheme.secondaryContainer.copy(alpha = 0.8f)
+    // 与 KernelSU module 卡片一致：图标色取 onSurface 的透明度，而不是某个固定语义色。
+    val actionIconTint = colorScheme.onSurface.copy(alpha = if (isInDarkTheme()) 0.7f else 0.9f)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        insideMargin = PaddingValues(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = lock.label.ifBlank { stringResource(R.string.home_status_empty_title) },
+                fontSize = 17.sp,
+                fontWeight = FontWeight(550),
+                color = colorScheme.onSurface,
             )
-        },
-        endActions = {
-            Icon(
-                imageVector = Icons.Rounded.Delete,
-                tint = colorScheme.onSurfaceVariantActions,
-                contentDescription = stringResource(R.string.locks_delete),
-                modifier = Modifier
-                    .clickable { actions.onDelete(lock) }
-                    .padding(8.dp),
-            )
-        },
-        onClick = { actions.onOpenDetail(lock) },
-    )
+            if (isDefault) {
+                Spacer(Modifier.width(6.dp))
+                DefaultTag()
+            }
+        }
+        // 对应 ModuleItem(Miuix) 的版本/作者两行：12sp、字重 550、onSurfaceVariantSummary。
+        Text(
+            text = lock.schoolName,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 2.dp),
+            fontWeight = FontWeight(550),
+            color = colorScheme.onSurfaceVariantSummary,
+        )
+        // 门锁号对应 ModuleItem 的「模块说明」：14sp、默认字重，与上方单位名拉开间距。
+        Text(
+            text = lock.lockNo.ifBlank { lock.mac },
+            fontSize = 14.sp,
+            modifier = Modifier.padding(top = 2.dp, bottom = 1.dp),
+            color = colorScheme.onSurfaceVariantSummary,
+        )
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 8.dp),
+            thickness = 0.5.dp,
+            color = colorScheme.outline.copy(alpha = 0.5f),
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // ModuleItem 的动作按钮是「图标 + 文字」的胶囊；我们只有图标，因此用 35dp 正圆。
+                Row(
+                    modifier = Modifier
+                        .size(35.dp)
+                        .clip(CircleShape)
+                        .background(secondaryContainer)
+                        .clickable { actions.onOpenDetail(lock) },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        imageVector = Icons.Rounded.Info,
+                        tint = actionIconTint,
+                        contentDescription = stringResource(R.string.locks),
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .size(35.dp)
+                        .clip(CircleShape)
+                        .background(secondaryContainer)
+                        .clickable { actions.onOpenMembers(lock) },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        imageVector = Icons.Rounded.People,
+                        tint = actionIconTint,
+                        contentDescription = stringResource(R.string.dorm_members),
+                    )
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            // 与 KernelSU 的 miuix 删除按钮一致：IconButton 胶囊 + MiuixIcons.Delete + 文字。
+            IconButton(
+                backgroundColor = secondaryContainer,
+                minHeight = 35.dp,
+                minWidth = 35.dp,
+                onClick = { actions.onDelete(lock) },
+            ) {
+                // 源码里这层 Row 带 animatedPadding（无更新时固定 10.dp），少了它文字会顶到胶囊边缘。
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        modifier = Modifier.size(20.dp),
+                        imageVector = MiuixIcons.Delete,
+                        tint = actionIconTint,
+                        contentDescription = null,
+                    )
+                    Text(
+                        modifier = Modifier.padding(start = 4.dp, end = 3.dp),
+                        text = stringResource(R.string.locks_delete),
+                        color = actionIconTint,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 15.sp,
+                    )
+                }
+            }
+        }
+    }
 }
 
+/** 「默认」标签：与 KernelSU Miuix 模块卡片的 META 标签同款。 */
+@Composable
+private fun DefaultTag() {
+    Box(
+        modifier = Modifier
+            .background(colorScheme.tertiaryContainer.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+    ) {
+        Text(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            text = stringResource(R.string.locks_default_tag),
+            color = colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight(750),
+            maxLines = 1,
+            softWrap = false,
+        )
+    }
+}
 
 @Composable
 private fun AccountRow(

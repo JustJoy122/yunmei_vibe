@@ -52,12 +52,18 @@ class UnlockRecordReporter(context: Context) {
         // 电量回写与会话无关，先做本地更新，保证关掉上报开关时界面也能刷新。
         scope.launch {
             runCatching { container.lockStore.setBattery(lock.label, battery, lockTime) }
-                .onFailure { error -> Log.d(TAG, "unlock battery save failed=" + error.message) }
+                .onFailure { error -> Log.i(TAG, "unlock battery save failed=" + error.message) }
         }
 
-        if (!container.settingsRepository.enableRecordUpload) return
+        if (!container.settingsRepository.enableRecordUpload) {
+            Log.i(TAG, "unlock record skipped: switch off")
+            return
+        }
         // 没有学校/门锁号时服务端无法登记，直接跳过，避免刷无效请求。
-        if (lock.schoolNo.isBlank() || lock.lockNo.isBlank()) return
+        if (lock.schoolNo.isBlank() || lock.lockNo.isBlank()) {
+            Log.i(TAG, "unlock record skipped: missing schoolNo/lockNo")
+            return
+        }
 
         scope.launch {
             runCatching {
@@ -80,10 +86,17 @@ class UnlockRecordReporter(context: Context) {
                     location = "",
                 )
                 val uploaded = container.repository.saveUnlockRecord(record, deviceId)
-                Log.d(TAG, "unlock record lock=" + lock.label + " uploaded=" + uploaded)
+                Log.i(TAG, "unlock record lock=" + lock.label + " uploaded=" + uploaded)
+                if (uploaded) {
+                    // 上报成功后服务端会把这把锁的电量/更新时间刷新到门锁上，
+                    // 立刻重拉一次让本地与其他人看到的数一致。
+                    container.repository.locksOf(record.schoolNo)?.forEach { fresh ->
+                        container.lockStore.updateFromServer(fresh)
+                    }
+                }
             }.onFailure { error ->
                 // 网络失败属预期情况（离线开门），只记录不打扰用户。
-                Log.d(TAG, "unlock record lock=" + lock.label + " failed=" + error.message)
+                Log.i(TAG, "unlock record lock=" + lock.label + " failed=" + error.message)
             }
         }
     }

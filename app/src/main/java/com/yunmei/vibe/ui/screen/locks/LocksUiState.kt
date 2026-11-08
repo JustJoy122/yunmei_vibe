@@ -24,6 +24,8 @@ data class LocksActions(
     val onSetDefault: (Lock) -> Unit,
     val onDelete: (Lock) -> Unit,
     val onOpenDetail: (Lock) -> Unit,
+    /** 打开群组成员页（卡片底部按钮，页面本体另行实现）。 */
+    val onOpenMembers: (Lock) -> Unit,
     val onMessageShown: () -> Unit,
     /** 确认框：确认添加 / 取消添加（仅清空待确认态，不写库）。 */
     val onConfirmImport: () -> Unit,

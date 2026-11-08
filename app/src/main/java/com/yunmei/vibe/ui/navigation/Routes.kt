@@ -56,4 +56,9 @@ sealed interface Route : NavKey, Parcelable {
     @Parcelize
     @Serializable
     data class LockDetail(val label: String) : Route
+
+    /** 群组成员页（门锁列表卡片的群组入口；页面本体尚未实现，先占位路由）。 */
+    @Parcelize
+    @Serializable
+    data class DormMembers(val label: String) : Route
 }

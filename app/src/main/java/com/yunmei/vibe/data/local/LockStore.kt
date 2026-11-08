@@ -129,6 +129,7 @@ class LockStore(private val secureStore: SecureStore) {
             aesSupport = fresh.aesSupport ?: current.aesSupport,
             lockElectricity = fresh.lockElectricity ?: current.lockElectricity,
             updateTime = fresh.updateTime ?: current.updateTime,
+            schoolName = fresh.schoolName.ifBlank { current.schoolName },
             areaNo = fresh.areaNo.ifBlank { current.areaNo },
             buildNo = fresh.buildNo.ifBlank { current.buildNo },
             dormNo = fresh.dormNo.ifBlank { current.dormNo },

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,11 +20,22 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.twotone.Delete
 import androidx.compose.material.icons.twotone.QrCodeScanner
-import androidx.compose.material.icons.twotone.Star
-import androidx.compose.material.icons.twotone.StarBorder
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.People
+import androidx.compose.material.icons.twotone.People
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
@@ -97,14 +109,18 @@ fun LocksPagerMaterial(
                     }
                 }
             } else {
-                SegmentedColumn(
+                Column(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    content = state.locks.map { lock ->
-                        {
-                            LockRow(lock, state.defaultLabel, actions)
-                        }
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    state.locks.forEach { lock ->
+                        LockCard(
+                            lock = lock,
+                            isDefault = lock.label == state.defaultLabel,
+                            actions = actions,
+                        )
                     }
-                )
+                }
             }
 
             // 账号（登录/切换账号 + 已保存账号；原「设置 → 账号」分组整体迁入）
@@ -176,50 +192,117 @@ private fun TopBar(
 }
 
 @Composable
-private fun LockRow(
+private fun LockCard(
     lock: Lock,
-    defaultLabel: String?,
+    isDefault: Boolean,
     actions: LocksActions,
 ) {
-    val isDefault = lock.label == defaultLabel
-    SegmentedListItem(
-        onClick = { actions.onOpenDetail(lock) },
-        headlineContent = { Text(lock.label.ifBlank { stringResource(R.string.home_status_empty_title) }) },
-        supportingContent = {
-            Text(
-                text = stringResource(R.string.home_mac) + "：" + lock.mac,
-                color = MaterialTheme.colorScheme.outline,
-            )
-        },
-        leadingContent = {
-            Icon(
-                if (isDefault) Icons.TwoTone.Star else Icons.TwoTone.StarBorder,
-                contentDescription = stringResource(R.string.locks_set_default),
-                tint = if (isDefault) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                modifier = Modifier
-                    .clickable { actions.onSetDefault(lock) }
-                    .padding(4.dp),
-            )
-        },
-        trailingContent = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.TwoTone.Delete,
-                    contentDescription = stringResource(R.string.locks_delete),
-                    tint = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier
-                        .clickable { actions.onDelete(lock) }
-                        .padding(8.dp),
+    TonalCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 10.dp)
+        ) {
+            // 对应 ModuleItem 的「标题 + 版本 + 作者」三行：0.8 宽列、bodySmall、onSurfaceVariant。
+            Column(modifier = Modifier.fillMaxWidth(0.8f)) {
+                Text(
+                    text = lock.label.ifBlank { stringResource(R.string.home_status_empty_title) },
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium,
+                    lineHeight = MaterialTheme.typography.bodySmall.lineHeight,
                 )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = null,
+                Text(
+                    text = lock.schoolName,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                // 门锁号对应 ModuleItem 的「模块说明」：14sp 正常字重，与上方两行拉开 8dp。
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = lock.lockNo.ifBlank { lock.mac },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
-        },
-    )
+            // KernelSU 的 META 标签是说明文字下方独立的一行，而不是贴在标题右侧。
+            Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                if (isDefault) {
+                    DefaultTag(modifier = Modifier.padding(bottom = 4.dp))
+                }
+            }
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                thickness = Dp.Hairline,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // 与 KernelSU 的 CombinedClickableButton 一致：浅色底胶囊，而不是裸 IconButton。
+                    FilledTonalButton(
+                        onClick = { actions.onOpenDetail(lock) },
+                        modifier = Modifier.defaultMinSize(52.dp, 32.dp),
+                        contentPadding = ButtonDefaults.TextButtonContentPadding,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = stringResource(R.string.locks),
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    FilledTonalButton(
+                        onClick = { actions.onOpenMembers(lock) },
+                        modifier = Modifier.defaultMinSize(52.dp, 32.dp),
+                        contentPadding = ButtonDefaults.TextButtonContentPadding,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.People,
+                            contentDescription = stringResource(R.string.dorm_members),
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+                FilledTonalButton(
+                    onClick = { actions.onDelete(lock) },
+                    modifier = Modifier.defaultMinSize(52.dp, 32.dp),
+                    contentPadding = ButtonDefaults.TextButtonContentPadding,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        modifier = Modifier.padding(start = 7.dp),
+                        text = stringResource(R.string.locks_delete),
+                        fontFamily = MaterialTheme.typography.labelMedium.fontFamily,
+                        fontSize = MaterialTheme.typography.labelMedium.fontSize,
+                    )
+                }
+            }
+        }
+    }
 }
 
+/** 「默认」标签：与 KernelSU 模块卡片的 META 标签同款（浅色底 + 小号字）。 */
+@Composable
+private fun DefaultTag(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.background(
+            color = MaterialTheme.colorScheme.primary,
+            shape = RoundedCornerShape(4.dp),
+        )
+    ) {
+        Text(
+            text = stringResource(R.string.locks_default_tag),
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onPrimary,
+        )
+    }
+}
 
 @Composable
 private fun AccountRow(

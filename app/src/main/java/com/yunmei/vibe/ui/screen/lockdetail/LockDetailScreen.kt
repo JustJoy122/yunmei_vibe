@@ -40,6 +40,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -67,6 +69,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -121,6 +124,8 @@ fun LockDetailScreen(label: String) {
     // 数据读取全部下沉到 LockDetailViewModel：页面只消费 UiState。
     val viewModel = viewModel<LockDetailViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // 群组成员验证结果（原始 JSON 或异常文本），点按钮后回填，弹窗展示。
+    val memberDump by viewModel.memberDumpText.collectAsStateWithLifecycle()
 
     var showQr by rememberSaveable { mutableStateOf(false) }
     var showAesKey by rememberSaveable { mutableStateOf(false) }
@@ -128,6 +133,11 @@ fun LockDetailScreen(label: String) {
     LifecycleResumeEffect(Unit) {
         viewModel.refresh(label)
         onPauseOrDispose { }
+    }
+
+    // 门锁数据加载完成后再自动跑一次群组成员查询：结果同时落盘到 files/dorm_debug.txt。
+    LaunchedEffect(uiState.lock?.label) {
+        if (uiState.lock != null) viewModel.autoDumpOnce()
     }
 
     fun shareLock(current: Lock) {
@@ -143,6 +153,11 @@ fun LockDetailScreen(label: String) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("yunmei", current.toShareUrl()))
         Toast.makeText(context, R.string.lock_detail_copied, Toast.LENGTH_SHORT).show()
+    }
+
+    // 调试弹窗放在早退分支之前：门锁数据还没读到或已失效时也要能把结果展示出来。
+    memberDump?.let { text ->
+        MemberDumpDialog(text = text, onDismiss = { viewModel.clearDormMemberDump() })
     }
 
     // 只有「已读取完成且确实找不到该门锁」时才返回，避免首帧误弹。
@@ -177,6 +192,10 @@ fun LockDetailScreen(label: String) {
         onCopyLink = { copyLink(current) },
         onShowAesKey = { showAesKey = true },
         onSaveAesKey = { value -> viewModel.setCustomAesKey(value) },
+        onDumpDormMembers = {
+            viewModel.dumpDormMembers()
+            Toast.makeText(context, context.getString(R.string.lock_detail_member_dump_loading), Toast.LENGTH_SHORT).show()
+        },
     )
 
     when (LocalUiMode.current) {
@@ -194,6 +213,35 @@ fun LockDetailScreen(label: String) {
             },
         )
     }
+
+}
+
+/**
+ * 群组成员验证结果弹窗：内容可滚动、可长按全选复制。
+ *
+ * 定位服务端返回结构时，Logcat 可能因机型日志过滤拿不到，所以把结果同时留在界面上，
+ * 用户可以直接复制整段 JSON 或异常文本发回来。确认结构后连同入口一起删除。
+ */
+@Composable
+private fun MemberDumpDialog(text: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.lock_detail_member_dump_title)) },
+        text = {
+            SelectionContainer {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState()),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+        },
+    )
 }
 
 private data class LockDetailActions(
@@ -205,6 +253,8 @@ private data class LockDetailActions(
     val onShowAesKey: () -> Unit,
     /** 提交 AES 密钥（32 位十六进制，空串表示清除）。 */
     val onSaveAesKey: (String) -> Unit,
+    /** 临时验证入口：拉取宿舍成员原始 JSON 并打到 Logcat（确认服务端结构后即移除）。 */
+    val onDumpDormMembers: () -> Unit,
 )
 
 @Composable
@@ -399,19 +449,28 @@ private fun LockDetailScreenMaterial(
             // 删除单独置底成组：与分享类操作分隔开，避免误触。
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                content = listOf {
-                    SegmentedListItem(
-                        onClick = actions.onDelete,
-                        headlineContent = { Text(stringResource(R.string.locks_delete)) },
-                        leadingContent = {
-                            Icon(
-                                Icons.TwoTone.Delete,
-                                null,
-                                tint = MaterialTheme.colorScheme.error,
-                            )
-                        },
-                    )
-                }
+                content = listOf(
+                    {
+                        SegmentedListItem(
+                            onClick = actions.onDelete,
+                            headlineContent = { Text(stringResource(R.string.locks_delete)) },
+                            leadingContent = {
+                                Icon(
+                                    Icons.TwoTone.Delete,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                            },
+                        )
+                    },
+                    {
+                        SegmentedListItem(
+                            onClick = actions.onDumpDormMembers,
+                            headlineContent = { Text(stringResource(R.string.lock_detail_member_dump_title)) },
+                            leadingContent = { Icon(Icons.TwoTone.Key, null) },
+                        )
+                    },
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -622,6 +681,16 @@ private fun LockDetailScreenMiuix(
                             )
                         },
                         onClick = actions.onDelete,
+                    )
+                    BasicComponent(
+                        title = stringResource(R.string.lock_detail_member_dump_title),
+                        startAction = {
+                            MiuixIcon(
+                                imageVector = Icons.Filled.Key,
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = actions.onDumpDormMembers,
                     )
                 }
                 Spacer(Modifier.height(16.dp))

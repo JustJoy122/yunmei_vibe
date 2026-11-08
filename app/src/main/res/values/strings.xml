@@ -38,6 +38,9 @@
 <string name="lock_import_secret_absent">不含密钥</string>
     <string name="locks_set_default">设为默认</string>
     <string name="locks_delete">删除</string>
+    <string name="locks_default_tag">默认</string>
+    <string name="dorm_members">群组成员</string>
+    <string name="dorm_members_placeholder">页面还在开发中</string>
     <string name="locks_deleted">%1$s 已删除</string>
     <string name="locks_duplicate">该门锁已存在</string>
     <string name="locks_default_set">%1$s 已设为默认门锁</string>
@@ -340,6 +343,9 @@
     <string name="lock_detail_aes_key">设置 AES 密钥</string>
     <string name="lock_detail_aes_key_configured">已设置</string>
     <string name="lock_detail_aes_key_unset">未设置，该门锁暂时无法开门</string>
-    <string name="lock_detail_aes_key_hint">32 位十六进制密钥</string>
+<string name="lock_detail_aes_key_hint">32 位十六进制密钥</string>
+    <string name="lock_detail_member_dump_title">获取群组成员（测试）</string>
+    <string name="lock_detail_member_dump_loading">正在获取群组成员，请稍候</string>
+    <string name="lock_detail_member_dump">群组数据已打印至 Logcat</string>
     <string name="unlock_cooldown_wait">开门成功后再次开门间隔不能小于 %1$d 秒</string>
 </resources>

@@ -81,6 +81,7 @@ import com.yunmei.vibe.ui.screen.home.HomePager
 import com.yunmei.vibe.ui.screen.license.LicenseScreen
 import com.yunmei.vibe.ui.screen.locks.LocksPager
 import com.yunmei.vibe.ui.screen.login.LoginScreen
+import com.yunmei.vibe.ui.screen.dormmembers.DormMembersScreen
 import com.yunmei.vibe.ui.screen.lockdetail.LockDetailScreen
 import com.yunmei.vibe.ui.screen.settings.SettingPager
 import com.yunmei.vibe.ui.screen.subsettings.CodeAndSignSettingsScreen
@@ -349,6 +350,11 @@ class MainActivity : ComponentActivity() {
                             entry<Route.LockDetail>(swipeDismiss = swipeBackDirection) { route ->
                                 InstallerNavEntry(interceptPredictiveBack, navOnBack) {
                                     LockDetailScreen(route.label)
+                                }
+                            }
+                            entry<Route.DormMembers>(swipeDismiss = swipeBackDirection) { route ->
+                                InstallerNavEntry(interceptPredictiveBack, navOnBack) {
+                                    DormMembersScreen(route.label)
                                 }
                             }
                         }

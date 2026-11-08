@@ -148,6 +148,7 @@ fun LocksPager(
             }
         },
         onOpenDetail = { lock -> navigator.push(Route.LockDetail(lock.label)) },
+        onOpenMembers = { lock -> navigator.push(Route.DormMembers(lock.label)) },
         onMessageShown = viewModel::onMessageShown,
         onConfirmImport = viewModel::confirmImport,
         onCancelImport = viewModel::cancelImport,

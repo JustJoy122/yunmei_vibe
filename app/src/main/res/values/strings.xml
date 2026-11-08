@@ -348,8 +348,13 @@
     <string name="settings_group_unlock">开锁</string>
     <string name="settings_group_code_sign">取码与打卡</string>
     <string name="settings_group_lock_behavior">门锁行为</string>
-    <string name="settings_enable_record_upload">上传开门记录</string>
-    <string name="settings_enable_record_upload_summary">开门成功后把这次记录上报到学校服务</string>
+    <string name="unlock_records">开门记录</string>
+    <string name="unlock_records_back">返回</string>
+    <string name="unlock_records_source">以下数据从学校服务获取</string>
+    <string name="unlock_records_upload">上传本软件记录</string>
+    <string name="unlock_records_upload_summary">开门成功后上传到学校服务</string>
+    <string name="unlock_records_empty">暂无开门记录</string>
+    <string name="unlock_records_failed_generic">记录加载失败</string>
     <string name="unlock_aes_key_required">该门锁需要 AES 密钥，请先在门锁详情页设置</string>
     <string name="lock_detail_aes_key">设置 AES 密钥</string>
     <string name="lock_detail_aes_key_configured">已设置</string>

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material.icons.twotone.Delete
 import androidx.compose.material.icons.twotone.QrCodeScanner
 import androidx.compose.foundation.background
@@ -79,7 +80,7 @@ fun LocksPagerMaterial(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = { TopBar(scrollBehavior = scrollBehavior) },
+        topBar = { TopBar(scrollBehavior = scrollBehavior, onOpenRecords = actions.onOpenRecords) },
         snackbarHost = { SnackBarHost(hostState = snackBarHost, modifier = Modifier.padding(bottom = bottomInnerPadding)) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     ) { paddingValues ->
@@ -179,7 +180,8 @@ fun LocksPagerMaterial(
 
 @Composable
 private fun TopBar(
-    scrollBehavior: TopAppBarScrollBehavior? = null
+    scrollBehavior: TopAppBarScrollBehavior? = null,
+    onOpenRecords: () -> Unit = {},
 ) {
     LargeFlexibleTopAppBar(
         title = { Text(stringResource(R.string.locks)) },
@@ -187,6 +189,15 @@ private fun TopBar(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
+        // 左上角入口：照 KernelSU 超级用户页，标题左侧直接放一颗记录图标。
+        actions = {
+            IconButton(onClick = onOpenRecords) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.Article,
+                    contentDescription = stringResource(R.string.unlock_records),
+                )
+            }
+        },
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior
     )

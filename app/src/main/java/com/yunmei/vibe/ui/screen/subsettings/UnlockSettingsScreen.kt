@@ -39,7 +39,6 @@ fun UnlockSettingsScreen() {
 
     val state = UnlockSettingsUiState(
         settings = functionalState.settings,
-        recordUpload = appearanceState.enableRecordUpload,
     )
     val onBack = dropUnlessResumed { navigator.pop() }
 
@@ -102,7 +101,6 @@ fun UnlockSettingsScreen() {
         onSetQuickConnect = viewModel::setQuickConnect,
         onSetAutoConnect = ::onSetAutoConnect,
         onSetAutoExit = ::onSetAutoExit,
-        onSetRecordUpload = viewModel::setEnableRecordUpload,
     )
 
     when (LocalUiMode.current) {

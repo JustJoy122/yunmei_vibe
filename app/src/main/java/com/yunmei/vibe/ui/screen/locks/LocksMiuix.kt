@@ -40,6 +40,7 @@ import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Delete
+import top.yukonga.miuix.kmp.icon.extended.Notes
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Lock
@@ -87,7 +88,16 @@ fun LocksPagerMiuix(
                 TopAppBar(
                     color = barColor,
                     title = stringResource(R.string.locks),
-                    scrollBehavior = scrollBehavior
+                    scrollBehavior = scrollBehavior,
+                    actions = {
+                        IconButton(onClick = actions.onOpenRecords) {
+                            Icon(
+                                imageVector = MiuixIcons.Notes,
+                                contentDescription = stringResource(R.string.unlock_records),
+                                tint = colorScheme.onSurface,
+                            )
+                        }
+                    },
                 )
             }
         },

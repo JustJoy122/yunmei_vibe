@@ -26,6 +26,8 @@ data class LocksActions(
     val onOpenDetail: (Lock) -> Unit,
     /** 打开群组成员页（卡片底部按钮，页面本体另行实现）。 */
     val onOpenMembers: (Lock) -> Unit,
+    /** 打开开门记录页（服务端按账号聚合，无需传入门锁）。 */
+    val onOpenRecords: () -> Unit,
     val onMessageShown: () -> Unit,
     /** 确认框：确认添加 / 取消添加（仅清空待确认态，不写库）。 */
     val onConfirmImport: () -> Unit,

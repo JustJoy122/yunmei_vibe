@@ -14,7 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.twotone.Bluetooth
-import androidx.compose.material.icons.twotone.CloudUpload
 import androidx.compose.material.icons.twotone.LockOpen
 import androidx.compose.material.icons.twotone.PowerSettingsNew
 import androidx.compose.material3.Icon
@@ -101,15 +100,6 @@ fun UnlockSettingsMaterial(
                             title = stringResource(id = R.string.settings_auto_exit),
                             checked = state.settings.autoExit,
                             onCheckedChange = actions.onSetAutoExit
-                        )
-                    },
-                    {
-                        SegmentedSwitchItem(
-                            icon = Icons.TwoTone.CloudUpload,
-                            title = stringResource(id = R.string.settings_enable_record_upload),
-                            summary = stringResource(id = R.string.settings_enable_record_upload_summary),
-                            checked = state.recordUpload,
-                            onCheckedChange = actions.onSetRecordUpload
                         )
                     },
                 )

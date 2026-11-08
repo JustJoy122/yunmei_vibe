@@ -10,6 +10,7 @@ import com.yunmei.vibe.data.model.LoginUser
 import com.yunmei.vibe.data.model.SchoolEntry
 import com.yunmei.vibe.data.model.UnitCodes
 import com.yunmei.vibe.data.model.UnlockRecord
+import com.yunmei.vibe.data.model.UnlockRecordItem
 import com.yunmei.vibe.data.network.YunMeiApiClient
 import com.yunmei.vibe.data.security.Md5
 import kotlinx.coroutines.CancellationException
@@ -293,6 +294,39 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
                 areaNo = lock.areaNo,
                 buildNo = lock.buildNo,
                 dormNo = lock.dormNo,
+            )
+        }
+    }
+
+    /**
+     * 拉取当前账号在本校的开门记录（官方 `lockrecord/getrecordbyschool`）。
+     *
+     * 接口只接受 `schoolNo` + `pageSize`：服务端按登录账号聚合该账号名下所有门锁的记录，
+     * 不接受按门锁/按人筛选，所以这里只借用 [lock] 定位学校，不参与过滤。
+     * 返回体既可能是裸数组，也可能被包在 `data` 或 `o` 里，三种形状都兼容。
+     */
+    suspend fun getUnlockRecords(lock: Lock): List<UnlockRecordItem> {
+        // findSchool 内部会再取一次 mutex，必须放在 withLock 之外（同 getDormMembers 的教训）。
+        val school = findSchool(lock.schoolNo)
+        val userId = requireUserId()
+        val serverUrl = requireServerUrl(school)
+        val element = mutex.withLock {
+            applySchoolAuth(school, userId)
+            client.api(serverUrl).getUnlockRecords(schoolNo = lock.schoolNo)
+        }
+        val array = when (element) {
+            is JsonArray -> element
+            is JsonObject -> (element["data"] as? JsonArray)
+                ?: (element["o"] as? JsonArray)
+                ?: JsonArray(emptyList())
+            else -> JsonArray(emptyList())
+        }
+        return array.mapNotNull { item -> item as? JsonObject }.map { item ->
+            UnlockRecordItem(
+                buildName = item.jsonText("buildName").orEmpty(),
+                dormName = item.jsonText("dormName").orEmpty(),
+                realName = item.jsonText("realName").orEmpty(),
+                lockTime = item.jsonText("lockTime").orEmpty(),
             )
         }
     }

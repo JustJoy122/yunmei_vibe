@@ -61,4 +61,9 @@ sealed interface Route : NavKey, Parcelable {
     @Parcelize
     @Serializable
     data class DormMembers(val label: String) : Route
+
+    /** 开门记录页（服务端按账号聚合并返回，不按门锁过滤）。 */
+    @Parcelize
+    @Serializable
+    data object UnlockRecords : Route
 }

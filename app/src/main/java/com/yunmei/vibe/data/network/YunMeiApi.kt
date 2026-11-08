@@ -107,4 +107,17 @@ interface YunMeiApi {
         @Field("buildNo") buildNo: String,
         @Field("dormNo") dormNo: String,
     ): JsonElement
+
+    /**
+     * 开门记录列表（学校服务，官方 `lockrecord/getrecordbyschool`）。
+     *
+     * 官方只传 `schoolNo` 与 `pageSize`：没有按门锁、按用户或按时间段的筛选参数，
+     * 也没有翻页参数（一次取回首屏）。返回是裸 JSON 数组，由仓库层兼容包装形状。
+     */
+    @FormUrlEncoded
+    @POST("lockrecord/getrecordbyschool")
+    suspend fun getUnlockRecords(
+        @Field("schoolNo") schoolNo: String,
+        @Field("pageSize") pageSize: Int = 20,
+    ): JsonElement
 }

@@ -228,9 +228,10 @@ private fun LockCard(
             fontWeight = FontWeight(550),
             color = colorScheme.onSurfaceVariantSummary,
         )
-        // 门锁号对应 ModuleItem 的「模块说明」：14sp、默认字重，与上方单位名拉开间距。
+        // 说明行展示电量：与首页同一优先级（BLE 实时 > 服务端 lockElectricity，见 HomeMiuix）。
         Text(
-            text = lock.lockNo.ifBlank { lock.mac },
+            text = stringResource(R.string.unlock_battery) + "：" +
+                (lock.lockElectricity?.let { "$it%" } ?: stringResource(R.string.lock_label_unknown)),
             fontSize = 14.sp,
             modifier = Modifier.padding(top = 2.dp, bottom = 1.dp),
             color = colorScheme.onSurfaceVariantSummary,

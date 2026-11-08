@@ -30,8 +30,9 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.SwitchColors
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -59,11 +60,31 @@ import kotlinx.coroutines.launch
 
 val LocalListItemShapes = compositionLocalOf<ListItemShapes?> { null }
 
+/**
+ * 开关配色：与 KernelSU `expressiveSwitchColors()` 完全一致。
+ *
+ * 默认的 `SwitchDefaults.colors()` 只覆盖启用态；这里显式给出图标色与全部禁用态，
+ * 保证开关在两种主题、明暗模式下的轨道/滑块颜色都和 KernelSU 对齐。
+ */
+@Composable
+private fun expressiveSwitchColors(): SwitchColors = SwitchDefaults.colors(
+    checkedIconColor = colorScheme.primary,
+    uncheckedIconColor = colorScheme.surfaceContainerHighest,
+    disabledCheckedThumbColor = colorScheme.surface.copy(alpha = 0.38f),
+    disabledCheckedTrackColor = colorScheme.onSurface.copy(alpha = 0.12f),
+    disabledCheckedIconColor = colorScheme.onSurface.copy(alpha = 0.12f),
+    disabledUncheckedThumbColor = colorScheme.outline.copy(alpha = 0.38f),
+    disabledUncheckedTrackColor = colorScheme.surfaceContainerHighest.copy(alpha = 0.12f),
+    disabledUncheckedBorderColor = colorScheme.onSurface.copy(alpha = 0.12f),
+    disabledUncheckedIconColor = colorScheme.surfaceContainerHighest,
+)
+
 @Composable
 private fun defaultSegmentedColors(): ListItemColors = ListItemDefaults.segmentedColors().copy(
-    containerColor = colorScheme.surfaceColorAtElevation(1.dp),
-    disabledContainerColor = colorScheme.surfaceColorAtElevation(1.dp),
-    supportingContentColor = colorScheme.outline
+    // 与 KernelSU `defaultSegmentedColors()` 逐字一致：卡片底色 surfaceBright、说明文字 onSurfaceVariant。
+    containerColor = colorScheme.surfaceBright,
+    disabledContainerColor = colorScheme.surfaceBright,
+    supportingContentColor = colorScheme.onSurfaceVariant
 )
 
 @Composable
@@ -247,6 +268,7 @@ fun SegmentedSwitchItem(
                 checked = checked,
                 enabled = enabled,
                 onCheckedChange = null,
+                colors = expressiveSwitchColors(),
                 interactionSource = interactionSource,
             )
         },

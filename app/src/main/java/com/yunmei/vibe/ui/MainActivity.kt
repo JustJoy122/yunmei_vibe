@@ -513,6 +513,7 @@ fun MainScreen(
             when (uiMode) {
                 UiMode.Material -> androidx.compose.material3.Scaffold(
                     snackbarHost = { GlobalMessageHost() },
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ) {
                     Row {
                         SideRail(
@@ -562,6 +563,7 @@ fun MainScreen(
                 UiMode.Material -> androidx.compose.material3.Scaffold(
                     snackbarHost = { GlobalMessageHost() },
                     bottomBar = bottomBar,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ) { innerPadding ->
                     pagerContent(innerPadding.calculateBottomPadding())
                 }

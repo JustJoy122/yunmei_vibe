@@ -68,6 +68,7 @@ fun SettingPagerMaterial(
     val signLocationItems = signLocationModes.map { stringResource(it.labelRes) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             TopBar(scrollBehavior = scrollBehavior)
         },
@@ -225,8 +226,8 @@ private fun TopBar(
     LargeFlexibleTopAppBar(
         title = { Text(stringResource(R.string.settings)) },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior

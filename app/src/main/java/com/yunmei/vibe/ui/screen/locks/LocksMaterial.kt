@@ -78,6 +78,7 @@ fun LocksPagerMaterial(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = { TopBar(scrollBehavior = scrollBehavior) },
         snackbarHost = { SnackBarHost(hostState = snackBarHost, modifier = Modifier.padding(bottom = bottomInnerPadding)) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
@@ -183,8 +184,8 @@ private fun TopBar(
     LargeFlexibleTopAppBar(
         title = { Text(stringResource(R.string.locks)) },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior
@@ -214,10 +215,11 @@ private fun LockCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )
-                // 门锁号对应 ModuleItem 的「模块说明」：14sp 正常字重，与上方两行拉开 8dp。
+                // 说明行展示电量：与首页同一优先级（BLE 实时 > 服务端 lockElectricity，见 HomeMaterial）。
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = lock.lockNo.ifBlank { lock.mac },
+                    text = stringResource(R.string.unlock_battery) + "：" +
+                        (lock.lockElectricity?.let { "$it%" } ?: stringResource(R.string.lock_label_unknown)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                 )

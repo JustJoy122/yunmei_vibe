@@ -270,6 +270,7 @@ private fun LockDetailScreenMaterial(
     val navigator = LocalNavigator.current
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(lock.label.ifBlank { stringResource(R.string.home_status_empty_title) }) },
@@ -282,8 +283,8 @@ private fun LockDetailScreenMaterial(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 scrollBehavior = scrollBehavior
             )

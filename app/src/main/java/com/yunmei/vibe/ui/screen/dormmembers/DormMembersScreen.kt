@@ -41,6 +41,7 @@ fun DormMembersScreen(label: String) {
 @Composable
 private fun MaterialPlaceholder(label: String) {
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.dorm_members)) },

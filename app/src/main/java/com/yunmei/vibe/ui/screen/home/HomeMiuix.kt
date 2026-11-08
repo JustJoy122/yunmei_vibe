@@ -1,7 +1,9 @@
 package com.yunmei.vibe.ui.screen.home
 
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -238,22 +240,32 @@ private fun UnlockActionCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                // 禁用时画整圈静态灰环：0% 只剩轨道，视觉上像「进度环不见了」。
-                CircularProgressIndicator(
-                    progress = { if (enabled) state.progress / 100f else 1f },
-                    modifier = Modifier.size(112.dp),
-                    // 禁用态用内容色 38% 透明：outline 在浅色主题下是中灰，比启用态更「重」。
-                    color = if (enabled) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.38f),
-                    trackColor = if (enabled) colorScheme.secondaryContainer else Color.Transparent,
-                    strokeWidth = 8.dp,
-                )
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${state.progress}%",
-                        fontSize = MiuixTheme.textStyles.headline1.fontSize,
-                        fontWeight = FontWeight.Bold,
-                        color = colorScheme.onSurface,
+                // 禁用态不渲染进度环、也不拿主题色加透明度（叠在卡片底色上会发黑），
+                // 改成描边色画一圈静态环，与启用态的 primary 环区分得很干净。
+                if (enabled) {
+                    CircularProgressIndicator(
+                        progress = { state.progress / 100f },
+                        modifier = Modifier.size(112.dp),
+                        color = colorScheme.primary,
+                        trackColor = colorScheme.secondaryContainer,
+                        strokeWidth = 8.dp,
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(112.dp)
+                            .border(width = 8.dp, color = colorScheme.outline, shape = CircleShape),
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (enabled) {
+                        Text(
+                            text = "${state.progress}%",
+                            fontSize = MiuixTheme.textStyles.headline1.fontSize,
+                            fontWeight = FontWeight.Bold,
+                            color = colorScheme.onSurface,
+                        )
+                    }
                     Text(
                         text = stringResource(R.string.unlock_open),
                         fontSize = MiuixTheme.textStyles.body2.fontSize,

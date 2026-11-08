@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.home
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -221,20 +223,6 @@ private fun UnlockActionCard(
 ) {
     // 仅在存在默认门锁时可用；未就绪时置灰且不响应点击（原因由顶部 Banner 说明）。
     val enabled = state.defaultLock != null
-    // 禁用时进度环改成整圈静态灰环：0% 时只剩极淡的轨道，看起来像「环消失了」。
-    val ringColor = if (enabled) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        // 禁用态用「内容色 38% 透明」而不是 outlineVariant：深色主题下 outlineVariant
-        // 反而比启用态的 primary 更亮，看起来像「没禁用」。
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-    }
-    val ringProgress = if (enabled) state.progress / 100f else 1f
-    val ringTrack = if (enabled) {
-        MaterialTheme.colorScheme.surfaceVariant
-    } else {
-        Color.Transparent
-    }
     TonalCard(enabled = enabled, onClick = actions.onOpenDoor) {
         Column(
             modifier = Modifier
@@ -244,19 +232,35 @@ private fun UnlockActionCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    progress = { ringProgress },
-                    modifier = Modifier.size(112.dp),
-                    color = ringColor,
-                    trackColor = ringTrack,
-                    strokeWidth = 8.dp,
-                )
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${state.progress}%",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
+                if (enabled) {
+                    CircularProgressIndicator(
+                        progress = { state.progress / 100f },
+                        modifier = Modifier.size(112.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        strokeWidth = 8.dp,
                     )
+                } else {
+                    // 禁用态不再用「主题色 + 半透明」：半透明色叠在卡片底色上会整体变暗发黑。
+                    // 改成规范里的描边色画一圈静态环，观感稳定且与启用态区分明显。
+                    Box(
+                        modifier = Modifier
+                            .size(112.dp)
+                            .border(
+                                width = 8.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                shape = CircleShape,
+                            ),
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (enabled) {
+                        Text(
+                            text = "${state.progress}%",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                     Text(
                         text = stringResource(R.string.unlock_open),
                         style = MaterialTheme.typography.labelMedium,

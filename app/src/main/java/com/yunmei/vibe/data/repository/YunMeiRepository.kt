@@ -5,8 +5,10 @@ import android.os.Build
 import com.yunmei.vibe.BuildConfig
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.local.StoredUser
+import com.yunmei.vibe.data.model.DormMember
 import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.data.model.LoginUser
+import com.yunmei.vibe.data.model.LoginUserInfo
 import com.yunmei.vibe.data.model.SchoolEntry
 import com.yunmei.vibe.data.model.UnitCodes
 import com.yunmei.vibe.data.model.UnlockRecord
@@ -281,13 +283,13 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
      * 这四个值都来自本地保存的 [Lock]，此前为上报开门记录已经存了下来。
      * 返回原始 JSON：服务端是否再包一层 `data` 尚未实测，解析交给调用方。
      */
-    suspend fun getDormMembers(lock: Lock): JsonElement {
+    suspend fun getDormMembers(lock: Lock): List<DormMember> {
         // findSchool 内部还会取一次 mutex（fetchSchools），必须放在 withLock 之外，
         // 否则同一协程重入不可重入的 Mutex 会永久挂起——表现为点了没有任何反应。
         val school = findSchool(lock.schoolNo)
         val userId = requireUserId()
         val serverUrl = requireServerUrl(school)
-        return mutex.withLock {
+        val element = mutex.withLock {
             applySchoolAuth(school, userId)
             client.api(serverUrl).getDormUsers(
                 schoolNo = lock.schoolNo,
@@ -296,7 +298,42 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
                 dormNo = lock.dormNo,
             )
         }
+        // 真机抓到的形状是裸数组，但同样兼容 `data` / `o` 包裹的写法。
+        val array = when (element) {
+            is JsonArray -> element
+            is JsonObject -> (element["data"] as? JsonArray)
+                ?: (element["o"] as? JsonArray)
+                ?: JsonArray(emptyList())
+            else -> JsonArray(emptyList())
+        }
+        return array.mapNotNull { item -> item as? JsonObject }.map { item ->
+            val info = item["loginUserInfo"] as? JsonObject
+            DormMember(
+                userId = item.jsonText("userId").orEmpty(),
+                roleType = item.jsonInt("roleType") ?: DormMember.ROLE_MEMBER,
+                status = item.jsonInt("status") ?: DormMember.STATUS_ENABLED,
+                startTime = item.jsonText("startTime").orEmpty(),
+                endTime = item.jsonText("endTime").orEmpty(),
+                schoolName = item.jsonText("schoolName").orEmpty(),
+                areaName = item.jsonText("areaName").orEmpty(),
+                buildName = item.jsonText("buildName").orEmpty(),
+                dormName = item.jsonText("dormName").orEmpty(),
+                loginUserInfo = LoginUserInfo(
+                    id = info?.jsonText("id").orEmpty(),
+                    userId = info?.jsonText("userId").orEmpty(),
+                    userTel = info?.jsonText("userTel").orEmpty(),
+                    nickName = info?.jsonText("nickName").orEmpty(),
+                    realName = info?.jsonText("realName").orEmpty(),
+                    email = info?.jsonText("email").orEmpty(),
+                    userName = info?.jsonText("userName").orEmpty(),
+                ),
+            )
+        }
     }
+
+    /** 取整数字段，兼容服务端把数字写成字符串的情况。 */
+    private fun JsonObject.jsonInt(key: String): Int? =
+        this[key]?.jsonPrimitive?.contentOrNull?.toIntOrNull()
 
     /**
      * 拉取当前账号在本校的开门记录（官方 `lockrecord/getrecordbyschool`）。

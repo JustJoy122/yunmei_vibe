@@ -2,7 +2,6 @@ package com.yunmei.vibe.ui.component.bottombar
 
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,25 +50,19 @@ class MainPagerState(
         selectedPage = target
         isNavigating = true
 
-        val distance = abs(target - pagerState.currentPage).coerceAtLeast(2)
-        val duration = 100 * distance + 100
-        val layoutInfo = pagerState.layoutInfo
-        val pageSize = layoutInfo.pageSize + layoutInfo.pageSpacing
-        val currentDistanceInPages = target - pagerState.currentPage - pagerState.currentPageOffsetFraction
-        val scrollPixels = currentDistanceInPages * pageSize
+        // 时长沿用「距离越远越久」的手感，但滚动交给官方按页吸附的 animateScrollToPage：
+        // 自己按像素累加（layoutInfo.pageSize × 页数）在页宽变化、密度变化、动画被打断这几种
+        // 情况下会多滚或少滚，表现出来就是「点门锁先闪一下设置页再弹回来」。
+        val distance = abs(target - pagerState.currentPage)
+        val duration = 100 * (distance + 1)
 
         navJob = coroutineScope.launch {
             val myJob = coroutineContext.job
             try {
-                if (pageSize > 0) {
-                    pagerState.animateScrollBy(
-                        value = scrollPixels,
-                        animationSpec = tween(easing = EaseInOut, durationMillis = duration)
-                    )
-                } else {
-                    // 首帧尚未测量出页宽时按像素滚动会滚 0 像素，改用官方按页滚动。
-                    pagerState.animateScrollToPage(target)
-                }
+                pagerState.animateScrollToPage(
+                    page = target,
+                    animationSpec = tween(easing = EaseInOut, durationMillis = duration),
+                )
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
@@ -88,7 +81,6 @@ class MainPagerState(
             }
         }
     }
-
     fun syncPage() {
         if (!isNavigating && selectedPage != pagerState.currentPage) {
             selectedPage = pagerState.currentPage

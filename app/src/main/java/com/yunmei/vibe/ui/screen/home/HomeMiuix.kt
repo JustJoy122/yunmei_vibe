@@ -242,7 +242,8 @@ private fun UnlockActionCard(
                 CircularProgressIndicator(
                     progress = { if (enabled) state.progress / 100f else 1f },
                     modifier = Modifier.size(112.dp),
-                    color = if (enabled) colorScheme.primary else colorScheme.outline,
+                    // 禁用态用内容色 38% 透明：outline 在浅色主题下是中灰，比启用态更「重」。
+                    color = if (enabled) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.38f),
                     trackColor = if (enabled) colorScheme.secondaryContainer else Color.Transparent,
                     strokeWidth = 8.dp,
                 )

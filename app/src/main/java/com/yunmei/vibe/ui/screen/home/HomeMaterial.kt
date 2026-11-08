@@ -225,7 +225,9 @@ private fun UnlockActionCard(
     val ringColor = if (enabled) {
         MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.outlineVariant
+        // 禁用态用「内容色 38% 透明」而不是 outlineVariant：深色主题下 outlineVariant
+        // 反而比启用态的 primary 更亮，看起来像「没禁用」。
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
     }
     val ringProgress = if (enabled) state.progress / 100f else 1f
     val ringTrack = if (enabled) {

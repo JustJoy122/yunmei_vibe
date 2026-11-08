@@ -254,7 +254,7 @@ private fun LockCard(
                     horizontalArrangement = Arrangement.Center,
                 ) {
                     Icon(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(18.dp),
                         imageVector = Icons.Rounded.Info,
                         tint = actionIconTint,
                         contentDescription = stringResource(R.string.locks),
@@ -270,7 +270,7 @@ private fun LockCard(
                     horizontalArrangement = Arrangement.Center,
                 ) {
                     Icon(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(18.dp),
                         imageVector = Icons.Rounded.People,
                         tint = actionIconTint,
                         contentDescription = stringResource(R.string.dorm_members),

@@ -250,7 +250,7 @@ private fun LockCard(
                         Icon(
                             imageVector = Icons.Outlined.Info,
                             contentDescription = stringResource(R.string.locks),
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                     FilledTonalButton(
@@ -261,7 +261,7 @@ private fun LockCard(
                         Icon(
                             imageVector = Icons.Outlined.People,
                             contentDescription = stringResource(R.string.dorm_members),
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                 }

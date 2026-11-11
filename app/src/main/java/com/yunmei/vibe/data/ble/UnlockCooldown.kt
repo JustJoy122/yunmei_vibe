@@ -32,8 +32,5 @@ object UnlockCooldown {
         return (INTERVAL_MS - elapsed).coerceAtLeast(0L)
     }
 
-    /** 冷却剩余秒数（向上取整），用于提示文案。 */
-    fun remainingSeconds(): Int = ((remainingMs() + 999L) / 1000L).toInt()
-
     private const val UNSET = Long.MIN_VALUE
 }

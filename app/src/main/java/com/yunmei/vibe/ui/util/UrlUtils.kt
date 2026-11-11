@@ -1,9 +1,9 @@
 package com.yunmei.vibe.ui.util
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.core.net.toUri
 import com.yunmei.vibe.data.network.YunMeiApiClient
 
 /**
@@ -29,7 +29,7 @@ private fun docUrl(file: String): String =
  */
 fun openUrlWithCustomTab(context: Context, url: String) {
     runCatching {
-        CustomTabsIntent.Builder().build().launchUrl(context, Uri.parse(url))
+        CustomTabsIntent.Builder().build().launchUrl(context, url.toUri())
     }.onFailure { error ->
         Log.w("YunMeiUrl", "打开链接失败：$url", error)
     }

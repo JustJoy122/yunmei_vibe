@@ -31,18 +31,6 @@ data class School(
 )
 
 @Serializable
-data class LockDto(
-    val buildName: String? = null,
-    val dormNo: String? = null,
-    val lockSecret: String? = null,
-    val lockCharacterUuid: String? = null,
-    val lockServiceUuid: String? = null,
-    val lockNo: String? = null,
-    val areaNo: String? = null,
-    val buildNo: String? = null,
-)
-
-@Serializable
 data class ApiMessage(
     val success: Boolean = false,
     val msg: String? = null,

@@ -86,9 +86,6 @@ data class Lock(
         }
     }
 
-    /** 去掉敏感信息后的公开分享体（写 NFC 用）。 */
-    fun withoutSecret(): Lock = copy(secret = "", usernameMd5 = "", lockNo = "", schoolNo = "")
-
     companion object {
         private const val DATA_VER = "1.2"
 

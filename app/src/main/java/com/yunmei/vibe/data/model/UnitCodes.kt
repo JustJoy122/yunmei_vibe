@@ -60,7 +60,4 @@ object UnitCodes {
 
     /** 名称 → 编号列表（可能多个，如「浙江工商大学」→ [006, 022]）；无法识别时返回空列表。 */
     fun codesOf(name: String): List<String> = CODES_BY_NAME[name].orEmpty()
-
-    /** 名称 → 单个编号，仅用于确知该名称唯一对应一个编号的场景；多编号场景请用 [codesOf]。 */
-    fun codeOf(name: String): String? = CODES_BY_NAME[name]?.firstOrNull()
 }

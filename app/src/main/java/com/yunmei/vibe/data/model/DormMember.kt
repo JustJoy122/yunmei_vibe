@@ -86,7 +86,4 @@ data class LoginUserInfo(
     val realName: String = "",
     val email: String = "",
     val userName: String = "",
-) {
-    /** 真实姓名优先，其次昵称。 */
-    val shownName: String get() = realName.ifBlank { nickName }
-}
+)

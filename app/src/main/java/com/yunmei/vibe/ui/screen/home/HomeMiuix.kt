@@ -242,8 +242,7 @@ private fun UnlockActionCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                // 禁用态不渲染进度环、也不拿主题色加透明度（叠在卡片底色上会发黑），
-                // 改成描边色画一圈静态环，与启用态的 primary 环区分得很干净。
+                // 禁用态不渲染进度环（主题色叠在置灰卡片上会发灰发脏），只留同尺寸占位保持居中。
                 if (enabled) {
                     CircularProgressIndicator(
                         progress = { state.progress / 100f },
@@ -253,7 +252,6 @@ private fun UnlockActionCard(
                         strokeWidth = 8.dp,
                     )
                 } else {
-                    // 禁用态直接不画环：只保留同尺寸空白占位，避免卡片高度变化、文字偏移。
                     Box(modifier = Modifier.size(112.dp))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

@@ -44,7 +44,8 @@ class AppContainer(context: Context) {
     }
 
     val repository: YunMeiRepository by lazy {
-        YunMeiRepository(appContext, apiClient)
+        // AccountStore 一并注入：会话续期时要按 usernameMd5 取回密码 MD5 静默重登。
+        YunMeiRepository(appContext, apiClient, accountStore)
     }
 
     val unlockManager: UnlockManager by lazy {

@@ -127,6 +127,8 @@ kotlin {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    // Custom Tabs：服务协议 / 隐私政策页面
+    implementation(libs.androidx.browser)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

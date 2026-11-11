@@ -44,6 +44,12 @@ class YunMeiApp : Application() {
                 refreshUnlockShortcut()
             }
         }
+        // 会话恢复：把上次保存的 token 填回内存，冷启动不必让用户重新登录。
+        // 放在 appScope 里异步做，不阻塞主线程；未恢复成功时各入口会自行走静默登录。
+        appScope.launch {
+            runCatching { container.repository.restoreSession() }
+                .onFailure { error -> Log.i("YunMei", "restoreSession skipped: " + error.message) }
+        }
         // 预测性返回手势：按保存的偏好初始化（与模板 TemplateApplication 一致）。
         // 键名统一走 SettingsPrefs，避免此处与设置页各自手写字符串。
         if (SettingsPrefs.of(this).getBoolean(SettingsPrefs.ENABLE_PREDICTIVE_BACK, false)) {

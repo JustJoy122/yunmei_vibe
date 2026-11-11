@@ -1,6 +1,7 @@
 package com.yunmei.vibe.ui.screen.about
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -10,6 +11,9 @@ import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.navigation.LocalNavigator
 import com.yunmei.vibe.ui.navigation.Route
+import com.yunmei.vibe.ui.util.openUrlWithCustomTab
+import com.yunmei.vibe.ui.util.privacyPolicyUrl
+import com.yunmei.vibe.ui.util.serviceAgreementUrl
 
 /** 「查看源代码」目标仓库。 */
 private const val SOURCE_CODE_URL = "https://github.com/JustJoy122/yunmei_vibe"
@@ -18,6 +22,7 @@ private const val SOURCE_CODE_URL = "https://github.com/JustJoy122/yunmei_vibe"
 fun AboutScreen() {
     val navigator = LocalNavigator.current
     val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
 
     // 版本号按构建类型区分，统一在此生成（Material / Miuix 两个主题共用同一个 state，不各自硬编码）：
     // - Debug：测试版 {versionName} (CI #{run_number})；本地未注入 BUILD_STAMP 时显示「本地」
@@ -43,6 +48,8 @@ fun AboutScreen() {
         onBack = dropUnlessResumed { navigator.pop() },
         onOpenSource = { uriHandler.openUri(SOURCE_CODE_URL) },
         onOpenLicense = dropUnlessResumed { navigator.push(Route.OpenSourceLicense) },
+        onOpenServiceAgreement = { openUrlWithCustomTab(context, serviceAgreementUrl()) },
+        onOpenPrivacyPolicy = { openUrlWithCustomTab(context, privacyPolicyUrl()) },
     )
 
     when (LocalUiMode.current) {

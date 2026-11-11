@@ -17,4 +17,8 @@ data class AboutScreenActions(
     val onOpenSource: () -> Unit,
     /** 开放源代码许可（跳转 License 页）。 */
     val onOpenLicense: () -> Unit,
+    /** 服务协议（Custom Tabs）。 */
+    val onOpenServiceAgreement: () -> Unit,
+    /** 隐私政策（Custom Tabs）。 */
+    val onOpenPrivacyPolicy: () -> Unit,
 )

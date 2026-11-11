@@ -2,6 +2,7 @@ package com.yunmei.vibe.ui.screen.home
 
 import androidx.compose.runtime.Immutable
 import com.yunmei.vibe.data.model.Lock
+import com.yunmei.vibe.data.model.SignStatus
 import com.yunmei.vibe.data.preferences.AppSettings
 import com.yunmei.vibe.ui.util.SystemInfo
 
@@ -29,6 +30,8 @@ data class HomeUiState(
     val signMessage: String? = null,
     val signing: Boolean = false,
     val signAsk: SignAskState? = null,
+    /** 学校打卡状态；null = 学校未开启打卡（界面不展示状态行）。 */
+    val signStatus: SignStatus? = null,
     // 开门选项
     val quickConnect: Boolean = true,
     val settings: AppSettings = AppSettings(),

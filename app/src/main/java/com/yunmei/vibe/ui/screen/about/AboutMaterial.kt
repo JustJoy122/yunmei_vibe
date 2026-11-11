@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.twotone.Code
 import androidx.compose.material.icons.twotone.Copyright
+import androidx.compose.material.icons.twotone.Description
+import androidx.compose.material.icons.twotone.PrivacyTip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -98,7 +100,9 @@ fun AboutScreenMaterial(
             item {
                 // 与 InstallerX 一致：功能项由 SegmentedColumn 成组，避免自研 Column 布局
                 // 造成项间无间隙、四角全圆角而互相"咬角"。
-                SegmentedColumn {
+                SegmentedColumn(
+                    title = stringResource(R.string.about_group_open_source),
+                ) {
                     item {
                         NavigationItemWidget(
                             icon = Icons.TwoTone.Code,
@@ -113,6 +117,28 @@ fun AboutScreenMaterial(
                             title = stringResource(R.string.about_open_source_license),
                             description = stringResource(R.string.about_open_source_license_summary),
                             onClick = actions.onOpenLicense,
+                        )
+                    }
+                }
+            }
+            item {
+                SegmentedColumn(
+                    title = stringResource(R.string.about_group_official_terms),
+                ) {
+                    item {
+                        NavigationItemWidget(
+                            icon = Icons.TwoTone.Description,
+                            title = stringResource(R.string.about_service_agreement),
+                            description = stringResource(R.string.about_service_agreement_summary),
+                            onClick = actions.onOpenServiceAgreement,
+                        )
+                    }
+                    item {
+                        NavigationItemWidget(
+                            icon = Icons.TwoTone.PrivacyTip,
+                            title = stringResource(R.string.about_privacy_policy),
+                            description = stringResource(R.string.about_privacy_policy_summary),
+                            onClick = actions.onOpenPrivacyPolicy,
                         )
                     }
                 }

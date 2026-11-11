@@ -53,6 +53,7 @@ import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.TonalCard
 import com.yunmei.vibe.ui.component.statustag.StatusTag
+import com.yunmei.vibe.ui.util.signStatusLine
 
 @Composable
 fun HomePagerMaterial(
@@ -387,10 +388,19 @@ private fun SignCard(
                 onClick = actions.onSign,
                 headlineContent = { Text(stringResource(R.string.unlock_sign)) },
                 supportingContent = {
-                    Text(
-                        text = state.signMessage ?: signLocationLabel(state.settings.signLocationMode),
-                        color = MaterialTheme.colorScheme.outline,
-                    )
+                    Column {
+                        // 学校开启了打卡时才有状态行；null（未开启）时整行不渲染。
+                        state.signStatus?.let { status ->
+                            Text(
+                                text = signStatusLine(status),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Text(
+                            text = state.signMessage ?: signLocationLabel(state.settings.signLocationMode),
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    }
                 },
                 leadingContent = {
                     Icon(

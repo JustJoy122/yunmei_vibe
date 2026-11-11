@@ -2,6 +2,7 @@ package com.yunmei.vibe.ui.theme
 
 import android.content.Context
 import android.content.res.Configuration
+import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.materialkolor.dynamicColorScheme
@@ -79,3 +80,25 @@ object ThemeColors {
         return accent
     }
 }
+
+/**
+ * 把 Material 3 色板的"表面族"强制压成纯黑。
+ *
+ * KernelSU 的等价实现见 `ui/theme/ThemeExt.kt:15-26`：material-kolor 的 `isAmoled`
+ * 只改写 `background` / `surface` / `onBackground` / `onSurface` 四个角色（已用 javap
+ * 核对 5.0.0 的 `MaterialKolors`：`surfaceContainer*`、`surfaceDim`、`surfaceBright`
+ * 都没有 amoled 分支），而本项目的页面底色用的是 `surfaceContainer`、卡片用的是
+ * `surfaceBright`，所以仅靠库内参数开 AMOLED 会出现"页面还是深灰"的观感。
+ */
+fun ColorScheme.amoledBackground(amoled: Boolean): ColorScheme =
+    if (!amoled) this
+    else copy(
+        background = Color.Black,
+        surface = Color.Black,
+        surfaceDim = Color.Black,
+        surfaceContainerLowest = Color.Black,
+        surfaceContainerLow = Color.Black,
+        surfaceContainer = Color.Black,
+        surfaceContainerHigh = Color.Black,
+        surfaceContainerHighest = Color.Black,
+    )

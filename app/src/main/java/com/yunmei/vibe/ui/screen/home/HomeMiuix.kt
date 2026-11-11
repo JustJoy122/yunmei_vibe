@@ -52,6 +52,7 @@ import com.yunmei.vibe.ui.theme.isInDarkTheme
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
+import com.yunmei.vibe.ui.util.signStatusLine
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
@@ -364,6 +365,9 @@ private fun SignCard(
     // 仅在存在默认门锁时可用；未就绪时由 BasicComponent 自带的禁用配色灰显、
     // 且不挂 clickable（无涟漪无点击），原因由顶部 Banner 说明。
     val enabled = state.defaultLock != null
+    // 学校开启打卡时多一行状态；null 表示未开启，保持原有副标题。
+    val statusLine = state.signStatus?.let { signStatusLine(it) }
+    val baseSummary = state.signMessage ?: signLocationLabel(state.settings.signLocationMode)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -371,7 +375,7 @@ private fun SignCard(
     ) {
         BasicComponent(
             title = stringResource(R.string.unlock_sign),
-            summary = state.signMessage ?: signLocationLabel(state.settings.signLocationMode),
+            summary = if (statusLine != null) statusLine + " · " + baseSummary else baseSummary,
             startAction = {
                 Icon(
                     Icons.Rounded.WhereToVote,

@@ -244,6 +244,8 @@ class SettingsViewModel(
 
     fun removeAccount(user: StoredUser) {
         container.accountStore.removeByUsernameMd5(user.usernameMd5)
+        // 最后一个账号被删掉时，连同持久化会话一起清空（否则冷启动会带着无效 token 发请求）。
+        if (container.accountStore.getAll().isEmpty()) container.repository.clearSession()
         refresh()
     }
 

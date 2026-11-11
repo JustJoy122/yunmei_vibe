@@ -70,6 +70,7 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
+import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
@@ -417,6 +418,7 @@ private fun AboutContent(
                         .fillParentMaxHeight()
                         .padding(bottom = innerPadding.calculateBottomPadding() + 12.dp),
                 ) {
+                    SectionTitle(stringResource(R.string.about_group_open_source))
                     Card(
                         modifier = Modifier
                             .padding(horizontal = 12.dp)
@@ -447,6 +449,37 @@ private fun AboutContent(
                             onClick = actions.onOpenLicense,
                         )
                     }
+                    SectionTitle(stringResource(R.string.about_group_official_terms))
+                    Card(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .then(
+                                if (enableBlur) {
+                                    Modifier.textureBlur(
+                                        backdrop = backdrop,
+                                        shape = RoundedCornerShape(16.dp),
+                                        blurRadius = 60f,
+                                        colors = BlurColors(blendColors = blendColors),
+                                        enabled = true,
+                                    )
+                                } else Modifier
+                            ),
+                        colors = CardDefaults.defaultColors(
+                            if (enableBlur) Color.Transparent else colorScheme.surfaceContainer,
+                            Color.Transparent,
+                        ),
+                    ) {
+                        ArrowPreference(
+                            title = stringResource(R.string.about_service_agreement),
+                            summary = stringResource(R.string.about_service_agreement_summary),
+                            onClick = actions.onOpenServiceAgreement,
+                        )
+                        ArrowPreference(
+                            title = stringResource(R.string.about_privacy_policy),
+                            summary = stringResource(R.string.about_privacy_policy_summary),
+                            onClick = actions.onOpenPrivacyPolicy,
+                        )
+                    }
                     Spacer(
                         Modifier.height(
                             WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
@@ -457,4 +490,13 @@ private fun AboutContent(
             }
         }
     }
+}
+
+/** 分组小标题：与设置页同款 miuix SmallTitle（卡片用 12dp 外边距，标题左内 16dp 与之对齐）。 */
+@Composable
+private fun SectionTitle(title: String) {
+    SmallTitle(
+        text = title,
+        insideMargin = PaddingValues(start = 16.dp, top = 0.dp, end = 28.dp, bottom = 12.dp),
+    )
 }

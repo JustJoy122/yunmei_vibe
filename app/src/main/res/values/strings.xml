@@ -170,6 +170,8 @@
     <string name="about_view_source_code_summary">在 GitHub 上查看源代码</string>
     <string name="about_open_source_license">开放源代码许可</string>
     <string name="about_open_source_license_summary">第三方开源库与许可证信息</string>
+    <string name="about_group_open_source">开源与许可</string>
+    <string name="about_group_official_terms">官方服务条款</string>
 
     <!-- 开放源代码许可页（AboutLibraries，对齐 InstallerX Revived） -->
     <string name="license">许可证：%1$s</string>
@@ -373,4 +375,12 @@
     <string name="lock_detail_aes_key_unset">未设置，该门锁暂时无法开门</string>
 <string name="lock_detail_aes_key_hint">32 位十六进制密钥</string>
     <string name="unlock_cooldown_wait">开门成功后再次开门间隔不能小于 %1$d 秒</string>
+    <string name="login_error_expired">登录已过期，请重新登录</string>
+    <string name="about_service_agreement">服务协议</string>
+    <string name="about_privacy_policy">隐私政策</string>
+    <string name="about_service_agreement_summary">前往云莓智能官方查看</string>
+    <string name="about_privacy_policy_summary">前往云莓智能官方查看</string>
+    <string name="unlock_sign_status_signed">已打卡 %1$s</string>
+    <string name="unlock_sign_status_unsigned">未打卡</string>
+    <string name="unlock_sign_status_window">未打卡 · 时段 %1$s - %2$s</string>
 </resources>

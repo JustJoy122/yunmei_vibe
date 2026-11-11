@@ -50,9 +50,13 @@ class LocksViewModel : ViewModel() {
     /** 移除已保存账号（与设置页原账号区同一实现：按用户名 MD5 删除）。 */
     fun removeAccount(user: StoredUser) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+            val stored = withContext(Dispatchers.IO) {
                 container.accountStore.removeByUsernameMd5(user.usernameMd5)
+                container.accountStore.getAll()
             }
+            // 账号被删除后，为它保存的 token 也不再有效：清掉持久化会话，避免下次启动
+            // 用一个已经不存在账号的会话去发请求（服务端只会回「未登录」，体验更差）。
+            if (stored.isEmpty()) container.repository.clearSession()
             refresh()
         }
     }

@@ -5,27 +5,39 @@ import android.os.Build
 import android.util.Log
 import com.yunmei.vibe.BuildConfig
 import com.yunmei.vibe.R
+import com.yunmei.vibe.data.local.AccountStore
+import com.yunmei.vibe.data.local.SchoolSession
+import com.yunmei.vibe.data.local.SecureStore
+import com.yunmei.vibe.data.local.SessionStore
+import com.yunmei.vibe.data.local.StoredSession
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.DormMember
 import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.data.model.LoginUser
 import com.yunmei.vibe.data.model.LoginUserInfo
 import com.yunmei.vibe.data.model.SchoolEntry
+import com.yunmei.vibe.data.model.SignStatus
 import com.yunmei.vibe.data.model.UnitCodes
 import com.yunmei.vibe.data.model.UnlockRecord
 import com.yunmei.vibe.data.model.UnlockRecordItem
+import com.yunmei.vibe.data.network.SessionExpiredException
 import com.yunmei.vibe.data.network.YunMeiApiClient
 import com.yunmei.vibe.data.security.Md5
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import java.util.Locale
 
 /** 业务异常基类。 */
 open class YunMeiException(message: String) : Exception(message)
@@ -42,12 +54,31 @@ class YunMeiAuthException(message: String) : YunMeiException(message)
  * 云莓智能业务仓库。
  * 网络调用与 token 切换用 [Mutex] 串行化，避免并发时 header 串号。
  */
-class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
+class YunMeiRepository(
+    context: Context,
+    private val client: YunMeiApiClient,
+    private val accountStore: AccountStore,
+) {
 
     /** 应用 Context，仅用于读取界面文案资源（数据层不再硬编码中文）。 */
     private val appContext = context.applicationContext
 
     private val mutex = Mutex()
+
+    /**
+     * 会话级操作（恢复 / 静默登录 / 过期续期）的串行锁。
+     *
+     * 与 [mutex] 分开是为了避免「拿着请求锁再去 login()」——[login] 自己要取 [mutex]，
+     * 同一个 Mutex 不可重入，混用会永久挂起（本项目已经踩过一次 `findSchool` 的坑）。
+     * 全项目的加锁顺序固定为 sessionMutex → mutex，不允许反向。
+     */
+    private val sessionMutex = Mutex()
+
+    private val sessionStore = SessionStore(SecureStore.get(appContext))
+
+    private companion object {
+        const val TAG = "YunMeiSession"
+    }
 
     private var username: String? = null
     private var usernameMd5: String? = null
@@ -78,6 +109,15 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         client.userId = safeUser.userId
         client.adminSchoolNo = null
         baseToken = safeUser.token
+        // 会话持久化：进程被杀后冷启动仍能直接复用，不必让用户重新输密码。
+        sessionStore.saveSession(
+            StoredSession(
+                usernameMd5 = this.usernameMd5.orEmpty(),
+                token = safeUser.token,
+                userId = safeUser.userId,
+                savedAt = System.currentTimeMillis(),
+            )
+        )
         // 安全：不打印 token / userId（会被"发送日志"整包带出）
         safeUser
     }
@@ -277,7 +317,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
      * 这四个值都来自本地保存的 [Lock]，此前为上报开门记录已经存了下来。
      * 返回原始 JSON：服务端是否再包一层 `data` 尚未实测，解析交给调用方。
      */
-    suspend fun getDormMembers(lock: Lock): List<DormMember> {
+    suspend fun getDormMembers(lock: Lock): List<DormMember> = withSessionRetry {
         // findSchool 内部还会取一次 mutex（fetchSchools），必须放在 withLock 之外，
         // 否则同一协程重入不可重入的 Mutex 会永久挂起——表现为点了没有任何反应。
         val school = findSchool(lock.schoolNo)
@@ -294,7 +334,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
                 )
             )
         }
-        return enrichWithDormStudents(
+        enrichWithDormStudents(
             members = members,
             lock = lock,
             school = school,
@@ -428,7 +468,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
      * 不接受按门锁/按人筛选，所以这里只借用 [lock] 定位学校，不参与过滤。
      * 返回体既可能是裸数组，也可能被包在 `data` 或 `o` 里，三种形状都兼容。
      */
-    suspend fun getUnlockRecords(lock: Lock): List<UnlockRecordItem> {
+    suspend fun getUnlockRecords(lock: Lock): List<UnlockRecordItem> = withSessionRetry {
         // findSchool 内部会再取一次 mutex，必须放在 withLock 之外（同 getDormMembers 的教训）。
         val school = findSchool(lock.schoolNo)
         val userId = requireUserId()
@@ -455,7 +495,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
             }
             else -> JsonArray(emptyList())
         }
-        return array.mapNotNull { item -> item as? JsonObject }.map { item ->
+        array.mapNotNull { item -> item as? JsonObject }.map { item ->
             UnlockRecordItem(
                 buildName = item.jsonText("buildName").orEmpty(),
                 dormName = item.jsonText("dormName").orEmpty(),
@@ -465,24 +505,85 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         }
     }
 
+    /**
+     * 查询学校当前打卡状态（官方 `signrecord/getsignstatusbyschool`）。
+     *
+     * 返回值语义：null = 学校没有开启打卡（数组为空 / 响应 null），界面上不显示状态行；
+     * 非 null 表示至少有一个打卡时段，[SignStatus.signed] 决定「已打卡 / 未打卡」。
+     */
+    suspend fun getSignStatus(school: SchoolEntry): SignStatus? = mutex.withLock {
+        val userId = requireUserId()
+        val serverUrl = requireServerUrl(school)
+        applySchoolAuth(school, userId)
+        parseSignStatus(client.api(serverUrl).getSignStatus(school.schoolNo.orEmpty()))
+    }
+
+    /** 按门锁所在学校查打卡状态：先补齐会话、再定位学校，最后复用上面的重载。 */
+    suspend fun getSignStatus(lock: Lock): SignStatus? = withSessionRetry {
+        getSignStatus(findSchool(lock.schoolNo))
+    }
+
+    /**
+     * 解析打卡状态数组。
+     *
+     * 服务端可能把数组再包一层 `data` / `o`，[extractArray] 已经兼容；这里只取第一项
+     * （官方页面同样只渲染一个时段）。`signTime` 既可能是字符串，也可能是
+     * `{hours, minutes}` 对象，两种形状都兼容。
+     */
+    private fun parseSignStatus(element: JsonElement): SignStatus? {
+        val item = extractArray(element).firstOrNull() ?: return null
+        val window = item["set"] as? JsonObject
+        val record = item["signRecord"] as? JsonObject
+        val rawTime = record?.signTimeText().orEmpty()
+        return SignStatus(
+            startTime = window?.jsonText("startTime").orEmpty(),
+            endTime = window?.jsonText("endTime").orEmpty(),
+            // 只保留时分秒：官方前端也是 `signTime.split(" ")[1]`。
+            signTime = rawTime.substringAfter(' ').ifBlank { rawTime },
+            askLeave = item["askLeave"].truthy(),
+        )
+    }
+
+    /** `signRecord.signTime` 的两种形状：字符串，或 `{hours, minutes}`。 */
+    private fun JsonObject.signTimeText(): String {
+        val raw = this["signTime"] ?: return ""
+        (raw as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotBlank() }?.let { return it }
+        if (raw is JsonObject) {
+            val hours = raw["hours"]?.jsonPrimitive?.intOrNull
+            val minutes = raw["minutes"]?.jsonPrimitive?.intOrNull
+            if (hours != null && minutes != null) {
+                return String.format(Locale.US, "%02d:%02d:00", hours, minutes)
+            }
+        }
+        return ""
+    }
+
+    /** 兼容 `true` / `"true"` / `1` 三种布尔写法。 */
+    private fun JsonElement?.truthy(): Boolean {
+        val primitive = this as? JsonPrimitive ?: return false
+        if (primitive.isString) {
+            val text = primitive.content
+            return text == "1" || text.equals("true", ignoreCase = true)
+        }
+        return primitive.booleanOrNull == true
+    }
+
     /** 依次尝试多个字段名，取到第一个非空字符串。 */    private fun JsonObject.jsonText(vararg keys: String): String? =
         keys.firstNotNullOfOrNull { key -> this[key]?.jsonPrimitive?.contentOrNull }
 
     /** 用已保存账号重新登录后获取开门密码（供主界面长期使用）。 */
-    suspend fun getLockPassword(user: StoredUser, lock: Lock): String {
-        login(user.username, user.passwordMd5)
+    suspend fun getLockPassword(user: StoredUser, lock: Lock): String = withSessionRetry(user) {
         val school = findSchool(lock.schoolNo)
-        return getLockPassword(school, lock)
+        getLockPassword(school, lock)
     }
 
     /** 用已保存账号重新登录后打卡。 */
-    suspend fun sign(user: StoredUser, lock: Lock, location: String): String {
-        login(user.username, user.passwordMd5)
+    suspend fun sign(user: StoredUser, lock: Lock, location: String): String = withSessionRetry(user) {
         val school = findSchool(lock.schoolNo)
         // 打卡接口只依赖 schoolNo + lockNo + location，不依赖门锁列表。
         // 服务器 getuserlock 返回空时，门锁是扫码/手动导入的，不能因为
         // 列表查不到而拒绝打卡（与原版 SignService 行为一致）。
-        return sign(school, lock, location)
+        sign(school, lock, location)
     }
 
     /**
@@ -497,10 +598,8 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
      *         调用方沿用本地门锁，保证离线也能开门。
      */
     suspend fun refreshLock(lock: Lock, account: StoredUser? = null): Lock? = runCatching {
-        if (client.token == null) {
-            account ?: return@runCatching null
-            login(account.username, account.passwordMd5)
-        }
+        // 没有会话时用调用方给的账号（或本地第一个）静默登录；拿不到账号就按「离线」处理。
+        ensureSession(account)
         val school = findSchool(lock.schoolNo)
         val latest = fetchLocks(school).firstOrNull { candidate ->
             (lock.lockNo.isNotBlank() && candidate.lockNo == lock.lockNo) || candidate.label == lock.label
@@ -534,6 +633,7 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
      */
     suspend fun saveUnlockRecord(record: UnlockRecord, deviceId: String): Boolean {
         return runCatching {
+            ensureSession()
             // findSchool 内部会再抢一次 mutex（fetchSchools），必须放在 withLock 之外。
             val school = findSchool(record.schoolNo)
             val userId = requireUserId()
@@ -598,6 +698,93 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         null
     }
 
+    /**
+     * 冷启动恢复会话：把上次保存的 token / userId 填回内存。
+     *
+     * 只在启动时调用一次；失败（没有会话、安全存储不可用）按未登录处理，
+     * 后续任何需要网络的入口都会走 [ensureSession] 自动补登录。
+     */
+    suspend fun restoreSession(): Boolean {
+        val stored = sessionStore.loadSession() ?: return false
+        sessionMutex.withLock {
+            client.token = stored.token
+            client.userId = stored.userId
+            client.adminSchoolNo = null
+            baseToken = stored.token
+            usernameMd5 = stored.usernameMd5
+        }
+        Log.i(TAG, "已恢复上次的登录会话")
+        return true
+    }
+
+    /**
+     * 统一会话守卫：内存里没有登录 token 时，用传入账号或本地第一个已保存账号静默登录。
+     *
+     * 调用前不能持有 [mutex]（[login] 自己要取它）；本方法内部按 sessionMutex → mutex 顺序加锁，
+     * 并做双检，避免并发时重复登录（登录会把 client 的 header 切来切去）。
+     *
+     * @param force 为 true 时即使当前有 token 也重新登录（用于「服务端说已过期」的续期）。
+     */
+    suspend fun ensureSession(account: StoredUser? = null, force: Boolean = false) {
+        if (!force && client.token != null) return
+        sessionMutex.withLock {
+            if (!force && client.token != null) return@withLock
+            val target = account ?: pickAccount()
+                ?: throw YunMeiException(appContext.getString(R.string.login_error_not_logged_in))
+            Log.i(TAG, "静默登录以恢复会话")
+            login(target.username, target.passwordMd5)
+        }
+    }
+
+    /** 本地已有账号里挑一个：优先当前会话对应的账号，否则取列表第一个。 */
+    private suspend fun pickAccount(): StoredUser? = withContext(Dispatchers.IO) {
+        val current = usernameMd5 ?: username?.let { Md5.hex(it) }
+        current?.let { accountStore.getByUsernameMd5(it) } ?: accountStore.getAll().firstOrNull()
+    }
+
+    /** 作废内存里的 token 与持久化会话（服务端说过期、或用户退出登录时）。 */
+    private fun invalidateSession() {
+        client.token = null
+        client.adminSchoolNo = null
+        baseToken = null
+        sessionStore.clearSession()
+    }
+
+    /** 退出登录 / 移除账号：内存会话与持久化会话一并清掉。 */
+    fun clearSession() {
+        invalidateSession()
+        client.userId = null
+        username = null
+        usernameMd5 = null
+        sessionStore.clearAll()
+    }
+
+    /**
+     * 带「过期 → 静默续期 → 重试一次」的请求包装。
+     *
+     * 防死循环：重试**只发生一次**，且重试路径不再进入本包装（直接执行 [block]），
+     * 第二次仍被判过期时立刻转成 [YunMeiAuthException] 抛出（说明密码已改，只能人工重登）。
+     */
+    private suspend fun <T> withSessionRetry(account: StoredUser? = null, block: suspend () -> T): T {
+        ensureSession(account)
+        return try {
+            block()
+        } catch (expired: SessionExpiredException) {
+            Log.i(TAG, "服务端判定会话过期，尝试静默续期")
+            invalidateSession()
+            ensureSession(account, force = true)
+            try {
+                block()
+            } catch (again: SessionExpiredException) {
+                invalidateSession()
+                throw YunMeiAuthException(
+                    again.message?.takeIf { it.isNotBlank() }
+                        ?: appContext.getString(R.string.login_error_expired)
+                )
+            }
+        }
+    }
+
     private suspend fun findSchool(schoolNo: String): SchoolEntry =
         fetchSchools().firstOrNull { it.schoolNo == schoolNo }
             ?: throw YunMeiException(appContext.getString(R.string.school_info_missing))
@@ -619,5 +806,13 @@ class YunMeiRepository(context: Context, private val client: YunMeiApiClient) {
         client.token = school.token
         client.userId = userId
         client.adminSchoolNo = school.schoolNo
+        // 学校 token 与登录 token 是两套凭据，一并缓存，重启后可省掉一次 userschool 往返。
+        sessionStore.saveSchool(
+            SchoolSession(
+                schoolNo = school.schoolNo.orEmpty(),
+                serverUrl = school.school?.serverUrl.orEmpty(),
+                schoolToken = school.token.orEmpty(),
+            )
+        )
     }
 }

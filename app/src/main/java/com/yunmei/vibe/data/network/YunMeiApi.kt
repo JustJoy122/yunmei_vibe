@@ -135,4 +135,14 @@ interface YunMeiApi {
         @Field("schoolNo") schoolNo: String,
         @Field("pageSize") pageSize: Int = 20,
     ): JsonElement
+
+    /**
+     * 打卡状态（学校服务，官方 `signrecord/getsignstatusbyschool`）。
+     *
+     * 与打卡动作 `signrecord/signbyschool` 配套：动作接口不返回状态，
+     * 官方在打卡成功后重新调本接口刷新「已打卡 HH:mm」。
+     */
+    @FormUrlEncoded
+    @POST("signrecord/getsignstatusbyschool")
+    suspend fun getSignStatus(@Field("schoolNo") schoolNo: String): JsonElement
 }

@@ -121,6 +121,8 @@ class HomeViewModel : ViewModel() {
         if (settings.autoCode && currentLock != null && _uiState.value.code == null) {
             getCode()
         }
+        // 打卡状态随时段变化，每次进入首页都刷新一次；拿到 null（学校未开打卡）就隐藏状态行。
+        refreshSignStatus()
     }
 
     fun onAutoOpenTrigger(trigger: Long) {
@@ -346,10 +348,19 @@ class HomeViewModel : ViewModel() {
         runCatching { container.repository.sign(user, lock, location) }
             .onSuccess { message ->
                 _uiState.update { it.copy(signing = false, signMessage = message) }
+                // 打卡成功后官方会重新拉一次状态来刷新「已打卡 HH:mm」。
+                refreshSignStatus()
             }
             .onFailure { error ->
                 _uiState.update { it.copy(signing = false, signMessage = error.message ?: str(R.string.unlock_sign_failed)) }
             }
+    }
+
+    /** 拉取当前门锁所在学校的打卡状态；失败或学校未开启时置空（界面隐藏状态行）。 */
+    private suspend fun refreshSignStatus() {
+        val lock = currentLock ?: return
+        val status = runCatching { container.repository.getSignStatus(lock) }.getOrNull()
+        _uiState.update { it.copy(signStatus = status) }
     }
 
     private fun setSetting(block: suspend () -> Unit) {

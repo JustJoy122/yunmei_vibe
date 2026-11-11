@@ -3,6 +3,7 @@ package com.yunmei.vibe.ui.screen.login
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.ui.LocalUiMode
@@ -15,6 +16,7 @@ fun LoginScreen() {
     val viewModel = viewModel<LoginViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.refresh()

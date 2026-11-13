@@ -63,6 +63,7 @@ import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.theme.isInDarkTheme
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
+import top.yukonga.miuix.kmp.basic.BasicComponentColors
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
@@ -109,6 +110,8 @@ fun AboutScreenMiuix(
         }
     }
 
+    // 关于页固定用纯黑/纯白正文与灰阶副文本，避免受莫奈取色影响。
+    val textPrimary = if (isInDarkTheme()) Color.White else Color.Black
     val enableBlur = LocalEnableBlur.current
     val barBlurBackdrop = rememberBlurBackdrop(enableBlur)
     val blurActive = barBlurBackdrop != null && scrollProgress == 1f
@@ -125,7 +128,7 @@ fun AboutScreenMiuix(
                     title = state.title,
                     scrollBehavior = topAppBarScrollBehavior,
                     color = barColor,
-                    titleColor = colorScheme.onSurface.copy(
+                    titleColor = textPrimary.copy(
                         alpha = ((scrollProgress - 0.35f) / 0.65f).coerceIn(0f, 1f),
                     ),
                     defaultWindowInsetsPadding = false,
@@ -180,6 +183,8 @@ private fun AboutContent(
     val backdrop = rememberLayerBackdrop()
 
     val isInDark = isInDarkTheme()
+    val textPrimary = if (isInDark) Color.White else Color.Black
+    val textSecondary = if (isInDark) Color(0xFFAAAAAA) else Color(0xFF666666)
     val enableBlur = LocalEnableBlur.current
     val effectBackground =
         remember(enableBlur) { isRuntimeShaderSupported() && enableBlur && Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM }
@@ -351,7 +356,7 @@ private fun AboutContent(
                         } else Modifier
                     ),
                 text = state.appName,
-                color = colorScheme.onBackground,
+                color = textPrimary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 35.sp,
             )
@@ -369,7 +374,7 @@ private fun AboutContent(
                         val size = coordinates.size
                         versionCodeY = y + size.height
                     },
-                color = colorScheme.onSurfaceVariantSummary,
+                color = textSecondary,
                 text = state.versionInfo,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
@@ -418,10 +423,11 @@ private fun AboutContent(
                         .fillParentMaxHeight()
                         .padding(bottom = innerPadding.calculateBottomPadding() + 12.dp),
                 ) {
-                    SectionTitle(stringResource(R.string.about_group_open_source))
+                    SectionTitle(stringResource(R.string.about_group_open_source), textPrimary)
                     Card(
                         modifier = Modifier
                             .padding(horizontal = 12.dp)
+                            .padding(bottom = 12.dp)
                             .then(
                                 if (enableBlur) {
                                     Modifier.textureBlur(
@@ -441,18 +447,23 @@ private fun AboutContent(
                         ArrowPreference(
                             title = stringResource(R.string.about_view_source_code),
                             summary = stringResource(R.string.about_view_source_code_summary),
+                            titleColor = BasicComponentColors(textPrimary, textPrimary),
+                            summaryColor = BasicComponentColors(textSecondary, textSecondary),
                             onClick = actions.onOpenSource,
                         )
                         ArrowPreference(
                             title = stringResource(R.string.about_open_source_license),
                             summary = stringResource(R.string.about_open_source_license_summary),
+                            titleColor = BasicComponentColors(textPrimary, textPrimary),
+                            summaryColor = BasicComponentColors(textSecondary, textSecondary),
                             onClick = actions.onOpenLicense,
                         )
                     }
-                    SectionTitle(stringResource(R.string.about_group_official_terms))
+                    SectionTitle(stringResource(R.string.about_group_official_terms), textPrimary)
                     Card(
                         modifier = Modifier
                             .padding(horizontal = 12.dp)
+                            .padding(bottom = 12.dp)
                             .then(
                                 if (enableBlur) {
                                     Modifier.textureBlur(
@@ -472,11 +483,15 @@ private fun AboutContent(
                         ArrowPreference(
                             title = stringResource(R.string.about_service_agreement),
                             summary = stringResource(R.string.about_service_agreement_summary),
+                            titleColor = BasicComponentColors(textPrimary, textPrimary),
+                            summaryColor = BasicComponentColors(textSecondary, textSecondary),
                             onClick = actions.onOpenServiceAgreement,
                         )
                         ArrowPreference(
                             title = stringResource(R.string.about_privacy_policy),
                             summary = stringResource(R.string.about_privacy_policy_summary),
+                            titleColor = BasicComponentColors(textPrimary, textPrimary),
+                            summaryColor = BasicComponentColors(textSecondary, textSecondary),
                             onClick = actions.onOpenPrivacyPolicy,
                         )
                     }
@@ -494,9 +509,10 @@ private fun AboutContent(
 
 /** 分组小标题：与设置页同款 miuix SmallTitle（卡片用 12dp 外边距，标题左内 16dp 与之对齐）。 */
 @Composable
-private fun SectionTitle(title: String) {
+private fun SectionTitle(title: String, color: Color) {
     SmallTitle(
         text = title,
+        textColor = color,
         insideMargin = PaddingValues(start = 16.dp, top = 0.dp, end = 28.dp, bottom = 12.dp),
     )
 }

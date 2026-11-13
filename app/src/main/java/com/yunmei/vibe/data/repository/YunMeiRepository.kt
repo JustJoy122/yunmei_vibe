@@ -766,9 +766,17 @@ class YunMeiRepository(
     val currentUsernameMd5: String? get() = usernameMd5
 
     /** 最近一次会话里缓存的账号信息：断网/失败时界面用它兜底显示姓名。 */
-    /** 已缓存的本人档案（个人中心/门锁页先用它渲染，再后台刷新）。 */
-    suspend fun cachedProfile(): UserProfile? =
-        withContext(Dispatchers.IO) { sessionStore.loadProfile() }
+    /**
+     * 已缓存的本人档案（个人中心/门锁页先用它渲染，再后台刷新）。
+     *
+     * 缓存按账号分键：这里先确定「当前是哪个账号」——内存里的 [usernameMd5] 在冷启动时
+     * 还为 null（要登录后才有），所以退一步用 [pickAccount] 取本机首个已保存账号，
+     * 否则冷启动永远读不到缓存，SWR 的第一步就形同虚设。
+     */
+    suspend fun cachedProfile(): UserProfile? = withContext(Dispatchers.IO) {
+        val md5 = usernameMd5 ?: pickAccount()?.usernameMd5 ?: return@withContext null
+        sessionStore.loadProfile(md5)
+    }
 
     suspend fun cachedSession(): StoredSession? =
         withContext(Dispatchers.IO) { sessionStore.loadSession() }
@@ -793,7 +801,15 @@ class YunMeiRepository(
             parsed
         }
         // 存一份快照：门锁页入口与个人中心下次可以立即渲染，不必等网络。
-        if (resolved != null) sessionStore.saveProfile(resolved)
+        // 落盘前先与旧快照合并：小号/非学生账号的响应会缺学院、宿舍等字段，
+        // 直接覆盖会把本来可用的缓存冲成空串。
+        if (resolved != null) {
+            val md5 = usernameMd5.orEmpty()
+            if (md5.isNotBlank()) {
+                val cached = withContext(Dispatchers.IO) { sessionStore.loadProfile(md5) }
+                sessionStore.saveProfile(md5, cached?.mergeWith(resolved) ?: resolved)
+            }
+        }
         resolved
     }
 

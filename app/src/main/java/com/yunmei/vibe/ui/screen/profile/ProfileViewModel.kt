@@ -8,6 +8,7 @@ import com.yunmei.vibe.data.local.StoredUser
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +31,12 @@ class ProfileViewModel : ViewModel() {
 
     private var loaded = false
 
+    /** 正在进行的刷新任务：切号或重试时先取消，避免旧请求占着连接。 */
+    private var refreshJob: Job? = null
+
+    /** 会话纪元：每次 refresh 自增，用来丢弃迟到的旧结果（取消点是协作式的）。 */
+    private var sessionEpoch = 0
+
     private companion object {
         const val TAG = "YunMeiProfile"
     }
@@ -40,43 +47,83 @@ class ProfileViewModel : ViewModel() {
         refresh()
     }
 
+    /**
+     * 加载/刷新页面数据：两段式（缓存优先 + 静默刷新）。
+     *
+     * 1. 先读本机缓存，命中就立刻上屏（`loading = false`），避免每次进页面都白屏等网络；
+     * 2. 再请求本人档案，成功后与缓存做非空合并，失败也只留一条提示，不清空已有内容。
+     *
+     * 并发：切号或用户点重试都会重新走 [refresh]，旧请求可能晚到。这里同时用「取消旧任务」
+     * 和 [sessionEpoch] 双重拦截——前者省流量，后者保证即使旧任务已经跑过取消点，
+     * 它的结果也不会写进新账号的界面。
+     */
     fun refresh() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = null) }
+        val epoch = ++sessionEpoch
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch {
+            // ---- 第一步：缓存优先 ----
+            val cached = runCatching { container.repository.cachedProfile() }.getOrNull()
+            if (epoch != sessionEpoch) return@launch
+            if (cached != null) {
+                _uiState.update { it.copy(profile = cached, loading = false) }
+            } else {
+                _uiState.update { it.copy(loading = true) }
+            }
+
             val accounts = withContext(Dispatchers.IO) { container.accountStore.getAll() }
             val defaultLock = withContext(Dispatchers.IO) { container.lockStore.getDefault() }
-            // 档案接口本身会确保登录态（必要时静默重登）；先请求它，再读会话缓存，
-            // 否则「会话还没建立」的时刻读到的是空 userId，头像地址就拼不出来。
-            val profile = try {
-                container.repository.getMyProfile()
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Exception) {
-                _uiState.update { it.copy(error = error.message) }
-                null
-            }
             val session = runCatching { container.repository.cachedSession() }.getOrNull()
-            Log.i(
-                TAG,
-                "profile loaded=" + (profile != null) +
-                    " id=" + (profile?.userId ?: "-") +
-                    " sessionUserId=" + (session?.userId ?: "-"),
-            )
+            if (epoch != sessionEpoch) return@launch
             _uiState.update {
                 it.copy(
                     accounts = accounts,
                     currentUsernameMd5 = container.repository.currentUsernameMd5.orEmpty(),
+                    // 切号后必须连会话里的姓名/手机号一起换，否则会和档案对不上。
                     cachedName = session?.realName.orEmpty(),
                     cachedTel = session?.userTel.orEmpty(),
                     cachedUserId = session?.userId.orEmpty(),
                     defaultLock = defaultLock,
-                    profile = profile ?: it.profile,
-                    loading = false,
                 )
             }
-            val signStatus = defaultLock?.let {
+
+            // ---- 第二步：静默刷新 ----
+            var softError: String? = null
+            val fresh = try {
+                container.repository.getMyProfile()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                // 网络失败属可恢复：有缓存就一直用缓存，只留提示，不把页面变成错误页。
+                softError = error.message ?: YunMeiApp.app.getString(R.string.profile_load_failed)
+                null
+            }
+            if (epoch != sessionEpoch) return@launch
+            Log.i(
+                TAG,
+                "profile refresh epoch=" + epoch +
+                    " fresh=" + (fresh != null) +
+                    " cached=" + (cached != null) +
+                    " id=" + (fresh?.userId ?: "-"),
+            )
+            _uiState.update {
+                val merged = fresh?.let { current -> it.profile?.mergeWith(current) ?: current }
+                it.copy(
+                    profile = merged ?: it.profile,
+                    loading = false,
+                    error = when {
+                        softError != null -> softError
+                        merged == null && it.profile == null ->
+                            YunMeiApp.app.getString(R.string.profile_load_failed)
+                        else -> null
+                    },
+                )
+            }
+
+            val targetLock = _uiState.value.defaultLock
+            val signStatus = targetLock?.let {
                 runCatching { container.repository.getSignStatus(it) }.getOrNull()
             }
+            if (epoch != sessionEpoch) return@launch
             _uiState.update { it.copy(signStatus = signStatus) }
         }
     }

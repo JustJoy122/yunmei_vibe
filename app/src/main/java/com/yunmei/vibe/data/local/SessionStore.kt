@@ -68,31 +68,77 @@ class SessionStore(private val secureStore: SecureStore) {
         secureStore.putJson(KEY_SCHOOLS, emptyList<SchoolSession>())
     }
 
-    /** 本人档案快照：个人中心和门锁页入口先用它渲染，避免每次进页面都发请求。 */
-    fun loadProfile(): UserProfile? =
-        secureStore.getJson(KEY_PROFILE, EMPTY_PROFILE).takeIf {
-            it.userId.isNotBlank() || it.realName.isNotBlank() || it.stuNo.isNotBlank()
-        }
-
-    fun saveProfile(profile: UserProfile) {
-        secureStore.putJson(KEY_PROFILE, profile)
+    /**
+     * 读取某个账号的档案快照。
+     *
+     * 按 [usernameMd5] 分键存储：多个账号共用同一台设备时，{@code account_profile}
+     * 这种单键缓存会在切号后先显示上一个账号的姓名/学院/宿舍（缓存优先策略会把这个
+     * 串号问题暴露出来），所以缓存必须带账号归属。[usernameMd5] 为空时视为没有归属，
+     * 直接当缓存未命中。
+     *
+     * 旧版本只有一个全局键 [KEY_PROFILE_LEGACY]；这里做一次懒迁移：首次命中就把它
+     * 写给当前账号，并立即清空旧键，避免被第二个账号再次读到。
+     */
+    fun loadProfile(usernameMd5: String): UserProfile? {
+        if (usernameMd5.isBlank()) return null
+        val key = profileKey(usernameMd5)
+        secureStore.getJson(key, EMPTY_PROFILE).takeIf { it.isFilled() }?.let { return it }
+        val legacy = secureStore.getJson(KEY_PROFILE_LEGACY, EMPTY_PROFILE).takeIf { it.isFilled() }
+            ?: return null
+        secureStore.putJson(key, legacy)
+        secureStore.putJson(KEY_PROFILE_LEGACY, EMPTY_PROFILE)
+        rememberProfileKey(usernameMd5)
+        return legacy
     }
 
-    fun clearProfile() {
-        secureStore.putJson(KEY_PROFILE, EMPTY_PROFILE)
+    fun saveProfile(usernameMd5: String, profile: UserProfile) {
+        if (usernameMd5.isBlank()) return
+        secureStore.putJson(profileKey(usernameMd5), profile)
+        rememberProfileKey(usernameMd5)
     }
 
-    /** 退出登录 / 注销账号：账号级、学校级会话与档案快照一并作废。 */
+    fun clearProfile(usernameMd5: String) {
+        if (usernameMd5.isBlank()) return
+        secureStore.putJson(profileKey(usernameMd5), EMPTY_PROFILE)
+        secureStore.putJson(KEY_PROFILE_INDEX, loadProfileKeys().filterNot { it == usernameMd5 })
+    }
+
+    /** 退出登录 / 注销账号：账号级、学校级会话与全部账号的档案快照一并作废。 */
     fun clearAll() {
+        // SecureStore 没有「列键」能力，只能靠索引记住写过哪些账号。
+        loadProfileKeys().forEach { md5 -> secureStore.putJson(profileKey(md5), EMPTY_PROFILE) }
+        secureStore.putJson(KEY_PROFILE_INDEX, emptyList<String>())
+        secureStore.putJson(KEY_PROFILE_LEGACY, EMPTY_PROFILE)
         clearSession()
         clearSchools()
-        clearProfile()
     }
+
+    /** 分键档案的键名，保证每个账号各占一份。 */
+    private fun profileKey(usernameMd5: String): String = PROFILE_KEY_PREFIX + usernameMd5
+
+    private fun loadProfileKeys(): List<String> = secureStore.getJson(KEY_PROFILE_INDEX, emptyList())
+
+    private fun rememberProfileKey(usernameMd5: String) {
+        val keys = loadProfileKeys()
+        if (usernameMd5 in keys) return
+        secureStore.putJson(KEY_PROFILE_INDEX, keys + usernameMd5)
+    }
+
+    private fun UserProfile.isFilled(): Boolean =
+        userId.isNotBlank() || realName.isNotBlank() || stuNo.isNotBlank()
 
     private companion object {
         const val KEY_SESSION = "account_session"
         const val KEY_SCHOOLS = "school_sessions"
-        const val KEY_PROFILE = "account_profile"
+
+        /** 分键前缀：`profile_<usernameMd5>`。 */
+        const val PROFILE_KEY_PREFIX = "profile_"
+
+        /** 写过档案的账号 md5 列表，退出登录时据此逐个清空。 */
+        const val KEY_PROFILE_INDEX = "account_profile_index"
+
+        /** 旧版本的单一全局档案键，仅用于一次性迁移。 */
+        const val KEY_PROFILE_LEGACY = "account_profile"
         val EMPTY_SESSION = StoredSession()
         val EMPTY_PROFILE = UserProfile()
     }

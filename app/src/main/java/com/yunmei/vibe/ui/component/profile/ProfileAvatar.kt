@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import com.yunmei.vibe.YunMeiApp
 import okhttp3.OkHttpClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.File
 import java.security.MessageDigest
@@ -83,7 +85,11 @@ private fun rememberAvatarBitmap(url: String): ImageBitmap? {
     var bitmap by remember(url) { mutableStateOf(if (url.isBlank()) null else avatarMemoryCache[url]) }
     LaunchedEffect(url) {
         if (url.isBlank() || avatarMemoryCache.containsKey(url)) return@LaunchedEffect
-        val loaded = runCatching { downloadAvatar(url) }.getOrNull() ?: return@LaunchedEffect
+        // 必须切到 IO：downloadAvatar 是同步 OkHttp 调用，在主线程上会抛
+        // NetworkOnMainThreadException，被 runCatching 吞掉后就永远只显示姓名首字。
+        val loaded = withContext(Dispatchers.IO) {
+            runCatching { downloadAvatar(url) }.getOrNull()
+        } ?: return@LaunchedEffect
         avatarMemoryCache[url] = loaded
         bitmap = loaded
     }

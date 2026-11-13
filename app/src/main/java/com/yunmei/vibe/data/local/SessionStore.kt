@@ -1,5 +1,6 @@
 package com.yunmei.vibe.data.local
 
+import com.yunmei.vibe.data.model.UserProfile
 import kotlinx.serialization.Serializable
 
 /**
@@ -15,6 +16,9 @@ data class StoredSession(
     val token: String = "",
     val userId: String = "",
     val savedAt: Long = 0L,
+    /** 登录时服务端返回的姓名与手机号：冷启动或断网时个人中心靠它先显示。 */
+    val realName: String = "",
+    val userTel: String = "",
 )
 
 /**
@@ -64,15 +68,32 @@ class SessionStore(private val secureStore: SecureStore) {
         secureStore.putJson(KEY_SCHOOLS, emptyList<SchoolSession>())
     }
 
-    /** 退出登录 / 注销账号：账号级与学校级会话一并作废。 */
+    /** 本人档案快照：个人中心和门锁页入口先用它渲染，避免每次进页面都发请求。 */
+    fun loadProfile(): UserProfile? =
+        secureStore.getJson(KEY_PROFILE, EMPTY_PROFILE).takeIf {
+            it.userId.isNotBlank() || it.realName.isNotBlank() || it.stuNo.isNotBlank()
+        }
+
+    fun saveProfile(profile: UserProfile) {
+        secureStore.putJson(KEY_PROFILE, profile)
+    }
+
+    fun clearProfile() {
+        secureStore.putJson(KEY_PROFILE, EMPTY_PROFILE)
+    }
+
+    /** 退出登录 / 注销账号：账号级、学校级会话与档案快照一并作废。 */
     fun clearAll() {
         clearSession()
         clearSchools()
+        clearProfile()
     }
 
     private companion object {
         const val KEY_SESSION = "account_session"
         const val KEY_SCHOOLS = "school_sessions"
+        const val KEY_PROFILE = "account_profile"
         val EMPTY_SESSION = StoredSession()
+        val EMPTY_PROFILE = UserProfile()
     }
 }

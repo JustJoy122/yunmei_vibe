@@ -137,6 +137,15 @@ interface YunMeiApi {
     ): JsonElement
 
     /**
+     * 本人档案（学校服务，官方「个人中心」`student/getbyloginuser`）。
+     *
+     * 入参只有 schoolNo；返回本人 User 对象（含 collegeName / className / dormName）。
+     */
+    @FormUrlEncoded
+    @POST("student/getbyloginuser")
+    suspend fun getMyProfile(@Field("schoolNo") schoolNo: String): JsonElement
+
+    /**
      * 打卡状态（学校服务，官方 `signrecord/getsignstatusbyschool`）。
      *
      * 与打卡动作 `signrecord/signbyschool` 配套：动作接口不返回状态，

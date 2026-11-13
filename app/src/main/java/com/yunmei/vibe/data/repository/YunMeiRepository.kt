@@ -20,6 +20,7 @@ import com.yunmei.vibe.data.model.SignStatus
 import com.yunmei.vibe.data.model.UnitCodes
 import com.yunmei.vibe.data.model.UnlockRecord
 import com.yunmei.vibe.data.model.UnlockRecordItem
+import com.yunmei.vibe.data.model.UserProfile
 import com.yunmei.vibe.data.network.SessionExpiredException
 import com.yunmei.vibe.data.network.YunMeiApiClient
 import com.yunmei.vibe.data.security.Md5
@@ -116,6 +117,8 @@ class YunMeiRepository(
                 token = safeUser.token,
                 userId = safeUser.userId,
                 savedAt = System.currentTimeMillis(),
+                realName = safeUser.realName.orEmpty(),
+                userTel = safeUser.userTel.orEmpty(),
             )
         )
         // 安全：不打印 token / userId（会被"发送日志"整包带出）
@@ -757,6 +760,91 @@ class YunMeiRepository(
         username = null
         usernameMd5 = null
         sessionStore.clearAll()
+    }
+
+    /** 当前会话对应的账号标识（未登录为 null）。 */
+    val currentUsernameMd5: String? get() = usernameMd5
+
+    /** 最近一次会话里缓存的账号信息：断网/失败时界面用它兜底显示姓名。 */
+    /** 已缓存的本人档案（个人中心/门锁页先用它渲染，再后台刷新）。 */
+    suspend fun cachedProfile(): UserProfile? =
+        withContext(Dispatchers.IO) { sessionStore.loadProfile() }
+
+    suspend fun cachedSession(): StoredSession? =
+        withContext(Dispatchers.IO) { sessionStore.loadSession() }
+
+    /**
+     * 本人档案（学校服务 `student/getbyloginuser`）。
+     *
+     * 单位取当前会话：优先 `adminSchoolNo` 命中的那家，否则取账号所属的第一家。
+     * 没有可用单位或接口失败时返回 null，界面退回 [cachedSession] 里的姓名。
+     */
+    suspend fun getMyProfile(): UserProfile? = withSessionRetry {
+        val school = currentSchool() ?: return@withSessionRetry null
+        val userId = requireUserId()
+        applySchoolAuth(school, userId)
+        val element = client.api(requireServerUrl(school)).getMyProfile(school.schoolNo.orEmpty())
+        val parsed = parseUserProfile(element)
+        // 档案接口没给 userId 时用会话里的 userId 兜底：头像地址只依赖它，缺了就只剩首字头像。
+        val resolved = if (parsed != null && parsed.userId.isBlank()) {
+            val sessionUserId = sessionStore.loadSession()?.userId.orEmpty()
+            if (sessionUserId.isNotBlank()) parsed.copy(userId = sessionUserId) else parsed
+        } else {
+            parsed
+        }
+        // 存一份快照：门锁页入口与个人中心下次可以立即渲染，不必等网络。
+        if (resolved != null) sessionStore.saveProfile(resolved)
+        resolved
+    }
+
+    /**
+     * 切换到某个已保存账号。
+     *
+     * 强制重新登录以拿到属于该账号的 token（多账号共用一份内存会话），
+     * 门锁快照由调用方在刷新时通过 [locksOf] 同步。
+     */
+    suspend fun switchAccount(account: StoredUser) {
+        ensureSession(account, force = true)
+    }
+
+    /** 当前会话所在单位：优先与 `adminSchoolNo` 一致，否则取第一项。 */
+    private suspend fun currentSchool(): SchoolEntry? {
+        val target = client.adminSchoolNo
+        val schools = fetchSchools()
+        return schools.firstOrNull { it.schoolNo == target } ?: schools.firstOrNull()
+    }
+
+    private fun parseUserProfile(element: JsonElement): UserProfile? {
+        val candidate = when {
+            element is JsonObject && element["data"] is JsonObject -> element["data"] as JsonObject
+            element is JsonObject && element["o"] is JsonObject -> element["o"] as JsonObject
+            element is JsonArray -> element.firstOrNull() as? JsonObject
+            else -> element as? JsonObject
+        } ?: return null
+        return UserProfile(
+            // 学校的 User 对象主键在不同接口里叫 `userId` 或 `id`（官方前端也做过 id→userId 归一化），
+            // 两个都读，否则头像 URL 拼不出来。
+            userId = candidate.jsonText("userId").orEmpty()
+                .ifBlank { candidate.jsonText("id").orEmpty() },
+            // 学校域的 User 对象用 `stuName` / `tel` / `stuNo`，基础服务用 `realName` / `userTel` /
+            // `userName`，两套叫法都读，取到哪个算哪个。
+            realName = candidate.jsonText("realName").orEmpty()
+                .ifBlank { candidate.jsonText("stuName").orEmpty() },
+            stuNo = candidate.jsonText("stuNo").orEmpty()
+                .ifBlank { candidate.jsonText("userName").orEmpty() },
+            userTel = candidate.jsonText("userTel").orEmpty()
+                .ifBlank { candidate.jsonText("tel").orEmpty() },
+            schoolNo = candidate.jsonText("schoolNo").orEmpty(),
+            collegeName = candidate.jsonText("collegeName").orEmpty(),
+            majorName = candidate.jsonText("majorName").orEmpty(),
+            schoolYear = candidate.jsonText("schoolYear").orEmpty(),
+            className = candidate.jsonText("className").orEmpty(),
+            areaName = candidate.jsonText("areaName").orEmpty(),
+            buildName = candidate.jsonText("buildName").orEmpty(),
+            dormName = candidate.jsonText("dormName").orEmpty(),
+            attr1 = candidate.jsonText("attr1").orEmpty(),
+            headImg = candidate.jsonText("headImg").orEmpty(),
+        )
     }
 
     /**

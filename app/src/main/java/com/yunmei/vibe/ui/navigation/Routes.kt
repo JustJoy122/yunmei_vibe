@@ -66,4 +66,9 @@ sealed interface Route : NavKey, Parcelable {
     @Parcelize
     @Serializable
     data object UnlockRecords : Route
+
+    /** 个人中心：本人档案、今日概览与多账号管理。 */
+    @Parcelize
+    @Serializable
+    data object Profile : Route
 }

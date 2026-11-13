@@ -3,7 +3,6 @@ package com.yunmei.vibe.ui.screen.locks
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.automirrored.rounded.Login
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.ui.theme.isInDarkTheme
 import androidx.compose.foundation.background
@@ -54,6 +53,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.Lock
+import com.yunmei.vibe.ui.component.profile.ProfileAvatar
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
@@ -142,28 +142,41 @@ fun LocksPagerMiuix(
                             }
                         }
 
-                        // 账号（登录/切换账号 + 已保存账号；原「设置 → 账号」分组整体迁入）
+                        // 账号入口：头像 + 真实姓名 + 学号；账号列表与切换都在个人中心里。
+                        val profile = state.profile
+                        val accountName = profile?.realName?.takeIf { it.isNotBlank() }
+                            ?: state.accounts.firstOrNull()?.username.orEmpty()
+                        val accountSummary = when {
+                            state.accounts.isEmpty() -> stringResource(R.string.locks_add_login)
+                            !profile?.stuNo.isNullOrBlank() -> profile.stuNo
+                            else -> state.accounts.firstOrNull()?.username.orEmpty()
+                        }
                         Card(modifier = Modifier.fillMaxWidth()) {
-                            Column {
-                                ArrowPreference(
-                                    title = stringResource(
-                                        if (state.accounts.isEmpty()) R.string.locks_add_login
-                                        else R.string.settings_account_login
-                                    ),
-                                    summary = stringResource(R.string.settings_account_hint),
-                                    startAction = {
+                            ArrowPreference(
+                                title = accountName.ifBlank {
+                                    stringResource(R.string.profile_account_entry)
+                                },
+                                summary = accountSummary,
+                                startAction = {
+                                    if (state.accounts.isEmpty()) {
                                         Icon(
-                                            imageVector = Icons.AutoMirrored.Rounded.Login,
+                                            imageVector = Icons.Rounded.Person,
                                             tint = colorScheme.onSurface,
                                             contentDescription = null,
                                         )
-                                    },
-                                    onClick = actions.onLogin,
-                                )
-                                state.accounts.forEach { user ->
-                                    AccountRow(user, actions.onRemoveAccount)
-                                }
-                            }
+                                    } else {
+                                        ProfileAvatar(
+                                            url = profile?.avatarUrl.orEmpty(),
+                                            fallback = accountName,
+                                            size = 36.dp,
+                                            containerColor = colorScheme.primaryContainer,
+                                            contentColor = colorScheme.onPrimaryContainer,
+                                            fontSize = 16,
+                                        )
+                                    }
+                                },
+                                onClick = if (state.accounts.isEmpty()) actions.onLogin else actions.onOpenProfile,
+                            )
                         }
 
                         Card(modifier = Modifier.fillMaxWidth()) {
@@ -333,32 +346,4 @@ private fun DefaultTag() {
             softWrap = false,
         )
     }
-}
-
-@Composable
-private fun AccountRow(
-    user: StoredUser,
-    onRemove: (StoredUser) -> Unit,
-) {
-    BasicComponent(
-        title = user.username,
-        summary = stringResource(R.string.settings_saved_accounts),
-        startAction = {
-            Icon(
-                Icons.Rounded.Person,
-                tint = colorScheme.onSurface,
-                contentDescription = user.username,
-            )
-        },
-        endActions = {
-            Icon(
-                Icons.Rounded.Delete,
-                tint = colorScheme.onSurfaceVariantActions,
-                contentDescription = stringResource(R.string.settings_remove_account),
-                modifier = Modifier
-                    .clickable { onRemove(user) }
-                    .padding(8.dp),
-            )
-        },
-    )
 }

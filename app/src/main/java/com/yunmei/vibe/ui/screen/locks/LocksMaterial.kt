@@ -4,8 +4,6 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.twotone.ContentPaste
 import com.yunmei.vibe.data.local.StoredUser
 import androidx.compose.material.icons.twotone.Person
-import androidx.compose.material.icons.automirrored.twotone.Login
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,7 +20,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Article
-import androidx.compose.material.icons.twotone.Delete
 import androidx.compose.material.icons.twotone.QrCodeScanner
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -57,6 +54,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.Lock
+import com.yunmei.vibe.ui.component.profile.ProfileAvatar
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.SnackBarHost
@@ -125,31 +123,40 @@ fun LocksPagerMaterial(
                 }
             }
 
-            // 账号（登录/切换账号 + 已保存账号；原「设置 → 账号」分组整体迁入）
+            // 账号入口：头像 + 真实姓名 + 学号；账号列表与切换都在个人中心里。
+            val profile = state.profile
+            val accountName = profile?.realName?.takeIf { it.isNotBlank() }
+                ?: state.accounts.firstOrNull()?.username.orEmpty()
+            val accountSubtitle = when {
+                state.accounts.isEmpty() -> stringResource(R.string.locks_add_login)
+                !profile?.stuNo.isNullOrBlank() -> profile.stuNo
+                else -> state.accounts.firstOrNull()?.username.orEmpty()
+            }
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                content = buildList {
-                    add {
-                        SegmentedListItem(
-                            onClick = actions.onLogin,
-                            headlineContent = {
-                                Text(
-                                    stringResource(
-                                        if (state.accounts.isEmpty()) R.string.locks_add_login
-                                        else R.string.settings_account_login
-                                    )
+                content = listOf {
+                    SegmentedListItem(
+                        onClick = if (state.accounts.isEmpty()) actions.onLogin else actions.onOpenProfile,
+                        headlineContent = {
+                            Text(accountName.ifBlank { stringResource(R.string.profile_account_entry) })
+                        },
+                        supportingContent = { Text(accountSubtitle) },
+                        leadingContent = {
+                            if (state.accounts.isEmpty()) {
+                                Icon(Icons.TwoTone.Person, null)
+                            } else {
+                                ProfileAvatar(
+                                    url = profile?.avatarUrl.orEmpty(),
+                                    fallback = accountName,
+                                    size = 40.dp,
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    fontSize = 18,
                                 )
-                            },
-                            supportingContent = { Text(stringResource(R.string.settings_account_hint)) },
-                            leadingContent = { Icon(Icons.AutoMirrored.TwoTone.Login, null) },
-                            trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
-                        )
-                    }
-                    state.accounts.forEach { user ->
-                        add {
-                            AccountRow(user, actions.onRemoveAccount)
-                        }
-                    }
+                            }
+                        },
+                        trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
+                    )
                 }
             )
 
@@ -318,26 +325,4 @@ private fun DefaultTag(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onPrimary,
         )
     }
-}
-
-@Composable
-private fun AccountRow(
-    user: StoredUser,
-    onRemove: (StoredUser) -> Unit,
-) {
-    SegmentedListItem(
-        headlineContent = { Text(user.username) },
-        supportingContent = { Text(stringResource(R.string.settings_saved_accounts)) },
-        leadingContent = { Icon(Icons.TwoTone.Person, null) },
-        trailingContent = {
-            Icon(
-                imageVector = Icons.TwoTone.Delete,
-                contentDescription = stringResource(R.string.settings_remove_account),
-                tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier
-                    .clickable { onRemove(user) }
-                    .padding(8.dp),
-            )
-        },
-    )
 }

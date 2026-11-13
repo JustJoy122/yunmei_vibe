@@ -35,31 +35,28 @@ class LocksViewModel : ViewModel() {
                 val locks = container.lockStore.getAll()
                     .sortedBy { lock -> if (lock.label == defaultLabel) 0 else 1 }
                 val accounts = container.accountStore.getAll()
-                Triple(locks, defaultLabel, accounts)
+                // 档案快照与账号同源：有缓存就先显示，没有则在下面补一次网络请求。
+                val profile = container.repository.cachedProfile()
+                Triple(locks, defaultLabel, accounts) to profile
             }
             _uiState.update {
                 it.copy(
-                    locks = data.first,
-                    defaultLabel = data.second,
-                    accounts = data.third,
+                    locks = data.first.first,
+                    defaultLabel = data.first.second,
+                    accounts = data.first.third,
+                    profile = data.second ?: it.profile,
                 )
+            }
+            if (data.second == null && data.first.first.isNotEmpty()) {
+                runCatching { container.repository.getMyProfile() }
+                    .onSuccess { profile ->
+                        if (profile != null) _uiState.update { it.copy(profile = profile) }
+                    }
             }
         }
     }
 
     /** 移除已保存账号（与设置页原账号区同一实现：按用户名 MD5 删除）。 */
-    fun removeAccount(user: StoredUser) {
-        viewModelScope.launch {
-            val stored = withContext(Dispatchers.IO) {
-                container.accountStore.removeByUsernameMd5(user.usernameMd5)
-                container.accountStore.getAll()
-            }
-            // 账号被删除后，为它保存的 token 也不再有效：清掉持久化会话，避免下次启动
-            // 用一个已经不存在账号的会话去发请求（服务端只会回「未登录」，体验更差）。
-            if (stored.isEmpty()) container.repository.clearSession()
-            refresh()
-        }
-    }
 
     fun setDefault(lock: Lock) {
         container.lockStore.setDefault(lock)

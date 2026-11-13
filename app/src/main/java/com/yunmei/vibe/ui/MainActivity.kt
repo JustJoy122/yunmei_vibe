@@ -83,6 +83,7 @@ import com.yunmei.vibe.ui.screen.locks.LocksPager
 import com.yunmei.vibe.ui.screen.login.LoginScreen
 import com.yunmei.vibe.ui.screen.dormmembers.DormMembersScreen
 import com.yunmei.vibe.ui.screen.lockdetail.LockDetailScreen
+import com.yunmei.vibe.ui.screen.profile.ProfileScreen
 import com.yunmei.vibe.ui.screen.unlockrecords.UnlockRecordsScreen
 import com.yunmei.vibe.ui.screen.settings.SettingPager
 import com.yunmei.vibe.ui.screen.subsettings.CodeAndSignSettingsScreen
@@ -365,6 +366,14 @@ class MainActivity : ComponentActivity() {
                             entry<Route.UnlockRecords>(swipeDismiss = swipeBackDirection) {
                                 InstallerNavEntry(interceptPredictiveBack, navOnBack) {
                                     UnlockRecordsScreen()
+                                }
+                            }
+                            entry<Route.Profile>(swipeDismiss = swipeBackDirection) {
+                                InstallerNavEntry(interceptPredictiveBack, navOnBack) {
+                                    ProfileScreen(
+                                        onBack = navOnBack,
+                                        onAddAccount = { navigator.push(Route.Login) },
+                                    )
                                 }
                             }
                         }

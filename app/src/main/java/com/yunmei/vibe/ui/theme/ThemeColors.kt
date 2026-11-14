@@ -101,4 +101,5 @@ fun ColorScheme.amoledBackground(amoled: Boolean): ColorScheme =
         surfaceContainer = Color.Black,
         surfaceContainerHigh = Color.Black,
         surfaceContainerHighest = Color.Black,
+        surfaceBright = Color.Black,
     )

@@ -45,6 +45,7 @@ import androidx.compose.material.icons.rounded.Settings
 
 import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.DesignServices
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.SwapHoriz
@@ -195,6 +196,25 @@ fun ThemeSettingsMiuix(
                             .padding(top = 12.dp)
                             .fillMaxWidth(),
                     ) {
+                        // AMOLED 纯黑：与 Material 侧的开关同一个偏好，深色下把页面底色、卡片、
+                        // 设置项容器压成纯黑（见 MiuixTemplateTheme 的 amoledMode）。
+                        SwitchPreference(
+                            title = stringResource(id = R.string.settings_amoled),
+                            summary = stringResource(id = R.string.settings_amoled_summary),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.DarkMode,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.settings_amoled),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            checked = uiState.amoled,
+                            onCheckedChange = {
+                                actions.onSetAmoled(it)
+                            }
+                        )
+
                         // 莫奈取色：系统动态取色只有 Android 12+ 才有，低版本直接隐藏这一项。
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             SwitchPreference(
@@ -297,7 +317,7 @@ fun ThemeSettingsMiuix(
 
                     // 按模板逻辑：仅在当前主题下可用的选项才显示。
                     // 模糊/悬浮底栏/液态玻璃为 Miuix 主题独占（Material 版不显示）；
-                    // AMOLED 为 Material 特性（Miuix 无纯黑方案，本页不显示）。
+                    // AMOLED 开关两套主题都有入口（Miuix 在「颜色」卡片顶部），共同读取 settings_amoled 偏好。
 
                     Card(
                         modifier = Modifier

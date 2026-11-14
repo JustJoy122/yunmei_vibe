@@ -32,6 +32,8 @@ fun MiuixTemplateTheme(
     val context = LocalContext.current
     val systemDarkTheme = isSystemInDarkTheme()
     val darkTheme = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && systemDarkTheme)
+    // AMOLED：独立的 amoled 开关与历史遗留的 DARK_AMOLED 模式等价；Miuix 侧只压黑中性面族（参考 InstallerX）。
+    val amoledMode = darkTheme && (appSettings.amoled || appSettings.colorMode.isAmoled)
     val colorStyle = appSettings.paletteStyle
     val colorSpec = appSettings.colorSpec
 
@@ -80,7 +82,7 @@ fun MiuixTemplateTheme(
         rememberDynamicColorScheme(
             seedColor = seed,
             isDark = true,
-            isAmoled = appSettings.amoled,
+            isAmoled = amoledMode,
             style = colorStyle,
             specVersion = colorSpec.effectiveFor(colorStyle),
         )
@@ -95,7 +97,7 @@ fun MiuixTemplateTheme(
     val controller = remember(
         appSettings.colorMode,
         appSettings.keyColor,
-        appSettings.amoled,
+        amoledMode,
         darkTheme,
         miuixPaletteStyle,
         miuixColorSpec,
@@ -137,10 +139,15 @@ fun MiuixTemplateTheme(
                     isAppearanceLightNavigationBars = !darkTheme
                 }
             }
-            CompositionLocalProvider(
-                LocalContentColor provides MiuixTheme.colorScheme.onBackground,
-            ) {
-                content()
+            // AMOLED 深色下把中性面族压黑：Miuix 的 Colors 由 ThemeController 生成，
+            // 库内没有 isAmoled 参数，这里照 InstallerX 的做法在外层再套一层 colors 覆盖。
+            val colors = MiuixTheme.colorScheme
+            MiuixTheme(colors = if (amoledMode) colors.amoledBlackened() else colors) {
+                CompositionLocalProvider(
+                    LocalContentColor provides MiuixTheme.colorScheme.onBackground,
+                ) {
+                    content()
+                }
             }
         },
     )
@@ -189,4 +196,19 @@ private fun Colors.mappedFrom(colorScheme: ColorScheme): Colors = copy(
     onSurfaceContainerHighest = colorScheme.onSurface,
     outline = colorScheme.outline,
     dividerLine = colorScheme.outlineVariant,
+)
+
+
+/**
+ * 把 Miuix 的中性「面族」压成纯黑（AMOLED）。
+ *
+ * 对齐 InstallerX `ui/theme/InstallerTheme.kt:163` 的 `colors.copy(surface = Color.Black)` 思路，
+ * 但本项目页面底色用 `surfaceContainer`、卡片用 `surfaceContainerHigh`，故一并覆盖。
+ */
+private fun Colors.amoledBlackened(): Colors = copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceContainer = Color.Black,
+    surfaceContainerHigh = Color.Black,
+    surfaceContainerHighest = Color.Black,
 )

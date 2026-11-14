@@ -1,7 +1,5 @@
 package com.yunmei.vibe.ui.component.bottombar
 
-import androidx.compose.animation.core.EaseInOut
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,8 +17,8 @@ import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
+import top.yukonga.miuix.kmp.utils.springAnimateToPage
 import android.util.Log
-import kotlin.math.abs
 import kotlinx.coroutines.CancellationException
 
 class MainPagerState(
@@ -50,26 +48,20 @@ class MainPagerState(
         selectedPage = target
         isNavigating = true
 
-        // 时长沿用「距离越远越久」的手感，但滚动交给官方按页吸附的 animateScrollToPage：
-        // 自己按像素累加（layoutInfo.pageSize × 页数）在页宽变化、密度变化、动画被打断这几种
-        // 情况下会多滚或少滚，表现出来就是「点门锁先闪一下设置页再弹回来」。
-        val distance = abs(target - pagerState.currentPage)
-        val duration = 100 * (distance + 1)
-
+        // 切页动画交给 miuix 的 springAnimateToPage（PagerNavigationSpringSpec + MutatePriority.UserInput）：
+        // 它按 layoutInfo.pageSize 计算位移并自行完成 updateCurrentPage，页宽/密度变化时不会多滚或少滚，
+        // 自身以 UserInput 优先级运行，不被焦点滚动打断；此前手写 tween + 像素累积正是「点门锁先闪设置页再弹回」的来源。
         navJob = coroutineScope.launch {
             val myJob = coroutineContext.job
             try {
-                pagerState.animateScrollToPage(
-                    page = target,
-                    animationSpec = tween(easing = EaseInOut, durationMillis = duration),
-                )
+                pagerState.springAnimateToPage(target)
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
                 // 动画被外部手势/状态变化打断时不让调用方感知失败，交给下面的兜底纠正。
                 Log.i("YunMei", "animateToPage interrupted: " + error.message)
             } finally {
-                // 只有「本次仍是最后一次导航」时才收尾：被后来的 animateToPage 顶掉的任务
+                // 只有「本次仍是一次导航」时才收尾：被后来的 animateToPage 顶掉的旧任务
                 // 不能再硬切页面，否则会把新任务的滚动动画瞬间打断（表现为切页没有过渡）。
                 if (navJob == myJob) {
                     // 兜底：动画结束仍不在目标页（被打断、页宽为 0 等）就硬切过去。

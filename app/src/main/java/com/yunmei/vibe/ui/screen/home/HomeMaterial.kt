@@ -54,6 +54,7 @@ import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.material.TonalCard
 import com.yunmei.vibe.ui.component.statustag.StatusTag
 import com.yunmei.vibe.ui.util.signStatusLine
+import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 @Composable
 fun HomePagerMaterial(
@@ -292,6 +293,7 @@ private fun SignAskDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.unlock_sign_ask_title)) },
         text = {
+            WindowNavigationEventBridge()
             Column {
                 Text(
                     text = stringResource(R.string.unlock_sign_ask_msg, ask.lastLocation.ifBlank { "—" }),

@@ -59,6 +59,7 @@ import com.mikepenz.aboutlibraries.ui.compose.variant.LibraryDetailMode
 import com.mikepenz.aboutlibraries.ui.compose.variant.LibraryRow
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.navigation.LocalNavigator
+import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 /** InstallerX `ui/theme/Shape.kt` 的圆角常量（16.dp）等值内联。 */
 private val CornerRadius = 16.dp
@@ -170,6 +171,7 @@ fun OpenSourceLicensePage() {
                     }
                 },
                 text = {
+                    WindowNavigationEventBridge()
                     LazyColumn(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp),

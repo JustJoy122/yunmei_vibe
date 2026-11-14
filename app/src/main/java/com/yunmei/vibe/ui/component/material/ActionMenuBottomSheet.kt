@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.ui.component.ActionMenuItem
+import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 /**
  * 通用弹窗菜单（Material，底部弹窗）。
@@ -34,6 +35,7 @@ fun ActionMenuBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         content = {
+            WindowNavigationEventBridge()
             Row(
                 modifier = Modifier
                     .padding(top = 16.dp, bottom = 32.dp)

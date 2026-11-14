@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.yunmei.vibe.ui.component.markdown.MarkdownContent
+import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 @Composable
 fun LoadingDialogMaterial(showDialog: MutableState<Boolean>) {
@@ -25,6 +26,7 @@ fun LoadingDialogMaterial(showDialog: MutableState<Boolean>) {
             onDismissRequest = {},
             properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
         ) {
+            WindowNavigationEventBridge()
             Surface(
                 modifier = Modifier.size(100.dp), shape = RoundedCornerShape(8.dp)
             ) {
@@ -53,6 +55,7 @@ fun ConfirmDialogMaterial(
             },
             title = { Text(visuals.title) },
             text = {
+                WindowNavigationEventBridge()
                 visuals.content?.let { content ->
                     when {
                         visuals.isMarkdown -> MarkdownContent(content = content, isMarkdown = true)

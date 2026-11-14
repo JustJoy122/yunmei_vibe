@@ -34,6 +34,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
+import com.yunmei.vibe.ui.component.WarningLevel
+import com.yunmei.vibe.ui.component.material.WarningCard
 import com.yunmei.vibe.ui.component.material.SegmentedCheckboxItem
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
@@ -91,19 +93,11 @@ fun LoginScreenMaterial(
             Spacer(modifier = Modifier.height(8.dp))
 
             state.message?.let { message ->
-                TonalCard(
+                WarningCard(
+                    message = message,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                ) {
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                    )
-                }
+                    level = WarningLevel.Error,
+                )
             }
 
             state.schoolChoices?.let { schools ->

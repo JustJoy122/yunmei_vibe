@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.yunmei.vibe.R
+import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 /**
  * 「页面缩放」的自定义输入对话框（Material 版）。
@@ -43,6 +44,7 @@ fun ScaleDialogMaterial(
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.settings_page_scale)) },
         text = {
+            WindowNavigationEventBridge()
             Column {
                 Text(
                     text = "80% - 110%",

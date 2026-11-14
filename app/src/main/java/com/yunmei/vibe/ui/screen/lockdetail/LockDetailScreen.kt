@@ -108,6 +108,7 @@ import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 /** 二维码展开/折叠动画时长（200–300ms 区间，与 InstallerX Revived 的手风琴写法一致）。 */
 private const val QR_ANIM_DURATION_MS = 250
@@ -733,6 +734,7 @@ private fun QrDialogMaterial(
         onDismissRequest = onToggle,
         title = { Text(stringResource(R.string.lock_detail_share_qr)) },
         text = {
+            WindowNavigationEventBridge()
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -888,6 +890,7 @@ private fun AesKeyDialog(
             onDismissRequest = onDismiss,
             title = { Text(title) },
             text = {
+                WindowNavigationEventBridge()
                 Column {
                     OutlinedTextField(
                         value = value,

@@ -38,6 +38,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.model.UnlockRecordItem
+import com.yunmei.vibe.ui.component.WarningLevel
+import com.yunmei.vibe.ui.component.material.WarningCard as MaterialWarningCard
+import com.yunmei.vibe.ui.component.miuix.WarningCard as MiuixWarningCard
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
@@ -121,18 +124,12 @@ private fun UnlockRecordsMaterial(
         ) {
 
             item {
-                // 提示条：只陈述数据来源，用 tertiaryContainer（提示而非错误）区分于真正的失败态。
-                TonalCard(
+                // 提示条：只陈述数据来源，用 Notice（提示而非错误）区分于真正的失败态。
+                MaterialWarningCard(
+                    message = stringResource(R.string.unlock_records_source),
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                ) {
-                    Text(
-                        text = stringResource(R.string.unlock_records_source),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    )
-                }
+                    level = WarningLevel.Notice,
+                )
             }
             item {
                 SegmentedColumn(
@@ -150,7 +147,11 @@ private fun UnlockRecordsMaterial(
             }
             when {
                 state.errorMessage != null -> item {
-                    RecordErrorCard(state.errorMessage)
+                    MaterialWarningCard(
+                        message = state.errorMessage,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        level = WarningLevel.Error,
+                    )
                 }
                 state.isLoading -> item {
                     Box(
@@ -197,21 +198,6 @@ private fun UnlockRecordsMaterial(
  *
  * 内容来自 ViewModel 翻译过的异常（HTTP 码 / 服务端 msg），用户不必连电脑抓日志也能看到原因。
  */
-@Composable
-private fun RecordErrorCard(message: String) {
-    TonalCard(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        containerColor = MaterialTheme.colorScheme.errorContainer,
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onErrorContainer,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        )
-    }
-}
-
 @Composable
 private fun RecordHint(text: String) {
     Box(
@@ -268,21 +254,12 @@ private fun UnlockRecordsMiuix(
         ) {
 
             item {
-                // 提示条：与 Material 侧同色（tertiaryContainer），语义是「数据来源提示」。
-                Card(
+                // 提示条：与 Material 侧同一语义（Notice），两套主题取同一族颜色。
+                MiuixWarningCard(
+                    message = stringResource(R.string.unlock_records_source),
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.defaultColors(
-                        color = colorScheme.tertiaryContainer,
-                        contentColor = colorScheme.onTertiaryContainer,
-                    ),
-                ) {
-                    MiuixText(
-                        text = stringResource(R.string.unlock_records_source),
-                        fontSize = 14.sp,
-                        color = colorScheme.onTertiaryContainer,
-                        modifier = Modifier.padding(16.dp),
-                    )
-                }
+                    level = WarningLevel.Notice,
+                )
             }
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
@@ -304,7 +281,13 @@ private fun UnlockRecordsMiuix(
                 }
             }
             when {
-                state.errorMessage != null -> item { MiuixErrorCard(state.errorMessage) }
+                state.errorMessage != null -> item {
+                    MiuixWarningCard(
+                        message = state.errorMessage,
+                        modifier = Modifier.fillMaxWidth(),
+                        level = WarningLevel.Error,
+                    )
+                }
                 state.isLoading -> item {
                     Box(
                         modifier = Modifier
@@ -323,24 +306,6 @@ private fun UnlockRecordsMiuix(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun MiuixErrorCard(message: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.defaultColors(
-            color = colorScheme.errorContainer,
-            contentColor = colorScheme.onErrorContainer,
-        ),
-    ) {
-        MiuixText(
-            text = message,
-            fontSize = 14.sp,
-            color = colorScheme.onErrorContainer,
-            modifier = Modifier.padding(16.dp),
-        )
     }
 }
 

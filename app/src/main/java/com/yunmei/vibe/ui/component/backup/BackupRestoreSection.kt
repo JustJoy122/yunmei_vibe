@@ -38,6 +38,7 @@ import com.yunmei.vibe.data.backup.BackupManager
 import com.yunmei.vibe.ui.LocalUiMode
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.component.ActionMenuItem
+import com.yunmei.vibe.ui.component.WarningLevel
 import com.yunmei.vibe.ui.component.material.ActionMenuBottomSheet
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import com.yunmei.vibe.ui.component.miuix.ActionMenuDialog
@@ -47,6 +48,7 @@ import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.preference.ArrowPreference
+import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 /** 备份/还原的两个动作。 */
 private enum class BackupAction { BACKUP, RESTORE }
@@ -55,18 +57,28 @@ private enum class BackupAction { BACKUP, RESTORE }
  * 安全存储不可用的内联提示（方案 A：设置页顶部，不弹阻断式对话框）。
  *
  * [show] 由调用方按 `AppContainer.secureStoreAvailable` 计算，安全存储恢复后自然隐藏。
+ * 两套主题共用同一个入口，内部按 [LocalUiMode] 分派到各自的 WarningCard：
+ * 该函数同时被 `SettingsMaterial.kt` 与 `SettingsMiuix.kt` 调用，不能在函数体里写死某一套主题的组件。
  */
 @Composable
 fun BackupSecureStoreWarning(show: Boolean) {
     if (!show) return
-    Text(
-        text = stringResource(R.string.secure_store_unavailable),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.error,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
-    )
+    val modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 20.dp, vertical = 8.dp)
+    when (LocalUiMode.current) {
+        UiMode.Material -> com.yunmei.vibe.ui.component.material.WarningCard(
+            message = stringResource(R.string.secure_store_unavailable),
+            modifier = modifier,
+            level = WarningLevel.Error,
+        )
+
+        UiMode.Miuix -> com.yunmei.vibe.ui.component.miuix.WarningCard(
+            message = stringResource(R.string.secure_store_unavailable),
+            modifier = modifier,
+            level = WarningLevel.Error,
+        )
+    }
 }
 
 /**
@@ -122,6 +134,7 @@ private fun PasswordDialog(
             onDismissRequest = onDismiss,
             title = { Text(title) },
             text = {
+                WindowNavigationEventBridge()
                 OutlinedTextField(
                     value = password,
                     onValueChange = onPasswordChange,
@@ -173,7 +186,10 @@ private fun OverwriteConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit)
         AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text(title) },
-            text = { Text(message) },
+            text = {
+                WindowNavigationEventBridge()
+                Text(message)
+            },
             confirmButton = {
                 TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
             },

@@ -54,6 +54,7 @@ import com.yunmei.vibe.ui.component.material.ActionMenuBottomSheet
 import com.yunmei.vibe.ui.component.miuix.ActionMenuDialog
 import com.yunmei.vibe.ui.theme.TemplateTheme
 import com.yunmei.vibe.ui.theme.ThemeController
+import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 /**
  * 打卡「选择定位方式」轻量弹窗页（无主界面）。
@@ -194,6 +195,7 @@ private fun SignLocationDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
+        WindowNavigationEventBridge()
         // 全屏 Box + 底部对齐 = 贴底弹窗（BottomSheet 形态）
         Box(
             modifier = Modifier.fillMaxSize(),

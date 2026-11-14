@@ -14,4 +14,8 @@
     <color name="splash_background_dark">#141218</color>
     <color name="splash_background_amoled">#000000</color>
 
+    <!-- 应用图标：API 26~30 的静态回退色（values-v31 / values-night-v31 会覆盖成系统动态色）。 -->
+    <color name="ic_launcher_background">#D4E3FF</color>
+    <color name="ic_launcher_foreground">#004784</color>
+
 </resources>

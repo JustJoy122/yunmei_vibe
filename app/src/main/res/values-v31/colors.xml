@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Android 12+ 亮色：图标底色与前景色跟随系统壁纸取色。
+      与参考项目 PiliPlus（android/app/src/main/res/values-v31/colors.xml）逐条一致：
+      背景取 system_accent1_100、前景取 system_neutral2_700，由系统按壁纸重新着色。
+    -->
+    <color name="ic_launcher_background">@android:color/system_accent1_100</color>
+    <color name="ic_launcher_foreground">@android:color/system_neutral2_700</color>
+</resources>

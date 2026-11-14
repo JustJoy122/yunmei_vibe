@@ -71,4 +71,9 @@ sealed interface Route : NavKey, Parcelable {
     @Parcelize
     @Serializable
     data object Profile : Route
+
+    /** 重设密码：短信验证码 + 新密码（官方 `loginuser/pub/findpwd`）。 */
+    @Parcelize
+    @Serializable
+    data object ResetPassword : Route
 }

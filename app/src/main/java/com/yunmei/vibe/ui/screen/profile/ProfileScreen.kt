@@ -20,17 +20,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -49,6 +57,7 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import com.yunmei.vibe.ui.component.profile.ProfileAvatar
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.LocalUiMode
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
 import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
@@ -56,9 +65,11 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Delete
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -71,23 +82,48 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 fun ProfileScreen(
     onBack: () -> Unit,
     onAddAccount: () -> Unit,
+    onResetPassword: () -> Unit,
+    onAccountDestroyed: () -> Unit,
 ) {
     val viewModel = viewModel<ProfileViewModel>()
     viewModel.load()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val actions = remember(viewModel, onBack, onAddAccount) {
+    var showDestroyDialog by rememberSaveable { mutableStateOf(false) }
+    val destroyTitle = stringResource(R.string.profile_destroy_account_confirm_title)
+    val destroyContent = stringResource(R.string.profile_destroy_account_confirm_content)
+    val actions = remember(viewModel, onBack, onAddAccount, onResetPassword) {
         ProfileActions(
             onBack = onBack,
             onAddAccount = onAddAccount,
             onSwitchAccount = viewModel::switchAccount,
             onRemoveAccount = viewModel::removeAccount,
             onRetry = viewModel::refresh,
+            onResetPassword = onResetPassword,
+            onDestroyAccount = { showDestroyDialog = true },
         )
     }
+
+    // 注销成功：账号在本机与服务端都已不存在，回登录页重新开始。
+    LaunchedEffect(state.destroyed) {
+        if (state.destroyed) onAccountDestroyed()
+    }
+
     when (LocalUiMode.current) {
         UiMode.Material -> ProfileScreenMaterial(state, actions)
         UiMode.Miuix -> ProfileScreenMiuix(state, actions)
     }
+
+    DestroyAccountDialog(
+        show = showDestroyDialog,
+        destroying = state.destroying,
+        title = destroyTitle,
+        content = destroyContent,
+        onConfirm = {
+            showDestroyDialog = false
+            viewModel.destroyAccount()
+        },
+        onDismiss = { showDestroyDialog = false },
+    )
 }
 
 @Composable
@@ -162,6 +198,7 @@ private fun ProfileScreenMaterial(state: ProfileUiState, actions: ProfileActions
                 rows = dormRows(state),
             )
             ProfileAccountGroupMaterial(state, actions)
+            ProfileSecurityGroupMaterial(state, actions)
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
@@ -234,6 +271,7 @@ private fun ProfileScreenMiuix(state: ProfileUiState, actions: ProfileActions) {
                 rows = dormRows(state),
             )
             ProfileAccountGroupMiuix(state, actions)
+            ProfileSecurityGroupMiuix(state, actions)
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
@@ -463,3 +501,148 @@ private fun AccountRowMiuix(
         onClick = { if (!isCurrent) actions.onSwitchAccount(account) },
     )
 }
+
+@Composable
+private fun ProfileSecurityGroupMaterial(state: ProfileUiState, actions: ProfileActions) {
+    val colorScheme = MaterialTheme.colorScheme
+    SegmentedColumn(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        title = stringResource(R.string.profile_group_security),
+        content = listOf(
+            {
+                SegmentedListItem(
+                    onClick = actions.onResetPassword,
+                    headlineContent = { Text(stringResource(R.string.profile_reset_password)) },
+                    supportingContent = { Text(stringResource(R.string.profile_reset_password_summary)) },
+                    leadingContent = { Icon(Icons.Rounded.Lock, null) },
+                )
+            },
+            {
+                SegmentedListItem(
+                    onClick = actions.onDestroyAccount,
+                    enabled = !state.destroying,
+                    headlineContent = {
+                        Text(
+                            text = stringResource(R.string.profile_destroy_account),
+                            color = colorScheme.error,
+                        )
+                    },
+                    supportingContent = { Text(stringResource(R.string.profile_destroy_account_summary)) },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Outlined.DeleteForever,
+                            contentDescription = null,
+                            tint = colorScheme.error,
+                        )
+                    },
+                )
+            },
+        ),
+    )
+}
+
+@Composable
+private fun ProfileSecurityGroupMiuix(state: ProfileUiState, actions: ProfileActions) {
+    SmallTitle(
+        text = stringResource(R.string.profile_group_security),
+        insideMargin = PaddingValues(start = 16.dp, top = 12.dp, end = 28.dp, bottom = 0.dp),
+    )
+    Card(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth(),
+    ) {
+        Column {
+            ArrowPreference(
+                title = stringResource(R.string.profile_reset_password),
+                summary = stringResource(R.string.profile_reset_password_summary),
+                onClick = actions.onResetPassword,
+            )
+            ArrowPreference(
+                title = stringResource(R.string.profile_destroy_account),
+                summary = stringResource(R.string.profile_destroy_account_summary),
+                enabled = !state.destroying,
+                onClick = actions.onDestroyAccount,
+            )
+        }
+    }
+}
+
+/**
+ * 注销确认框：不可逆操作，确认键用错误色，Miuix 侧同理。
+ *
+ * 两套主题各自渲染（Material 用 material3 `AlertDialog`，Miuix 用 `OverlayDialog` + 红色 `TextButton`），
+ * 逻辑只在这里收敛一次。
+ */
+@Composable
+private fun DestroyAccountDialog(
+    show: Boolean,
+    destroying: Boolean,
+    title: String,
+    content: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    when (LocalUiMode.current) {
+        UiMode.Material -> {
+            if (!show) return
+            val colorScheme = MaterialTheme.colorScheme
+            AlertDialog(
+                onDismissRequest = onDismiss,
+                title = { Text(title) },
+                text = { Text(content) },
+                confirmButton = {
+                    TextButton(onClick = onConfirm, enabled = !destroying) {
+                        Text(
+                            text = stringResource(
+                                if (destroying) R.string.profile_destroying else R.string.profile_destroy_confirm
+                            ),
+                            color = colorScheme.error,
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(R.string.profile_destroy_cancel))
+                    }
+                },
+                containerColor = colorScheme.surfaceContainerHigh,
+                shape = MaterialTheme.shapes.extraLarge,
+            )
+        }
+
+        UiMode.Miuix -> {
+            val colorScheme = MiuixTheme.colorScheme
+            OverlayDialog(
+                show = show,
+                title = title,
+                summary = content,
+                onDismissRequest = onDismiss,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    MiuixTextButton(
+                        text = stringResource(R.string.profile_destroy_cancel),
+                        onClick = onDismiss,
+                    )
+                    MiuixTextButton(
+                        text = stringResource(
+                            if (destroying) R.string.profile_destroying else R.string.profile_destroy_confirm
+                        ),
+                        onClick = onConfirm,
+                        enabled = !destroying,
+                        colors = ButtonDefaults.textButtonColors(
+                            color = colorScheme.error,
+                            textColor = colorScheme.onError,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+}
+

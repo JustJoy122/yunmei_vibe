@@ -26,6 +26,10 @@ data class ProfileUiState(
     val currentUsernameMd5: String = "",
     val signStatus: SignStatus? = null,
     val defaultLock: Lock? = null,
+    /** 注销请求进行中：界面据此禁用入口并显示进度。 */
+    val destroying: Boolean = false,
+    /** 注销成功：页面观察该标记跳回登录页。 */
+    val destroyed: Boolean = false,
 ) {
     /** 姓名：接口 > 会话缓存 > 账号手机号。 */
     val displayName: String
@@ -65,4 +69,8 @@ data class ProfileActions(
     val onSwitchAccount: (StoredUser) -> Unit,
     val onRemoveAccount: (StoredUser) -> Unit,
     val onRetry: () -> Unit,
+    /** 进入「重设密码」二级页。 */
+    val onResetPassword: () -> Unit,
+    /** 已确认注销：调用接口并清理本地数据。 */
+    val onDestroyAccount: () -> Unit,
 )

@@ -154,4 +154,35 @@ interface YunMeiApi {
     @FormUrlEncoded
     @POST("signrecord/getsignstatusbyschool")
     suspend fun getSignStatus(@Field("schoolNo") schoolNo: String): JsonElement
+
+    /**
+     * 发送短信验证码（基础服务，官方 `phonecode/pub/getcode`）。
+     *
+     * 官方「换手机号」与「找回密码」共用这一个接口：只传手机号，服务端下发 6 位验证码。
+     */
+    @FormUrlEncoded
+    @POST("phonecode/pub/getcode")
+    suspend fun getPhoneCode(@Field("tel") tel: String): ApiMessage
+
+    /**
+     * 凭短信验证码重设密码（基础服务，官方 `loginuser/pub/findpwd`）。
+     *
+     * `userPwd` 传的是**新密码的 MD5**（官方前端同样先 MD5 再提交），不是明文。
+     */
+    @FormUrlEncoded
+    @POST("loginuser/pub/findpwd")
+    suspend fun resetPassword(
+        @Field("userTel") userTel: String,
+        @Field("loginValidCode") loginValidCode: String,
+        @Field("userPwd") userPwd: String,
+    ): ApiMessage
+
+    /**
+     * 注销账号（基础服务，官方 `loginuser/destroyAccount`）。
+     *
+     * 只传 userId；服务端确认后该账号的凭证全部作废，不可恢复。
+     */
+    @FormUrlEncoded
+    @POST("loginuser/destroyAccount")
+    suspend fun destroyAccount(@Field("userId") userId: String): ApiMessage
 }

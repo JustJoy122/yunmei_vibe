@@ -50,7 +50,6 @@
 | --- | --- | --- |
 | 蓝牙 BLE | 必需 | 连接门锁、开门 |
 | 相机 | 可选 | 扫码添加门锁 |
-| NFC | 可选（预留） | 近场通信 |
 
 ### 权限说明
 
@@ -60,7 +59,6 @@
 | 定位（`ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION`） | BLE 扫描（Android 11 及以下）、定位打卡 |
 | 蓝牙（`BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT`） | Android 12+ 运行时蓝牙授权 |
 | 相机（`CAMERA`） | 扫码添加门锁 |
-| NFC（`NFC`） | 预留 |
 
 ## 构建说明
 

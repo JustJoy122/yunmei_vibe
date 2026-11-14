@@ -85,6 +85,7 @@ import com.yunmei.vibe.ui.screen.login.LoginScreen
 import com.yunmei.vibe.ui.screen.dormmembers.DormMembersScreen
 import com.yunmei.vibe.ui.screen.lockdetail.LockDetailScreen
 import com.yunmei.vibe.ui.screen.profile.ProfileScreen
+import com.yunmei.vibe.ui.screen.resetpassword.ResetPasswordScreen
 import com.yunmei.vibe.ui.screen.unlockrecords.UnlockRecordsScreen
 import com.yunmei.vibe.ui.screen.settings.SettingPager
 import com.yunmei.vibe.ui.screen.subsettings.CodeAndSignSettingsScreen
@@ -379,7 +380,16 @@ class MainActivity : ComponentActivity() {
                                     ProfileScreen(
                                         onBack = navOnBack,
                                         onAddAccount = { navigator.push(Route.Login) },
+                                        onResetPassword = { navigator.push(Route.ResetPassword) },
+                                        onAccountDestroyed = {
+                                            navigator.replaceAll(listOf(Route.Login))
+                                        },
                                     )
+                                }
+                            }
+                            entry<Route.ResetPassword>(swipeDismiss = swipeBackDirection) {
+                                InstallerNavEntry(interceptPredictiveBack, navOnBack) {
+                                    ResetPasswordScreen()
                                 }
                             }
                         }

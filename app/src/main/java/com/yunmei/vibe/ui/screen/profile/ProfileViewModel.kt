@@ -176,6 +176,36 @@ class ProfileViewModel : ViewModel() {
     }
 
     /**
+     * 注销账号。
+     *
+     * 不可逆：服务端确认后立刻清空本机账号表、门锁表与会话缓存，界面据 [ProfileUiState.destroyed]
+     * 跳回登录页。失败时只提示、不动本地数据——否则会出现「服务端还在、本地已清空」的半吊子状态。
+     */
+    fun destroyAccount() {
+        if (_uiState.value.destroying) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(destroying = true, error = null) }
+            try {
+                container.repository.destroyAccount()
+                _uiState.update { it.copy(destroying = false, destroyed = true) }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Log.i(TAG, "destroyAccount failed: " + error.message)
+                _uiState.update {
+                    it.copy(
+                        destroying = false,
+                        error = YunMeiApp.app.getString(
+                            R.string.profile_destroy_failed,
+                            error.message.orEmpty(),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    /**
      * 切号后把门锁快照刷一遍。
      *
      * 门锁是按账号/单位下发的，不同账号可能看到不同的锁；这里只更新本地已有的锁，

@@ -6,11 +6,13 @@ import android.util.Log
 import com.yunmei.vibe.BuildConfig
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.local.AccountStore
+import com.yunmei.vibe.data.local.LockStore
 import com.yunmei.vibe.data.local.SchoolSession
 import com.yunmei.vibe.data.local.SecureStore
 import com.yunmei.vibe.data.local.SessionStore
 import com.yunmei.vibe.data.local.StoredSession
 import com.yunmei.vibe.data.local.StoredUser
+import com.yunmei.vibe.data.model.ApiMessage
 import com.yunmei.vibe.data.model.DormMember
 import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.data.model.LoginUser
@@ -22,6 +24,7 @@ import com.yunmei.vibe.data.model.UnlockRecord
 import com.yunmei.vibe.data.model.UnlockRecordItem
 import com.yunmei.vibe.data.model.UserProfile
 import com.yunmei.vibe.data.network.SessionExpiredException
+import com.yunmei.vibe.data.network.YunMeiApi
 import com.yunmei.vibe.data.network.YunMeiApiClient
 import com.yunmei.vibe.data.security.Md5
 import kotlinx.coroutines.CancellationException
@@ -59,6 +62,7 @@ class YunMeiRepository(
     context: Context,
     private val client: YunMeiApiClient,
     private val accountStore: AccountStore,
+    private val lockStore: LockStore,
 ) {
 
     /** 应用 Context，仅用于读取界面文案资源（数据层不再硬编码中文）。 */
@@ -778,6 +782,67 @@ class YunMeiRepository(
         username = null
         usernameMd5 = null
         sessionStore.clearAll()
+    }
+
+    /**
+     * 基础服务请求：临时把 header 切回登录 token。
+     *
+     * 学校域接口会把 `client.token` 换成学校 token（见 [applySchoolAuth]），而
+     * `phonecode/…`、`loginuser/…` 这类账号级接口只认登录 token，因此这里与 [fetchSchools]
+     * 同一套做法：切过去、请求、finally 里换回来，避免污染调用方后续的学校请求。
+     */
+    private suspend fun <T> withBaseAuth(block: suspend (YunMeiApi) -> T): T {
+        val loginToken = baseToken
+            ?: throw YunMeiException(appContext.getString(R.string.login_error_not_logged_in))
+        val userId = requireUserId()
+        val schoolToken = client.token
+        val schoolNo = client.adminSchoolNo
+        return try {
+            client.token = loginToken
+            client.userId = userId
+            client.adminSchoolNo = null
+            block(client.api(YunMeiApiClient.BASE_URL))
+        } finally {
+            client.token = schoolToken
+            client.adminSchoolNo = schoolNo
+        }
+    }
+
+    /** 发送短信验证码（基础服务，官方 `phonecode/pub/getcode`）。 */
+    suspend fun requestPhoneCode(tel: String): ApiMessage = withBaseAuth { api ->
+        api.getPhoneCode(tel)
+    }
+
+    /**
+     * 用短信验证码重设密码。
+     *
+     * 入参是用户输入的**明文**新密码，这里统一做 MD5（与登录时的密码处理保持一致），
+     * 再提交给 `loginuser/pub/findpwd`。
+     */
+    suspend fun resetPassword(tel: String, code: String, newPassword: String): ApiMessage = withBaseAuth { api ->
+        api.resetPassword(tel, code, Md5.hex(newPassword))
+    }
+
+    /**
+     * 注销账号：先让服务端作废账号，成功后再清空本机所有与该账号相关的数据。
+     *
+     * 清理顺序：账号表 → 门锁表 → 会话与档案缓存（[clearSession] 内部调 `SessionStore.clearAll`）。
+     * 先清持久化再清内存，若中途进程被杀，残留也只是一份没有 token 的空壳。
+     */
+    suspend fun destroyAccount(): Boolean {
+        val response = withBaseAuth { api -> api.destroyAccount(requireUserId()) }
+        if (!response.success) {
+            throw YunMeiException(
+                response.msg?.takeIf { it.isNotBlank() }
+                    ?: appContext.getString(R.string.profile_destroy_failed, "")
+            )
+        }
+        withContext(Dispatchers.IO) {
+            accountStore.replaceAll(emptyList())
+            lockStore.replaceAll(emptyList(), null)
+        }
+        clearSession()
+        return true
     }
 
     /** 当前会话对应的账号标识（未登录为 null）。 */

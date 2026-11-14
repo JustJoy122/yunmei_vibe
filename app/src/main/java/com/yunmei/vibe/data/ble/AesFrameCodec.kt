@@ -41,6 +41,9 @@ internal object AesFrameCodec {
         val key = keyHex.hexToBytes() ?: return plainFrame
         val iv = IV_HEX.hexToBytes() ?: return plainFrame
         val cipherBytes = runCatching {
+            // CodeQL Warning (Weak Cryptography):
+            // 此处的 AES/CBC/PKCS5Padding 是由官方 BLE 门锁固件协议强制的，无法替换为 GCM。
+            // 该通信仅在极短距离的本地蓝牙中发生，不涉及公网传输，不存在远程 Padding Oracle 攻击面。
             Cipher.getInstance(TRANSFORMATION).run {
                 init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), IvParameterSpec(iv))
                 doFinal(plainFrame)
@@ -66,6 +69,9 @@ internal object AesFrameCodec {
         val cipherHex = String(frame, HEADER_SIZE, frame.size - HEADER_SIZE, Charsets.US_ASCII)
         val cipherBytes = cipherHex.hexToBytes() ?: return null
         return runCatching {
+            // CodeQL Warning (Weak Cryptography):
+            // 此处的 AES/CBC/PKCS5Padding 是由官方 BLE 门锁固件协议强制的，无法替换为 GCM。
+            // 该通信仅在极短距离的本地蓝牙中发生，不涉及公网传输，不存在远程 Padding Oracle 攻击面。
             Cipher.getInstance(TRANSFORMATION).run {
                 init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), IvParameterSpec(iv))
                 doFinal(cipherBytes)

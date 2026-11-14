@@ -3,6 +3,7 @@ package com.yunmei.vibe.ui
 import androidx.compose.runtime.mutableIntStateOf
 import com.yunmei.vibe.data.repository.SettingsRepository
 import com.yunmei.vibe.ui.navigation.PendingLockImport
+import com.yunmei.vibe.ui.util.NotificationDowngrade
 import top.yukonga.miuix.kmp.utils.PagerFlingTrackerConnection
 import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
 import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
@@ -141,6 +142,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         applyStartupTheme()
         super.onCreate(savedInstanceState)
+
+        // 用户从通知点进应用：取消结束态的延时降级，避免把正在看的通知再改写一次。
+        if (intent?.action == NotificationDowngrade.ACTION_FROM_NOTIFICATION) {
+            NotificationDowngrade.cancel()
+        }
 
         setContent {
             val viewModel = viewModel<MainActivityViewModel>()
@@ -391,6 +397,10 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        // 同 onCreate：从通知点进来时取消结束态降级。
+        if (intent.action == NotificationDowngrade.ACTION_FROM_NOTIFICATION) {
+            NotificationDowngrade.cancel()
+        }
         // 深链已由 AddLockLinkActivity 写入 PendingLockImport：这里只需触发一次重查（切页在组合内完成）。
         if (PendingLockImport.raw.value != null) linkImportTick.intValue++
     }

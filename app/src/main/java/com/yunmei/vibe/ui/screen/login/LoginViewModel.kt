@@ -12,7 +12,6 @@ import com.yunmei.vibe.data.security.Md5
 import com.yunmei.vibe.ui.component.UiMessage
 import com.yunmei.vibe.ui.component.UiMessageBus
 import com.yunmei.vibe.ui.component.UiMessageTone
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class LoginViewModel : ViewModel() {
 
@@ -37,49 +35,15 @@ class LoginViewModel : ViewModel() {
     private val _finished = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val finished: SharedFlow<Unit> = _finished.asSharedFlow()
 
-    /** 当前选中的已保存账号的密码 MD5（输入未改则直接复用，与原项目一致）。 */
-    private var storedPasswordMd5: String? = null
     private var passwordMd5: String? = null
-
-    fun refresh() {
-        // 已保存账号来自加密存储（EncryptedSharedPreferences + JSON 解码），切到 IO 线程读取。
-        viewModelScope.launch {
-            val users = withContext(Dispatchers.IO) { container.accountStore.getAll() }
-            _uiState.update { it.copy(savedUsers = users) }
-        }
-    }
 
     fun onUsernameChange(value: String) = _uiState.update { it.copy(username = value) }
 
-    fun onPasswordChange(value: String) = _uiState.update {
-        // 手动输入密码即视为改用新凭证：丢弃「使用已保存凭证」标记（保存的 MD5 仍留作比对）。
-        it.copy(password = value, usingSavedCredential = false)
-    }
+    fun onPasswordChange(value: String) = _uiState.update { it.copy(password = value) }
 
     fun onSaveCurrentChange(value: Boolean) = _uiState.update { it.copy(saveCurrent = value) }
 
     fun onToggleShowPassword(value: Boolean) = _uiState.update { it.copy(showPassword = value) }
-
-    /**
-     * 选择已保存账号。
-     *
-     * 已保存账号只保存密码 **MD5**（`StoredUser.passwordMd5`，非明文、非 Token），
-     * 因此**不能**把它回填进密码输入框——否则「显示密码」会把这串 MD5 当作明文展示，
-     * 用户手动改动其中任一字符还会被再次 MD5，导致登录失败。
-     * 这里改为：输入框留空 + 标记 [LoginUiState.usingSavedCredential]，登录时直接复用该 MD5。
-     */
-    fun pickSavedUser(user: StoredUser) {
-        storedPasswordMd5 = user.passwordMd5
-        _uiState.update {
-            it.copy(
-                username = user.username,
-                password = "",
-                usingSavedCredential = true,
-                showPassword = false,
-                message = null,
-            )
-        }
-    }
 
     fun onMessageShown() = _uiState.update { it.copy(message = null) }
 
@@ -87,20 +51,14 @@ class LoginViewModel : ViewModel() {
         val username = _uiState.value.username.trim()
         val password = _uiState.value.password
 
-        // 输入框为空且存在已保存凭证时，直接复用保存的 MD5（已保存账号场景，无需重复输入密码）；
-        // 否则按原逻辑：输入的就是已保存 MD5 时不再重复 MD5，其余情况对明文做 MD5。
-        val pwdMd5: String? = if (password.isNotBlank()) {
-            if (storedPasswordMd5 != null && password == storedPasswordMd5) password else Md5.hex(password)
-        } else {
-            storedPasswordMd5
-        }
-
-        if (username.isBlank() || pwdMd5 == null) {
+        // 只走手动输入：账号与密码都必填，密码统一按 MD5 提交。
+        if (username.isBlank() || password.isBlank()) {
             showInPageMessage(str(R.string.login_error_empty_input))
             return
         }
         if (_uiState.value.loading) return
 
+        val pwdMd5 = Md5.hex(password)
         passwordMd5 = pwdMd5
 
         _uiState.update { it.copy(loading = true, message = null) }

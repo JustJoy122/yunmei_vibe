@@ -422,6 +422,7 @@ private fun AccountRowMaterial(
                 Icon(
                     imageVector = Icons.Outlined.Delete,
                     contentDescription = stringResource(R.string.profile_remove_account),
+                    tint = MaterialTheme.colorScheme.error,
                 )
             }
         },
@@ -436,9 +437,11 @@ private fun AccountRowMiuix(
 ) {
     val colorScheme = MiuixTheme.colorScheme
     val isCurrent = account.usernameMd5 == state.currentUsernameMd5
-    ArrowPreference(
+    // 删除是直接动作、不是跳转：用 BasicComponent（无右侧箭头），删除图标取 error 色，
+    // 与门锁列表的删除一致。
+    BasicComponent(
         title = account.username,
-        summary = if (isCurrent) stringResource(R.string.profile_current_account) else "",
+        summary = if (isCurrent) stringResource(R.string.profile_current_account) else null,
         startAction = {
             if (isCurrent) {
                 MiuixIcon(
@@ -453,7 +456,7 @@ private fun AccountRowMiuix(
                 MiuixIcon(
                     imageVector = MiuixIcons.Delete,
                     contentDescription = stringResource(R.string.profile_remove_account),
-                    tint = colorScheme.onSurfaceVariantSummary,
+                    tint = colorScheme.error,
                 )
             }
         },

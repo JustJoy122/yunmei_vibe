@@ -1,6 +1,7 @@
 package com.yunmei.vibe.ui.sign
 
 import com.yunmei.vibe.ui.util.ForegroundPlaceholder
+import com.yunmei.vibe.ui.util.NotificationDowngrade
 import android.Manifest
 import android.app.Service
 import android.content.Intent
@@ -10,7 +11,6 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
@@ -50,6 +50,8 @@ class SignService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         SignNotifications.ensureChannel(this)
+        // 新的一次启动（含重试）：之前排队的降级不能把新进度覆盖成旧结果。
+        NotificationDowngrade.cancel()
         val action = intent?.action ?: ACTION_START
 
         when (action) {
@@ -174,6 +176,7 @@ class SignService : Service() {
      * 因此这里用一个占位通知顶替同 ID 的失败通知，随后立即移除。
      */
     private fun finishAndDismiss() {
+        NotificationDowngrade.cancel()
         ForegroundPlaceholder.startThenRemove(
             service = this,
             id = SignNotifications.SIGN_NOTIFICATION_ID,
@@ -214,15 +217,29 @@ class SignService : Service() {
                     runCatching { container.repository.sign(user, lock, location) }
                 }
                 message.onSuccess { text ->
-                    // 成功：实况/进度条直接到 100%，通知可被划走，前台服务退出但保留通知。
+                    // 成功：进度到 100%，先以常驻形态收尾（保持实况提升），8 秒后原地换成可滑动的普通通知。
+                    val finalText = text.ifBlank { getString(R.string.unlock_sign_success) }
                     SignNotifications.post(
                         this@SignService,
                         SignNotifications.progress(
                             this@SignService,
-                            text.ifBlank { getString(R.string.unlock_sign_success) },
+                            finalText,
                             100,
                             completed = true,
+                            ongoing = true,
                         ),
+                    )
+                    NotificationDowngrade.schedule(
+                        this@SignService,
+                        SignNotifications.SIGN_NOTIFICATION_ID,
+                        SignNotifications.progress(
+                            this@SignService,
+                            finalText,
+                            100,
+                            completed = true,
+                            ongoing = false,
+                        ),
+                        autoClearOnSuccess = true,
                     )
                     complete()
                 }.onFailure { error ->
@@ -317,15 +334,32 @@ class SignService : Service() {
                 failedStage = stage,
                 locationUnavailable = locationUnavailable,
                 retrySubMode = retrySubMode?.value,
+                ongoing = true,
             ),
         )
-        cancelOwnNotification()
+        // 失败通知保留在通知栏，8 秒后降级为可滑动的普通通知（不删除重建）。
+        NotificationDowngrade.schedule(
+            this,
+            SignNotifications.SIGN_NOTIFICATION_ID,
+            SignNotifications.progress(
+                this,
+                message,
+                percent,
+                failedStage = stage,
+                locationUnavailable = locationUnavailable,
+                retrySubMode = retrySubMode?.value,
+                ongoing = false,
+            ),
+        )
         stopForegroundCompat()
         stopSelf()
     }
 
+    /**
+     * 成功收尾：只解除前台服务身份，通知留在通知栏（由 8 秒降级换成可滑动形态）。
+     * 此前这里会 cancel 掉通知，导致实况退场时通知先消失、再被系统以普通通知重建。
+     */
     private fun complete() {
-        cancelOwnNotification()
         stopForegroundCompat()
         stopSelf()
     }
@@ -334,12 +368,6 @@ class SignService : Service() {
         runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH) }
     }
 
-    /** 收尾时只清除打卡自己的通知（1002），绝不影响开门通知（1001）。 */
-    private fun cancelOwnNotification() {
-        runCatching {
-            NotificationManagerCompat.from(this).cancel(SignNotifications.SIGN_NOTIFICATION_ID)
-        }
-    }
 
     /** 弹窗回传的定位方式（与设置项解耦，仅表达"这一次打卡怎么取位置"）。 */
     enum class SignSubMode(val value: String) {

@@ -271,11 +271,8 @@
     <string name="login_skip_selection_hint">账号已保存，可稍后在「门锁」页扫码添加</string>
     <string name="login_username">账号</string>
     <string name="login_password">密码</string>
-    <string name="login_password_saved">已保存，无需重复输入</string>
     <string name="login_show_password">显示密码</string>
-    <string name="login_show_password_saved">已保存账号无需显示密码</string>
     <string name="login_submit">登录</string>
-    <string name="login_use_saved">使用已保存账号</string>
     <string name="login_save_current">保存此账号</string>
     <string name="login_logging_in">登录中…</string>
     <!-- 登录失败：页面内错误条（认证失败用 error 语义色，由模板的页面内错误组件承载） -->

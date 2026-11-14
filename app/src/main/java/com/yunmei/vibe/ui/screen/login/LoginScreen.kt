@@ -18,10 +18,6 @@ fun LoginScreen() {
     val navigator = LocalNavigator.current
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        viewModel.refresh()
-    }
-
     // 登录成功 → 进入主界面。
     LaunchedEffect(Unit) {
         viewModel.finished.collect {
@@ -34,7 +30,6 @@ fun LoginScreen() {
         onPasswordChange = viewModel::onPasswordChange,
         onSaveCurrentChange = viewModel::onSaveCurrentChange,
         onLogin = viewModel::login,
-        onPickSavedUser = viewModel::pickSavedUser,
         onPickSchool = viewModel::pickSchool,
         onPickLock = viewModel::pickLock,
         onToggleShowPassword = viewModel::onToggleShowPassword,

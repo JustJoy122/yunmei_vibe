@@ -1,11 +1,9 @@
 package com.yunmei.vibe.ui.screen.login
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -192,16 +190,6 @@ fun LoginScreenMaterial(
                             PasswordVisualTransformation()
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        // 已保存账号不回填密码（只存 MD5），用占位提示说明「无需重复输入」。
-                        placeholder = {
-                            Text(
-                                if (state.usingSavedCredential) {
-                                    stringResource(R.string.login_password_saved)
-                                } else {
-                                    ""
-                                }
-                            )
-                        },
                     )
                 }
             )
@@ -211,14 +199,7 @@ fun LoginScreenMaterial(
                 content = listOf {
                     SegmentedCheckboxItem(
                         title = stringResource(R.string.login_show_password),
-                        summary = if (state.usingSavedCredential) {
-                            stringResource(R.string.login_show_password_saved)
-                        } else {
-                            null
-                        },
                         checked = state.showPassword,
-                        // 已保存凭证时没有可供显示的密码明文，直接禁用开关，避免暴露 MD5 串。
-                        enabled = !state.usingSavedCredential,
                         onCheckedChange = actions.onToggleShowPassword,
                     )
                 }
@@ -255,22 +236,6 @@ fun LoginScreenMaterial(
                     )
                 }
             )
-
-            if (state.savedUsers.isNotEmpty()) {
-                SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    content = state.savedUsers.map { user ->
-                        {
-                            SegmentedListItem(
-                                onClick = { actions.onPickSavedUser(user) },
-                                headlineContent = { Text(user.username) },
-                                supportingContent = { Text(stringResource(R.string.login_use_saved)) },
-                                leadingContent = { Icon(Icons.TwoTone.Person, null) },
-                            )
-                        }
-                    }
-                )
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
         }

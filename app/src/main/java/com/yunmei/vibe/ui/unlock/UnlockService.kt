@@ -1,13 +1,15 @@
 package com.yunmei.vibe.ui.unlock
 
+import android.app.Notification
 import com.yunmei.vibe.ui.util.ForegroundPlaceholder
+import com.yunmei.vibe.ui.util.NotificationDowngrade
 import android.app.Service
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
-import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
@@ -48,10 +50,15 @@ class UnlockService : Service() {
     /** 本次开门执行的 Job：与 Service 生命周期作用域分离，取消只影响本次执行。 */
     private var runJob: Job? = null
 
+    /** 结束态的「可滑动」形态：8 秒降级与 10 分钟兜底都复用它原地更新通知。 */
+    private var pendingDowngrade: Notification? = null
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         UnlockNotifications.ensureChannel(this)
+        // 新的一次启动（含重试）：之前排队的降级不能把新进度覆盖成旧结果。
+        NotificationDowngrade.cancel()
         // 每次新命令都重置完成标记：失败后服务会保持存活以承载实况通知，
         // 此时用户点「重试」若不清零，进度回调与再次失败都会被 early-return 吞掉。
         if (intent?.action != ACTION_FINISH) {
@@ -200,9 +207,20 @@ class UnlockService : Service() {
 
     private fun finishWithSuccess() {
         if (!finished.compareAndSet(false, true)) return
+        val text = getString(R.string.unlock_progress_done)
+        // 先以常驻形态更新「同一条」通知：解除前台服务身份后系统会把实况回落，
+        // 但通知本身不删除，避免出现「删掉再重建」的闪断。
         UnlockNotifications.post(
             this,
-            UnlockNotifications.result(this, true, getString(R.string.unlock_progress_done)),
+            UnlockNotifications.result(this, true, text, ongoing = true),
+        )
+        // 8 秒后原地换成可滑动的普通通知（同 ID、同渠道，不触发重建），
+        // 成功后 10 秒再自动清除；失败保留由用户处理。
+        NotificationDowngrade.schedule(
+            this,
+            UnlockNotifications.UNLOCK_NOTIFICATION_ID,
+            UnlockNotifications.result(this, true, text, ongoing = false),
+            autoClearOnSuccess = true,
         )
         stopSelfSafely()
     }
@@ -211,32 +229,36 @@ class UnlockService : Service() {
         if (!finished.compareAndSet(false, true)) return
         // 严格对齐 InstallerX：失败不退回传统通知，保留实况与进度条，失败分段变红、进度停在失败处，
         // 通知常驻（ongoing，不 autoCancel），由用户通过「重试 / 完成」结束。
-        val notification = UnlockNotifications.failure(
-            this,
-            message,
-            UnlockNotifications.stageOf(lastPercent),
-            listOf(
-                UnlockNotifications.retryAction(this),
-                UnlockNotifications.finishAction(this),
-            ),
+        val stage = UnlockNotifications.stageOf(lastPercent)
+        val actions = listOf(
+            UnlockNotifications.retryAction(this),
+            UnlockNotifications.finishAction(this),
         )
+        val notification = UnlockNotifications.failure(this, message, stage, actions, ongoing = true)
         // 失败时继续以这个通知作为前台服务通知（不 detach、不 stopSelf）：实况/流体云的"提升"依赖
         // 应用仍处于前台服务状态，一旦立刻停服，系统会把通知降级成普通通知。
         runCatching { startForeground(UnlockNotifications.UNLOCK_NOTIFICATION_ID, notification) }
             .onFailure { UnlockNotifications.post(this, notification) }
+        // 结束态先保持常驻，8 秒后原地降级；10 分钟兜底复用同一份降级通知。
+        val downgraded = UnlockNotifications.failure(this, message, stage, actions, ongoing = false)
+        pendingDowngrade = downgraded
+        NotificationDowngrade.schedule(this, UnlockNotifications.UNLOCK_NOTIFICATION_ID, downgraded)
         armFailureTimeout()
     }
 
-    /** 失败通知的兜底清理：用户长时间不理会时释放前台服务，避免常驻。 */
+    /**
+     * 失败通知的兜底清理：用户长时间不理会时把通知换成可滑动的普通形态，并只解除前台服务身份。
+     * 刻意不删除通知、也不用 STOP_FOREGROUND_REMOVE：删除会让实况/流体云走「删掉再重建」的路径。
+     */
     private fun armFailureTimeout() {
         failureTimeoutJob?.cancel()
         failureTimeoutJob = scope.launch {
             delay(FAILURE_KEEP_MS)
-            runCatching {
-                NotificationManagerCompat.from(this@UnlockService)
-                    .cancel(UnlockNotifications.UNLOCK_NOTIFICATION_ID)
+            pendingDowngrade?.let { normal ->
+                NotificationDowngrade.cancel()
+                UnlockNotifications.post(this@UnlockService, normal)
             }
-            stopForeground(STOP_FOREGROUND_REMOVE)
+            ServiceCompat.stopForeground(this@UnlockService, ServiceCompat.STOP_FOREGROUND_DETACH)
             stopSelf()
         }
     }
@@ -258,12 +280,23 @@ class UnlockService : Service() {
         // 直接以失败通知充当前台通知，随后 detach，保证通知留在通知栏。
         runCatching { startForeground(UnlockNotifications.UNLOCK_NOTIFICATION_ID, notification) }
             .onFailure { UnlockNotifications.post(this, notification) }
-        stopForeground(STOP_FOREGROUND_DETACH)
+        // 先安排降级再解除前台身份：通知留在通知栏，8 秒后变成可滑动的普通通知。
+        val downgraded = UnlockNotifications.failure(
+            this,
+            getString(R.string.unlock_bluetooth_disabled),
+            0,
+            actions,
+            ongoing = false,
+        )
+        pendingDowngrade = downgraded
+        NotificationDowngrade.schedule(this, UnlockNotifications.UNLOCK_NOTIFICATION_ID, downgraded)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
         stopSelf()
     }
 
     /** 「完成」：用占位通知顶替同 ID 的通知后立即移除，并按规则先完成 startForeground。 */
     private fun dismissAndStop() {
+        NotificationDowngrade.cancel()
         ForegroundPlaceholder.startThenRemove(
             service = this,
             id = UnlockNotifications.UNLOCK_NOTIFICATION_ID,
@@ -280,8 +313,8 @@ class UnlockService : Service() {
     }.getOrDefault(false)
 
     private fun stopSelfSafely() {
-        // 结果通知保留在通知栏，只撤掉前台服务身份。
-        stopForeground(STOP_FOREGROUND_DETACH)
+        // 结果通知保留在通知栏，只撤掉前台服务身份（detach 而非 remove：remove 会删掉通知）。
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
         stopSelf()
     }
 

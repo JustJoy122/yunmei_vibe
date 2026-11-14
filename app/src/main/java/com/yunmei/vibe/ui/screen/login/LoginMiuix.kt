@@ -3,7 +3,6 @@ package com.yunmei.vibe.ui.screen.login
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -29,7 +28,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.component.miuix.EditText
 import com.yunmei.vibe.ui.component.miuix.WarningCard
@@ -173,12 +171,7 @@ fun LoginScreenMiuix(
                                 title = stringResource(R.string.login_password),
                                 value = state.password,
                                 onValueChange = actions.onPasswordChange,
-                                // 已保存账号不回填密码（只存 MD5），用占位提示说明「无需重复输入」。
-                                textHint = if (state.usingSavedCredential) {
-                                    stringResource(R.string.login_password_saved)
-                                } else {
-                                    ""
-                                },
+                                textHint = "",
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                                 visualTransformation = if (state.showPassword) {
                                     VisualTransformation.None
@@ -188,14 +181,7 @@ fun LoginScreenMiuix(
                             )
                             SwitchPreference(
                                 title = stringResource(R.string.login_show_password),
-                                summary = if (state.usingSavedCredential) {
-                                    stringResource(R.string.login_show_password_saved)
-                                } else {
-                                    null
-                                },
                                 checked = state.showPassword,
-                                // 已保存凭证时没有可供显示的密码明文，直接禁用开关，避免暴露 MD5 串。
-                                enabled = !state.usingSavedCredential,
                                 onCheckedChange = actions.onToggleShowPassword,
                             )
                         }
@@ -241,35 +227,6 @@ fun LoginScreenMiuix(
                                 enabled = !state.loading,
                                 onClick = actions.onLogin,
                             )
-                        }
-
-                        if (state.savedUsers.isNotEmpty()) {
-                            Card(
-                                modifier = Modifier
-                                    .padding(top = 12.dp)
-                                    .fillMaxWidth(),
-                            ) {
-                                Column {
-                                    Text(
-                                        text = stringResource(R.string.login_use_saved),
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                                        color = colorScheme.onSurfaceVariantSummary,
-                                    )
-                                    state.savedUsers.forEach { user ->
-                                        BasicComponent(
-                                            title = user.username,
-                                            startAction = {
-                                                Icon(
-                                                    Icons.Rounded.Person,
-                                                    tint = colorScheme.onSurface,
-                                                    contentDescription = null,
-                                                )
-                                            },
-                                            onClick = { actions.onPickSavedUser(user) },
-                                        )
-                                    }
-                                }
-                            }
                         }
 
                         Spacer(Modifier.height(12.dp))

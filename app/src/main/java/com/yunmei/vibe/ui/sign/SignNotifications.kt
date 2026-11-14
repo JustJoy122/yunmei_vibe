@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.MainActivity
+import com.yunmei.vibe.ui.util.NotificationDowngrade
 import com.yunmei.vibe.ui.theme.ThemeColors
 
 /**
@@ -97,8 +98,11 @@ object SignNotifications {
         completed: Boolean = false,
         retrySubMode: String? = null,
         promptChooser: Boolean = false,
+        ongoing: Boolean? = null,
     ): Notification {
         val accent = ThemeColors.accent(context)
+        // 常驻标志：显式传入时以它为准（结束态延时降级传 false），否则按流程状态推导。
+        val pinned = ongoing ?: (failedStage == null && !completed)
         // 需要选择定位方式时，通知整体点击也直接进弹窗（与按钮同一个 PendingIntent），
         // 避免个别 ROM 折叠/吞掉通知动作时用户完全无法选择。
         val contentIntent = if (promptChooser) chooserIntent(context) else openAppIntent(context)
@@ -129,8 +133,8 @@ object SignNotifications {
                 .setContentText(text)
                 .setContentIntent(contentIntent)
                 .setColor(accent.primary)
-                .setOngoing(failedStage == null && !completed)
-                .setAutoCancel(completed)
+                .setOngoing(pinned)
+                .setAutoCancel(!pinned)
                 .setProgress(PROGRESS_MAX, percent, false)
                 .setStyle(style)
             if (failedStage != null) {
@@ -184,8 +188,8 @@ object SignNotifications {
             .setContentText(text)
             .setContentIntent(contentIntent)
             .setColor(if (failedStage != null) accent.error else accent.primary)
-            .setOngoing(failedStage == null && !completed)
-            .setAutoCancel(completed)
+            .setOngoing(pinned)
+            .setAutoCancel(!pinned)
             .setProgress(PROGRESS_MAX, percent, false)
         if (failedStage != null) {
             builder.setOnlyAlertOnce(false).setSilent(false)
@@ -336,6 +340,8 @@ object SignNotifications {
 
     private fun openAppIntent(context: Context): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
+            // 标记「从通知点进来」：主界面据此取消结束态的延时降级。
+            action = NotificationDowngrade.ACTION_FROM_NOTIFICATION
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         return PendingIntent.getActivity(

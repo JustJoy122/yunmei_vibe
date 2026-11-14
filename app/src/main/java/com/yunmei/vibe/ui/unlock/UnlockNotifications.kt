@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.MainActivity
+import com.yunmei.vibe.ui.util.NotificationDowngrade
 import com.yunmei.vibe.ui.theme.ThemeColors
 
 /**
@@ -237,7 +238,16 @@ object UnlockNotifications {
      * 与 InstallerX 一致：结束时取消 ongoing 并切到高优先级渠道，进度条随之为结果状态让位；
      * 小米设备附带超级岛的结果态参数（岛通知保持在同一渠道）。失败用错误色，成功用主色。
      */
-    fun result(context: Context, success: Boolean, text: String): Notification {
+    /**
+     * 结束态通知。[ongoing] = true 时先以常驻形态收尾（实况提升靠它维持），
+     * 延时降级时再以 [ongoing] = false 原地更新成可滑动的普通通知。
+     */
+    fun result(
+        context: Context,
+        success: Boolean,
+        text: String,
+        ongoing: Boolean = false,
+    ): Notification {
         val title = context.getString(if (success) R.string.unlock_success else R.string.unlock_failed)
         val accent = ThemeColors.accent(context)
         val islandSupported = MiIslandNotification.isSupported(context)
@@ -249,8 +259,8 @@ object UnlockNotifications {
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
             .setColor(if (success) accent.primary else accent.error)
-            .setAutoCancel(true)
-            .setOngoing(false)
+            .setAutoCancel(!ongoing)
+            .setOngoing(ongoing)
             .setOnlyAlertOnce(false)
             .setSilent(false)
         if (islandSupported) {
@@ -334,6 +344,7 @@ object UnlockNotifications {
         text: String,
         stage: Int,
         actions: List<Notification.Action> = emptyList(),
+        ongoing: Boolean = true,
     ): Notification {
         val accent = ThemeColors.accent(context)
         val percent = when (stage) {
@@ -366,8 +377,8 @@ object UnlockNotifications {
                 .setContentText(text)
                 .setContentIntent(openAppIntent(context))
                 .setColor(accent.error)
-                .setOngoing(true)
-                .setAutoCancel(false)
+                .setOngoing(ongoing)
+                .setAutoCancel(!ongoing)
                 .setOnlyAlertOnce(false)
                 .setProgress(PROGRESS_MAX, percent, false)
                 .setStyle(style)
@@ -385,8 +396,8 @@ object UnlockNotifications {
             .setContentText(text)
             .setContentIntent(openAppIntent(context))
             .setColor(accent.error)
-            .setOngoing(true)
-            .setAutoCancel(false)
+            .setOngoing(ongoing)
+            .setAutoCancel(!ongoing)
             .setOnlyAlertOnce(false)
             .setSilent(false)
             .setProgress(PROGRESS_MAX, percent, false)
@@ -454,6 +465,8 @@ object UnlockNotifications {
 
     private fun openAppIntent(context: Context): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
+            // 标记「从通知点进来」：主界面据此取消结束态的延时降级。
+            action = NotificationDowngrade.ACTION_FROM_NOTIFICATION
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         return PendingIntent.getActivity(

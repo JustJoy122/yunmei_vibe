@@ -1,6 +1,7 @@
 package com.yunmei.vibe.data.model
 
 import androidx.compose.runtime.Immutable
+import kotlinx.serialization.Serializable
 
 /**
  * 宿舍成员（官方「我的群组」列表项，接口 `dormuser/getbyloginuser`）。
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Immutable
  * `https://base.yunmeitech.com/headimg/<userId>.png`，所以 [userId] 必须保留原始字符串。
  */
 @Immutable
+@Serializable
 data class DormMember(
     /** 成员账号 id；官方用它拼头像地址 `headimg/<userId>.png`。 */
     val userId: String = "",
@@ -78,6 +80,7 @@ data class DormMember(
 
 /** 成员的人员信息（官方返回里的 `loginUserInfo` 对象）。 */
 @Immutable
+@Serializable
 data class LoginUserInfo(
     val id: String = "",
     val userId: String = "",

@@ -1,5 +1,6 @@
 package com.yunmei.vibe.data.local
 
+import com.yunmei.vibe.data.model.DormMember
 import com.yunmei.vibe.data.model.UserProfile
 import kotlinx.serialization.Serializable
 
@@ -104,10 +105,29 @@ class SessionStore(private val secureStore: SecureStore) {
     }
 
     /** 退出登录 / 注销账号：账号级、学校级会话与全部账号的档案快照一并作废。 */
+    /**
+     * 群组成员缓存。
+     *
+     * 成员是按「宿舍」划分的（同一宿舍的几把锁共用一份名单），所以键由学校 + 宿舍号拼成，
+     * 而不是按门锁 label——后者换锁/重装就会失效，前者在室友之间也是同一份数据。
+     * 读取返回 null 表示「从未缓存过」，空列表则是「确实没有人」。
+     */
+    fun loadDormMembers(key: String): List<DormMember>? {
+        if (key.isBlank()) return null
+        return secureStore.getJson(KEY_DORM_MEMBERS, emptyMap<String, List<DormMember>>())[key]
+    }
+
+    fun saveDormMembers(key: String, members: List<DormMember>) {
+        if (key.isBlank()) return
+        val all = secureStore.getJson(KEY_DORM_MEMBERS, emptyMap<String, List<DormMember>>())
+        secureStore.putJson(KEY_DORM_MEMBERS, all + (key to members))
+    }
+
     fun clearAll() {
         // SecureStore 没有「列键」能力，只能靠索引记住写过哪些账号。
         loadProfileKeys().forEach { md5 -> secureStore.putJson(profileKey(md5), EMPTY_PROFILE) }
         secureStore.putJson(KEY_PROFILE_INDEX, emptyList<String>())
+        secureStore.putJson(KEY_DORM_MEMBERS, emptyMap<String, List<DormMember>>())
         secureStore.putJson(KEY_PROFILE_LEGACY, EMPTY_PROFILE)
         clearSession()
         clearSchools()
@@ -139,6 +159,7 @@ class SessionStore(private val secureStore: SecureStore) {
 
         /** 旧版本的单一全局档案键，仅用于一次性迁移。 */
         const val KEY_PROFILE_LEGACY = "account_profile"
+    const val KEY_DORM_MEMBERS = "dorm_members_cache"
         val EMPTY_SESSION = StoredSession()
         val EMPTY_PROFILE = UserProfile()
     }

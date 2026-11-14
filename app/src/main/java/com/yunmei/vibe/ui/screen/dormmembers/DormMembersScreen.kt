@@ -176,6 +176,16 @@ private fun DormMembersMaterial(
                     .padding(innerPadding),
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
+                if (state.stale) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.dorm_members_stale),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        )
+                    }
+                }
                 if (state.members.isEmpty()) {
                     item {
                         CenterHint(Modifier.fillMaxWidth().padding(32.dp)) {
@@ -359,6 +369,15 @@ private fun DormMembersMiuix(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 overscrollEffect = null,
             ) {
+                if (state.stale) {
+                    item {
+                        MiuixText(
+                            text = stringResource(R.string.dorm_members_stale),
+                            fontSize = 12.sp,
+                            color = colorScheme.onSurfaceVariantSummary,
+                        )
+                    }
+                }
                 if (state.members.isEmpty()) {
                     item {
                         CenterHint(Modifier.fillMaxWidth().padding(32.dp)) {

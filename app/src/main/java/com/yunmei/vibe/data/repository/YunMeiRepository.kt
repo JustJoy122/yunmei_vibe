@@ -337,13 +337,31 @@ class YunMeiRepository(
                 )
             )
         }
-        enrichWithDormStudents(
+        val enriched = enrichWithDormStudents(
             members = members,
             lock = lock,
             school = school,
             userId = userId,
             serverUrl = serverUrl,
         )
+        // 网络结果落盘：下次进页面先显示这份缓存，再静默刷新。
+        withContext(Dispatchers.IO) { sessionStore.saveDormMembers(dormCacheKey(lock), enriched) }
+        enriched
+    }
+
+    /**
+     * 群组成员缓存键。
+     *
+     * 成员按宿舍划分（同宿舍多把锁共享一份名单），所以优先用 `dorm_<schoolNo>_<dormNo>`；
+     * 没存宿舍号的锁（扫码/链接导入的历史数据）退化成按 label 缓存，避免互相覆盖。
+     */
+    private fun dormCacheKey(lock: Lock): String =
+        if (lock.dormNo.isNotBlank()) "dorm_" + lock.schoolNo + "_" + lock.dormNo
+        else "dorm_lock_" + lock.label
+
+    /** 读到 nil 表示从未缓存；空列表是「确实没人」，两者要给不同 UI。 */
+    suspend fun cachedDormMembers(lock: Lock): List<DormMember>? = withContext(Dispatchers.IO) {
+        sessionStore.loadDormMembers(dormCacheKey(lock))
     }
 
     /**

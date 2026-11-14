@@ -50,6 +50,7 @@
     <string name="dorm_members_save_contact">保存到通讯录</string>
     <string name="dorm_members_action_failed">没有可以处理该操作的应用</string>
     <string name="dorm_members_empty">暂无成员</string>
+    <string name="dorm_members_stale">刷新名单失败，已展示本地记录</string>
     <string name="dorm_members_failed">成员加载失败</string>
     <string name="dorm_members_lock_missing">门锁不存在，请返回重试</string>
     <string name="dorm_members_retry">重试</string>

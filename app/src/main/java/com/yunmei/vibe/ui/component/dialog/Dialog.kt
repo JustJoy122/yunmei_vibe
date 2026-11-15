@@ -204,6 +204,10 @@ private class ConfirmDialogHandleImpl(
             resultFlow
                 .consumeAsFlow()
                 .onEach { result ->
+                    // 先同步收起，再唤醒等待者：等待者被唤醒后会立刻发起下一次 showConfirm，
+                    // 若收起动作是异步 launch（hide() 的实现），可能晚于下一次 show 执行，
+                    // 把刚弹出的下一级对话框又盖掉。连续多级确认（如门锁的危险开关）依赖这个顺序。
+                    visible.value = false
                     awaitContinuation?.let {
                         awaitContinuation = null
                         if (it.isActive) {
@@ -211,7 +215,6 @@ private class ConfirmDialogHandleImpl(
                         }
                     }
                 }
-                .onEach { hide() }
                 .collect(resultCollector)
         }
     }

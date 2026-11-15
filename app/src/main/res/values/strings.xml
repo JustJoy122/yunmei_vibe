@@ -414,11 +414,19 @@
     <string name="profile_destroy_account">注销账号</string>
     <string name="profile_destroy_account_summary">永久删除账号与门锁绑定，不可恢复</string>
     <string name="profile_destroy_account_confirm_title">注销账号</string>
-    <string name="profile_destroy_account_confirm_content">注销后账号、门锁绑定与开门记录都会永久删除，且无法恢复。确定继续吗？</string>
+    <string name="profile_destroy_account_confirm_content">注销后将清空所有本地数据并退出登录，是否继续？</string>
     <string name="profile_destroy_confirm">注销</string>
     <string name="profile_destroy_cancel">取消</string>
     <string name="profile_destroying">注销中…</string>
+    <string name="profile_remove_account_confirm_title">移除账号</string>
+    <string name="profile_remove_account_confirm_content">确定要移除该账号吗？此操作不会注销云端账号，仅清理本地数据。</string>
+    <string name="profile_remove_account_confirm">移除</string>
     <string name="profile_destroy_failed">注销失败：%1$s</string>
+    <string name="profile_destroy_continue">继续</string>
+    <string name="profile_destroy_final_title">最后确认</string>
+    <string name="profile_destroy_final_content">此操作完全不可逆，账号一旦注销将无法恢复！真的要注销吗？</string>
+    <string name="profile_destroy_final_confirm">立即注销</string>
+    <string name="profile_destroy_final_abort">放弃</string>
 
     <string name="reset_password_title">重设密码</string>
     <string name="reset_password_tel">手机号</string>

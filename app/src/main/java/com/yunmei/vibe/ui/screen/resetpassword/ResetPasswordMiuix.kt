@@ -1,6 +1,7 @@
 package com.yunmei.vibe.ui.screen.resetpassword
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -29,6 +31,8 @@ import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -91,33 +95,48 @@ fun ResetPasswordMiuix(state: ResetPasswordUiState, actions: ResetPasswordAction
                     onValueChange = {},
                     enabled = false,
                 )
-                EditText(
-                    title = stringResource(R.string.reset_password_code),
-                    value = state.code,
-                    onValueChange = actions.onCodeChange,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                )
-                BasicComponent(
-                    title = if (state.countdown > 0) {
-                        stringResource(R.string.reset_password_resend, state.countdown)
-                    } else {
-                        stringResource(R.string.reset_password_get_code)
-                    },
-                    enabled = state.canSendCode,
-                    onClick = actions.onSendCode,
-                )
-                EditText(
-                    title = stringResource(R.string.reset_password_new_password),
-                    value = state.password,
-                    onValueChange = actions.onPasswordChange,
-                    summary = stringResource(R.string.reset_password_rule),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = if (state.showPassword) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                )
+                // 验证码与「获取验证码」同一行：输入区占满剩余宽度，按钮固定在右侧。
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    EditText(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(R.string.reset_password_code),
+                        value = state.code,
+                        onValueChange = actions.onCodeChange,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    )
+                    MiuixTextButton(
+                        text = if (state.countdown > 0) {
+                            stringResource(R.string.reset_password_resend, state.countdown)
+                        } else {
+                            stringResource(R.string.reset_password_get_code)
+                        },
+                        onClick = actions.onSendCode,
+                        enabled = state.canSendCode,
+                    )
+                }
+                // 密码规则单独一行小字，避免挤在输入框里。
+                Column {
+                    EditText(
+                        title = stringResource(R.string.reset_password_new_password),
+                        value = state.password,
+                        onValueChange = actions.onPasswordChange,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        visualTransformation = if (state.showPassword) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                    )
+                    Text(
+                        text = stringResource(R.string.reset_password_rule),
+                        fontSize = MiuixTheme.textStyles.footnote1.fontSize,
+                        color = colorScheme.onSurfaceVariantSummary,
+                        modifier = Modifier.padding(start = 16.dp, top = 2.dp, end = 16.dp, bottom = 8.dp),
+                    )
+                }
                 SwitchPreference(
                     title = stringResource(R.string.reset_password_show),
                     checked = state.showPassword,

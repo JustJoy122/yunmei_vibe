@@ -37,7 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +49,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.local.StoredUser
+import com.yunmei.vibe.ui.component.dialog.ConfirmResult
+import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import top.yukonga.miuix.kmp.preference.ArrowPreference
@@ -71,6 +73,7 @@ import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import kotlinx.coroutines.launch
 
 /**
  * 个人中心：只读展示本人档案 + 本机账号管理。
@@ -88,18 +91,53 @@ fun ProfileScreen(
     val viewModel = viewModel<ProfileViewModel>()
     viewModel.load()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var showDestroyDialog by rememberSaveable { mutableStateOf(false) }
+    // 删除本机账号同样需要二次确认：先把待删账号挂起，确认后再交给 ViewModel。
+    var pendingRemove by remember { mutableStateOf<StoredUser?>(null) }
+    val confirmDialog = rememberConfirmDialog()
+    val scope = rememberCoroutineScope()
     val destroyTitle = stringResource(R.string.profile_destroy_account_confirm_title)
     val destroyContent = stringResource(R.string.profile_destroy_account_confirm_content)
-    val actions = remember(viewModel, onBack, onAddAccount, onResetPassword) {
+    val destroyContinue = stringResource(R.string.profile_destroy_continue)
+    val destroyCancel = stringResource(R.string.profile_destroy_cancel)
+    val destroyFinalTitle = stringResource(R.string.profile_destroy_final_title)
+    val destroyFinalContent = stringResource(R.string.profile_destroy_final_content)
+    val destroyFinalConfirm = stringResource(R.string.profile_destroy_final_confirm)
+    val destroyFinalAbort = stringResource(R.string.profile_destroy_final_abort)
+    val actions = remember(
+        viewModel,
+        onBack,
+        onAddAccount,
+        onResetPassword,
+        confirmDialog,
+        scope,
+    ) {
         ProfileActions(
             onBack = onBack,
             onAddAccount = onAddAccount,
             onSwitchAccount = viewModel::switchAccount,
-            onRemoveAccount = viewModel::removeAccount,
+            onRemoveAccount = { account -> pendingRemove = account },
             onRetry = viewModel::refresh,
             onResetPassword = onResetPassword,
-            onDestroyAccount = { showDestroyDialog = true },
+            onDestroyAccount = {
+                // 注销不可逆：先标准警告，再红字强警告，两层都确认才真正执行。
+                scope.launch {
+                    val first = confirmDialog.awaitConfirm(
+                        title = destroyTitle,
+                        content = destroyContent,
+                        confirm = destroyContinue,
+                        dismiss = destroyCancel,
+                    )
+                    if (first != ConfirmResult.Confirmed) return@launch
+                    val second = confirmDialog.awaitConfirm(
+                        title = destroyFinalTitle,
+                        content = destroyFinalContent,
+                        confirm = destroyFinalConfirm,
+                        dismiss = destroyFinalAbort,
+                    )
+                    if (second != ConfirmResult.Confirmed) return@launch
+                    viewModel.destroyAccount()
+                }
+            },
         )
     }
 
@@ -113,16 +151,14 @@ fun ProfileScreen(
         UiMode.Miuix -> ProfileScreenMiuix(state, actions)
     }
 
-    DestroyAccountDialog(
-        show = showDestroyDialog,
-        destroying = state.destroying,
-        title = destroyTitle,
-        content = destroyContent,
+    RemoveAccountDialog(
+        account = pendingRemove,
         onConfirm = {
-            showDestroyDialog = false
-            viewModel.destroyAccount()
+            val target = pendingRemove
+            pendingRemove = null
+            if (target != null) viewModel.removeAccount(target)
         },
-        onDismiss = { showDestroyDialog = false },
+        onDismiss = { pendingRemove = null },
     )
 }
 
@@ -569,34 +605,35 @@ private fun ProfileSecurityGroupMiuix(state: ProfileUiState, actions: ProfileAct
 }
 
 /**
- * 注销确认框：不可逆操作，确认键用错误色，Miuix 侧同理。
+ * 删除本机账号的二次确认框。
  *
- * 两套主题各自渲染（Material 用 material3 `AlertDialog`，Miuix 用 `OverlayDialog` + 红色 `TextButton`），
- * 逻辑只在这里收敛一次。
+ * 与注销账号的区别要写清楚：只清理本地列表，不会注销云端账号。
  */
 @Composable
-private fun DestroyAccountDialog(
-    show: Boolean,
-    destroying: Boolean,
-    title: String,
-    content: String,
+private fun RemoveAccountDialog(
+    account: StoredUser?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val title = stringResource(R.string.profile_remove_account_confirm_title)
+    val content = stringResource(R.string.profile_remove_account_confirm_content)
     when (LocalUiMode.current) {
         UiMode.Material -> {
-            if (!show) return
+            if (account == null) return
             val colorScheme = MaterialTheme.colorScheme
             AlertDialog(
                 onDismissRequest = onDismiss,
                 title = { Text(title) },
-                text = { Text(content) },
+                text = {
+                    Text(
+                        text = content,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                },
                 confirmButton = {
-                    TextButton(onClick = onConfirm, enabled = !destroying) {
+                    TextButton(onClick = onConfirm) {
                         Text(
-                            text = stringResource(
-                                if (destroying) R.string.profile_destroying else R.string.profile_destroy_confirm
-                            ),
+                            text = stringResource(R.string.profile_remove_account_confirm),
                             color = colorScheme.error,
                         )
                     }
@@ -606,15 +643,13 @@ private fun DestroyAccountDialog(
                         Text(stringResource(R.string.profile_destroy_cancel))
                     }
                 },
-                containerColor = colorScheme.surfaceContainerHigh,
-                shape = MaterialTheme.shapes.extraLarge,
             )
         }
 
         UiMode.Miuix -> {
             val colorScheme = MiuixTheme.colorScheme
             OverlayDialog(
-                show = show,
+                show = account != null,
                 title = title,
                 summary = content,
                 onDismissRequest = onDismiss,
@@ -630,11 +665,8 @@ private fun DestroyAccountDialog(
                         onClick = onDismiss,
                     )
                     MiuixTextButton(
-                        text = stringResource(
-                            if (destroying) R.string.profile_destroying else R.string.profile_destroy_confirm
-                        ),
+                        text = stringResource(R.string.profile_remove_account_confirm),
                         onClick = onConfirm,
-                        enabled = !destroying,
                         colors = ButtonDefaults.textButtonColors(
                             color = colorScheme.error,
                             textColor = colorScheme.onError,
@@ -645,4 +677,3 @@ private fun DestroyAccountDialog(
         }
     }
 }
-

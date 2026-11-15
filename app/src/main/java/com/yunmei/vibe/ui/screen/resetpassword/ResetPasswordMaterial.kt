@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -14,15 +16,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Sms
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -106,44 +109,56 @@ fun ResetPasswordMaterial(state: ResetPasswordUiState, actions: ResetPasswordAct
                         )
                     },
                     {
-                        SegmentedTextField(
-                            label = stringResource(R.string.reset_password_code),
-                            value = state.code,
-                            onValueChange = actions.onCodeChange,
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        )
-                    },
-                    {
-                        SegmentedListItem(
-                            onClick = actions.onSendCode,
-                            enabled = state.canSendCode,
-                            headlineContent = {
+                        // 验证码与「获取验证码」同一行：输入区占满剩余宽度，按钮固定在右侧。
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            SegmentedTextField(
+                                modifier = Modifier.weight(1f),
+                                label = stringResource(R.string.reset_password_code),
+                                value = state.code,
+                                onValueChange = actions.onCodeChange,
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            )
+                            TextButton(
+                                onClick = actions.onSendCode,
+                                enabled = state.canSendCode,
+                            ) {
                                 Text(
                                     text = if (state.countdown > 0) {
                                         stringResource(R.string.reset_password_resend, state.countdown)
                                     } else {
                                         stringResource(R.string.reset_password_get_code)
-                                    }
+                                    },
+                                    style = MaterialTheme.typography.labelLarge,
                                 )
-                            },
-                            leadingContent = { Icon(Icons.Rounded.Sms, null) },
-                        )
+                            }
+                        }
                     },
                     {
-                        SegmentedTextField(
-                            label = stringResource(R.string.reset_password_new_password),
-                            value = state.password,
-                            onValueChange = actions.onPasswordChange,
-                            singleLine = true,
-                            supportingContent = { Text(stringResource(R.string.reset_password_rule)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                            visualTransformation = if (state.showPassword) {
-                                VisualTransformation.None
-                            } else {
-                                PasswordVisualTransformation()
-                            },
-                        )
+                        // 密码规则单独一行小字，避免挤在输入框里。
+                        Column {
+                            SegmentedTextField(
+                                label = stringResource(R.string.reset_password_new_password),
+                                value = state.password,
+                                onValueChange = actions.onPasswordChange,
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                visualTransformation = if (state.showPassword) {
+                                    VisualTransformation.None
+                                } else {
+                                    PasswordVisualTransformation()
+                                },
+                            )
+                            Text(
+                                text = stringResource(R.string.reset_password_rule),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp),
+                            )
+                        }
                     },
                     {
                         SegmentedCheckboxItem(

@@ -376,6 +376,7 @@
     <string name="about_service_agreement">服务协议</string>
     <string name="about_privacy_policy">隐私政策</string>
     <string name="about_service_agreement_summary">前往云莓智能官方查看</string>
+    <string name="about_icp_notice">数据来源于官方服务 · 浙ICP备 19003558号-4X</string>
     <string name="about_privacy_policy_summary">前往云莓智能官方查看</string>
     <string name="unlock_sign_status_signed">已打卡 %1$s</string>
     <string name="unlock_sign_status_unsigned">未打卡</string>

@@ -495,6 +495,16 @@ private fun AboutContent(
                             onClick = actions.onOpenPrivacyPolicy,
                         )
                     }
+                    // 备案号：声明数据与官方服务同源，页面最底部，次要色 + 12sp。
+                    Text(
+                        text = stringResource(R.string.about_icp_notice),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 8.dp),
+                        color = textSecondary,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                    )
                     Spacer(
                         Modifier.height(
                             WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +

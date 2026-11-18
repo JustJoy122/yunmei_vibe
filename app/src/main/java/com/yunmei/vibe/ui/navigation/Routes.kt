@@ -76,4 +76,9 @@ sealed interface Route : NavKey, Parcelable {
     @Parcelize
     @Serializable
     data object ResetPassword : Route
+
+    /** 换绑手机号（个人中心「账号安全」入口）。 */
+    @Parcelize
+    @Serializable
+    data object ChangePhone : Route
 }

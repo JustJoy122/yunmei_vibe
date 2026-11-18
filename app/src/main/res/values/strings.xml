@@ -445,4 +445,26 @@
     <string name="reset_password_invalid_password">密码需 8-16 位，且同时包含大写字母、小写字母和数字</string>
     <string name="reset_password_success">密码已修改</string>
     <string name="reset_password_failed">修改失败：%1$s</string>
+    <string name="profile_change_phone">换绑手机号</string>
+    <string name="profile_change_phone_summary">用短信验证码更换绑定号码</string>
+    <string name="change_phone_title">换绑手机号</string>
+    <string name="change_phone_current_tel">当前手机号</string>
+    <string name="change_phone_current_tel_missing">未绑定手机号</string>
+    <string name="change_phone_new_tel">新手机号</string>
+    <string name="change_phone_code">验证码</string>
+    <string name="change_phone_get_code">获取验证码</string>
+    <string name="change_phone_resend">%1$d 秒后重新获取</string>
+    <string name="change_phone_submit">确认换绑</string>
+    <string name="change_phone_submitting">提交中…</string>
+    <string name="change_phone_notice">为了保护账号安全，换绑成功后需重新登录。</string>
+    <string name="change_phone_invalid_tel">请输入正确的手机号</string>
+    <string name="change_phone_same_tel">新手机号不能与当前手机号相同</string>
+    <string name="change_phone_missing_code">请输入短信验证码</string>
+    <string name="change_phone_code_sent">验证码已发送</string>
+    <string name="change_phone_code_failed">验证码发送失败：%1$s</string>
+    <string name="change_phone_success">手机号已换绑，请重新登录</string>
+    <string name="change_phone_failed">换绑失败：%1$s</string>
+    <string name="profile_avatar_change">更换头像</string>
+    <string name="profile_avatar_unreadable">无法读取这张图片，换一张试试</string>
+    <string name="profile_avatar_upload_failed">头像上传失败：%1$s</string>
 </resources>

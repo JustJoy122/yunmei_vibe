@@ -41,6 +41,9 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.Locale
 
 /** 业务异常基类。 */
@@ -821,6 +824,73 @@ class YunMeiRepository(
      */
     suspend fun resetPassword(tel: String, code: String, newPassword: String): ApiMessage = withBaseAuth { api ->
         api.resetPassword(tel, code, Md5.hex(newPassword))
+    }
+
+    /**
+     * 换绑手机号（基础服务，官方 `loginuser/changetel`）。
+     *
+     * 官方只校验新号 + 短信验证码，不校验旧号也不校验密码，所以这里不做二次加固，
+     * 只负责「调接口 → 失败即抛 → 成功则把本机残留的旧身份清干净」：
+     * ①本机档案快照里的手机号改成新号；
+     * ②登录名恰好就是旧手机号时，账号表条目也要换成新号，否则重新登录会拿着已失效的旧号；
+     * ③整体清掉会话（token、学校凭据、档案缓存），让用户用新号重新登录重新认证。
+     */
+    suspend fun changePhone(tel: String, code: String): Boolean {
+        val response = withBaseAuth { api -> api.changePhone(tel, code) }
+        if (!response.success) {
+            throw YunMeiException(
+                response.msg?.takeIf { it.isNotBlank() }
+                    ?: appContext.getString(R.string.change_phone_failed, "")
+            )
+        }
+        withContext(Dispatchers.IO) {
+            val oldMd5 = usernameMd5
+            val oldUsername = username
+            val oldTel = sessionStore.loadSession()?.userTel.orEmpty()
+            if (!oldMd5.isNullOrBlank()) {
+                sessionStore.loadProfile(oldMd5)?.let { profile ->
+                    sessionStore.saveProfile(oldMd5, profile.copy(userTel = tel))
+                }
+            }
+            if (!oldUsername.isNullOrBlank() && oldTel.isNotBlank() && oldUsername == oldTel) {
+                val migrated = accountStore.getAll().map { user ->
+                    if (user.username == oldUsername) {
+                        user.copy(username = tel, usernameMd5 = Md5.hex(tel))
+                    } else {
+                        user
+                    }
+                }
+                accountStore.replaceAll(migrated)
+            }
+        }
+        // 会话里还留着旧号的 token 与学校凭据，必须整体清掉，回到未登录态重新认证。
+        clearSession()
+        return true
+    }
+
+    /**
+     * 上传头像（基础服务，官方 `loginuser/uploadheadimg`）。
+     *
+     * 官方是「直接 multipart 覆盖」，不是「先上传拿 URL 再保存」：服务端按 userId 渲染固定地址
+     * `headimg/<userId>.png`，所以成功后本地只要换个带版本号的地址重新拉一次即可。
+     *
+     * [bytes] 是已裁成正方形并压缩好的 JPEG 字节。
+     */
+    suspend fun uploadAvatar(bytes: ByteArray): Boolean {
+        val filePart = MultipartBody.Part.createFormData(
+            name = "headImg",
+            filename = "headImg.jpg",
+            body = bytes.toRequestBody("image/jpeg".toMediaType()),
+        )
+        val userIdPart = requireUserId().toRequestBody("text/plain".toMediaType())
+        val response = withBaseAuth { api -> api.uploadHeadImg(filePart, userIdPart) }
+        if (!response.success) {
+            throw YunMeiException(
+                response.msg?.takeIf { it.isNotBlank() }
+                    ?: appContext.getString(R.string.profile_avatar_upload_failed, "")
+            )
+        }
+        return true
     }
 
     /**

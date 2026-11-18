@@ -82,6 +82,7 @@ import com.yunmei.vibe.ui.screen.home.HomePager
 import com.yunmei.vibe.ui.screen.license.LicenseScreen
 import com.yunmei.vibe.ui.screen.locks.LocksPager
 import com.yunmei.vibe.ui.screen.login.LoginScreen
+import com.yunmei.vibe.ui.screen.changephone.ChangePhoneScreen
 import com.yunmei.vibe.ui.screen.dormmembers.DormMembersScreen
 import com.yunmei.vibe.ui.screen.lockdetail.LockDetailScreen
 import com.yunmei.vibe.ui.screen.profile.ProfileScreen
@@ -381,6 +382,7 @@ class MainActivity : ComponentActivity() {
                                         onBack = navOnBack,
                                         onAddAccount = { navigator.push(Route.Login) },
                                         onResetPassword = { navigator.push(Route.ResetPassword) },
+                                        onChangePhone = { navigator.push(Route.ChangePhone) },
                                         onAccountDestroyed = {
                                             navigator.replaceAll(listOf(Route.Login))
                                         },
@@ -390,6 +392,12 @@ class MainActivity : ComponentActivity() {
                             entry<Route.ResetPassword>(swipeDismiss = swipeBackDirection) {
                                 InstallerNavEntry(interceptPredictiveBack, navOnBack) {
                                     ResetPasswordScreen()
+                                }
+                            }
+                            entry<Route.ChangePhone>(swipeDismiss = swipeBackDirection) {
+                                InstallerNavEntry(interceptPredictiveBack, navOnBack) {
+                                    // 换绑成功后会话已被清空，直接回登录页重新认证，不做 pop。
+                                    ChangePhoneScreen(onChanged = { navigator.replaceAll(listOf(Route.Login)) })
                                 }
                             }
                         }

@@ -5,7 +5,11 @@ import com.yunmei.vibe.data.model.LoginResponse
 import com.yunmei.vibe.data.model.SchoolEntry
 import kotlinx.serialization.json.JsonElement
 import retrofit2.http.Field
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.FormUrlEncoded
+import retrofit2.http.Multipart
+import retrofit2.http.Part
 import retrofit2.http.POST
 
 /**
@@ -185,4 +189,30 @@ interface YunMeiApi {
     @FormUrlEncoded
     @POST("loginuser/destroyAccount")
     suspend fun destroyAccount(@Field("userId") userId: String): ApiMessage
+
+    /**
+     * 换绑手机号（基础服务，官方 `loginuser/changetel`）。
+     *
+     * 只传新号码与短信验证码；官方不校验旧号，也不校验密码。
+     */
+    @FormUrlEncoded
+    @POST("loginuser/changetel")
+    suspend fun changePhone(
+        @Field("tel") tel: String,
+        @Field("validCode") validCode: String,
+    ): ApiMessage
+
+    /**
+     * 上传头像（基础服务，官方 `loginuser/uploadheadimg`，multipart/form-data）。
+     *
+     * 官方前端（`uni.uploadFile`）的写法：文件字段名固定为 `headImg`，表单另外带一个 `userId`。
+     * 上传成功后服务端把图片渲染成固定地址 `headimg/<userId>.png`，客户端只需换个带版本号的
+     * URL 重新拉取即可，不需要额外的「保存头像」接口。
+     */
+    @Multipart
+    @POST("loginuser/uploadheadimg")
+    suspend fun uploadHeadImg(
+        @Part headImg: MultipartBody.Part,
+        @Part("userId") userId: RequestBody,
+    ): ApiMessage
 }

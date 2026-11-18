@@ -7,4 +7,9 @@
     -->
     <color name="ic_launcher_background">@android:color/system_accent1_100</color>
     <color name="ic_launcher_foreground">@android:color/system_neutral2_700</color>
+
+    <!-- Android 12+ 亮色：快捷方式图标跟随系统壁纸取色（与主图标同一套映射）。 -->
+    <color name="ic_shortcut_background">@android:color/system_accent1_100</color>
+    <color name="ic_shortcut_foreground">@android:color/system_neutral2_700</color>
+
 </resources>

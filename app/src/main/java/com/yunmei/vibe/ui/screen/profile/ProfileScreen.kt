@@ -1,5 +1,10 @@
 package com.yunmei.vibe.ui.screen.profile
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,6 +26,8 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.Phone
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material3.AlertDialog
@@ -40,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +64,7 @@ import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import com.yunmei.vibe.ui.component.profile.AvatarPickerMenu
 import com.yunmei.vibe.ui.component.profile.ProfileAvatar
 import com.yunmei.vibe.ui.UiMode
 import com.yunmei.vibe.ui.LocalUiMode
@@ -86,6 +95,7 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onAddAccount: () -> Unit,
     onResetPassword: () -> Unit,
+    onChangePhone: () -> Unit,
     onAccountDestroyed: () -> Unit,
 ) {
     val viewModel = viewModel<ProfileViewModel>()
@@ -93,6 +103,8 @@ fun ProfileScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // 删除本机账号同样需要二次确认：先把待删账号挂起，确认后再交给 ViewModel。
     var pendingRemove by remember { mutableStateOf<StoredUser?>(null) }
+    // 换头像的来源菜单（拍照 / 相册）。
+    var showAvatarMenu by remember { mutableStateOf(false) }
     val confirmDialog = rememberConfirmDialog()
     val scope = rememberCoroutineScope()
     val destroyTitle = stringResource(R.string.profile_destroy_account_confirm_title)
@@ -108,6 +120,7 @@ fun ProfileScreen(
         onBack,
         onAddAccount,
         onResetPassword,
+        onChangePhone,
         confirmDialog,
         scope,
     ) {
@@ -118,6 +131,8 @@ fun ProfileScreen(
             onRemoveAccount = { account -> pendingRemove = account },
             onRetry = viewModel::refresh,
             onResetPassword = onResetPassword,
+            onChangePhone = onChangePhone,
+            onEditAvatar = { showAvatarMenu = true },
             onDestroyAccount = {
                 // 注销不可逆：先标准警告，再红字强警告，两层都确认才真正执行。
                 scope.launch {
@@ -150,6 +165,19 @@ fun ProfileScreen(
         UiMode.Material -> ProfileScreenMaterial(state, actions)
         UiMode.Miuix -> ProfileScreenMiuix(state, actions)
     }
+
+    AvatarPickerMenu(
+        show = showAvatarMenu,
+        onDismissRequest = { showAvatarMenu = false },
+        onPicked = { bytes ->
+            showAvatarMenu = false
+            viewModel.uploadAvatar(bytes)
+        },
+        onError = { message ->
+            showAvatarMenu = false
+            viewModel.onAvatarPickedFailed(message)
+        },
+    )
 
     RemoveAccountDialog(
         account = pendingRemove,
@@ -206,6 +234,7 @@ private fun ProfileScreenMaterial(state: ProfileUiState, actions: ProfileActions
                 name = state.displayName,
                 containerColor = colorScheme.primaryContainer,
                 contentColor = colorScheme.onPrimaryContainer,
+                onEditAvatar = actions.onEditAvatar,
             )
 
             if (state.error != null) {
@@ -278,6 +307,7 @@ private fun ProfileScreenMiuix(state: ProfileUiState, actions: ProfileActions) {
                 name = state.displayName,
                 containerColor = colorScheme.primaryContainer,
                 contentColor = colorScheme.onPrimaryContainer,
+                onEditAvatar = actions.onEditAvatar,
             )
 
             if (state.error != null) {
@@ -320,19 +350,40 @@ private fun ProfileIdentity(
     name: String,
     containerColor: androidx.compose.ui.graphics.Color,
     contentColor: androidx.compose.ui.graphics.Color,
+    onEditAvatar: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ProfileAvatar(
-            url = avatarUrl,
-            fallback = name,
-            size = 80.dp,
-            containerColor = containerColor,
-            contentColor = contentColor,
-            fontSize = 32,
-        )
+        // 头像 + 右下角编辑角标：角标底色取主题主色，保证叠在任何头像上都看得清。
+        Box {
+            ProfileAvatar(
+                url = avatarUrl,
+                fallback = name,
+                size = 80.dp,
+                containerColor = containerColor,
+                contentColor = contentColor,
+                fontSize = 32,
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 2.dp, y = 2.dp)
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable(onClick = onEditAvatar),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.PhotoCamera,
+                    contentDescription = stringResource(R.string.profile_avatar_change),
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = name.ifBlank { stringResource(R.string.profile_account_entry) },
@@ -555,6 +606,14 @@ private fun ProfileSecurityGroupMaterial(state: ProfileUiState, actions: Profile
             },
             {
                 SegmentedListItem(
+                    onClick = actions.onChangePhone,
+                    headlineContent = { Text(stringResource(R.string.profile_change_phone)) },
+                    supportingContent = { Text(stringResource(R.string.profile_change_phone_summary)) },
+                    leadingContent = { Icon(Icons.Rounded.Phone, null) },
+                )
+            },
+            {
+                SegmentedListItem(
                     onClick = actions.onDestroyAccount,
                     enabled = !state.destroying,
                     headlineContent = {
@@ -593,6 +652,11 @@ private fun ProfileSecurityGroupMiuix(state: ProfileUiState, actions: ProfileAct
                 title = stringResource(R.string.profile_reset_password),
                 summary = stringResource(R.string.profile_reset_password_summary),
                 onClick = actions.onResetPassword,
+            )
+            ArrowPreference(
+                title = stringResource(R.string.profile_change_phone),
+                summary = stringResource(R.string.profile_change_phone_summary),
+                onClick = actions.onChangePhone,
             )
             ArrowPreference(
                 title = stringResource(R.string.profile_destroy_account),

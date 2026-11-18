@@ -15,8 +15,8 @@ import java.util.UUID
  * 「打卡」动态快捷方式。
  *
  * 与「开门」快捷方式是同构实现（同一个可用性判据：是否存在默认门锁）。
- * 图标使用彩色品牌图标 drawable/ic_shortcut_check_in.xml（主 Logo 配色 + 打卡主体），
- * 不依赖主题反色，因此这里不需要任何深色模式逻辑。
+ * 图标使用 drawable/ic_shortcut_check_in_dynamic.xml：底色/主体色引用 @color/ic_shortcut_*，
+ * 由 values-v31 / values-night-v31 映射到系统动态色，低版本回退品牌固定色。
  */
 object SignShortcut {
 
@@ -71,8 +71,8 @@ object SignShortcut {
         return ShortcutInfoCompat.Builder(context, ID)
             .setShortLabel(context.getString(R.string.shortcut_sign_short))
             .setLongLabel(context.getString(R.string.shortcut_sign_long))
-            // 彩色品牌图标：主 Logo 配色（#D4E3FF 底 + #004784 主体）+ 打卡主体。
-            .setIcon(IconCompat.createWithResource(context, R.drawable.ic_shortcut_check_in))
+            // 图标配色引用资源，跟随系统壁纸取色（与主应用图标同一套映射）。
+            .setIcon(IconCompat.createWithResource(context, R.drawable.ic_shortcut_check_in_dynamic))
             .setIntent(intent)
             .setRank(0)
             .build()

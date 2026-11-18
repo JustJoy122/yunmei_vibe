@@ -8,8 +8,10 @@
   Apache-2.0），仅把 Compose 的 path 指令逐条转换为 Android 矢量 pathData，形状未做改动；
   缩放 2.625 并居中（约占画布 58%）。
 
-  说明：捷径图标由启动器绘制、无法跟随应用主题，因此这里用固定品牌色，浅色与深色模式下都清晰；
-  不再依赖主题反色（原先的 light/dark 两套单色剪影已移除）。
+  说明：底色与主体色不再写死，改为引用 @color/ic_shortcut_background 与 @color/ic_shortcut_foreground；
+  这两个颜色在 values/ 里是品牌固定色（API 26~30 回退），在 values-v31/ 与 values-night-v31/ 里
+  映射到系统壁纸动态色（system_accent1_* / system_neutral*），与主应用图标同一套取色规则。
+  捷径图标由启动器用自己的 Resources 配置加载，因此亮/暗模式下会自动取到对应档位的颜色。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
@@ -17,7 +19,7 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#FFD4E3FF"
+        android:fillColor="@color/ic_shortcut_background"
         android:pathData="M30,6 H78 A24,24 0 0 1 102,30 V78 A24,24 0 0 1 78,102 H30 A24,24 0 0 1 6,78 V30 A24,24 0 0 1 30,6 Z" />
     <group
         android:scaleX="2.625"
@@ -25,7 +27,7 @@
         android:translateX="22.5"
         android:translateY="22.5">
         <path
-            android:fillColor="#FF004784"
+            android:fillColor="@color/ic_shortcut_foreground"
             android:pathData="M12.0,2.0 c-4.2,0.0,-8.0,3.22,-8.0,8.2 c0.0,3.18,2.45,6.92,7.34,11.23 c0.38,0.33,0.95,0.33,1.33,0.0 C17.55,17.12,20.0,13.38,20.0,10.2 C20.0,5.22,16.2,2.0,12.0,2.0 Z M10.23,12.66 l-1.41,-1.41 c-0.39,-0.39,-0.39,-1.02,0.0,-1.41 l0.0,0.0 c0.39,-0.39,1.02,-0.39,1.41,0.0 l0.71,0.71 l2.83,-2.83 c0.39,-0.39,1.02,-0.39,1.41,0.0 l0.0,0.0 c0.39,0.39,0.39,1.02,0.0,1.41 l-3.54,3.54 C11.26,13.05,10.62,13.05,10.23,12.66 Z" />
     </group>
 </vector>

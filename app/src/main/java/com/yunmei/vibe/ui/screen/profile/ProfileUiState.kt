@@ -30,6 +30,15 @@ data class ProfileUiState(
     val destroying: Boolean = false,
     /** 注销成功：页面观察该标记跳回登录页。 */
     val destroyed: Boolean = false,
+    /** 头像上传中：界面据此禁用入口，避免重复提交。 */
+    val uploadingAvatar: Boolean = false,
+    /**
+     * 头像版本号。
+     *
+     * 头像是服务端固定路径 `headimg/<userId>.png`，同名文件会被本地内存缓存与磁盘缓存拦住，
+     * 所以上传成功后把时间戳拼进 URL，强制换一个缓存键重新下载。
+     */
+    val avatarVersion: Long = 0L,
 ) {
     /** 姓名：接口 > 会话缓存 > 账号手机号。 */
     val displayName: String
@@ -55,10 +64,13 @@ data class ProfileUiState(
      * 都没有才返回空串（界面显示姓名首字）。
      */
     val avatarUrl: String
-        get() = profile?.avatarUrl?.takeIf { it.isNotBlank() }
-            ?: cachedUserId.takeIf { it.isNotBlank() }
-                ?.let { UserProfile.HEADIMG_BASE + it + ".png" }
-                .orEmpty()
+        get() {
+            val base = profile?.avatarUrl?.takeIf { it.isNotBlank() }
+                ?: cachedUserId.takeIf { it.isNotBlank() }
+                    ?.let { UserProfile.HEADIMG_BASE + it + ".png" }
+                    .orEmpty()
+            return if (base.isBlank() || avatarVersion == 0L) base else base + "?v=" + avatarVersion
+        }
 }
 
 @Immutable
@@ -71,6 +83,10 @@ data class ProfileActions(
     val onRetry: () -> Unit,
     /** 进入「重设密码」二级页。 */
     val onResetPassword: () -> Unit,
+    /** 进入「换绑手机号」二级页。 */
+    val onChangePhone: () -> Unit,
+    /** 点头像右下角的编辑角标：弹出「拍照 / 从相册选择」。 */
+    val onEditAvatar: () -> Unit,
     /** 已确认注销：调用接口并清理本地数据。 */
     val onDestroyAccount: () -> Unit,
 )

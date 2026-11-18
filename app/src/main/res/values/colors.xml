@@ -18,4 +18,9 @@
     <color name="ic_launcher_background">#D4E3FF</color>
     <color name="ic_launcher_foreground">#004784</color>
 
+
+    <!-- 快捷方式图标（开门 / 打卡）：API 26~30 的静态回退色（values-v31 / values-night-v31 覆盖成系统动态色）。 -->
+    <color name="ic_shortcut_background">#D4E3FF</color>
+    <color name="ic_shortcut_foreground">#004784</color>
+
 </resources>

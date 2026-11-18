@@ -181,7 +181,7 @@ class SignService : Service() {
             service = this,
             id = SignNotifications.SIGN_NOTIFICATION_ID,
             channelId = SignNotifications.LIVE_CHANNEL_ID,
-            smallIcon = R.drawable.ic_shortcut_check_in,
+            smallIcon = R.drawable.ic_shortcut_check_in_dynamic,
             title = getString(R.string.unlock_sign),
             foregroundType = foregroundServiceType(),
         )

@@ -17,9 +17,10 @@ import java.util.UUID
  * 只负责快捷方式本身的创建 / 启用 / 禁用，以及给快捷方式 Intent 签发校验令牌；
  * 可用性完全由「是否存在默认门锁」决定（无默认门锁时调用 disableShortcuts 隐藏）。
  *
- * 图标：改为彩色品牌图标（主 Logo 配色 + 白色/品牌色主体），不再依赖深浅色反色；
- * 「开门」用 drawable/ic_shortcut_open_door.xml（Icons.Rounded.LockOpen 主体），
- * 「打卡」用 drawable/ic_shortcut_check_in.xml（Icons.Rounded.WhereToVote 主体，与 App 内打卡同一图形）。
+ * 图标：与主应用图标同一套取色规则——底色/主体色引用 @color/ic_shortcut_background 与
+ * @color/ic_shortcut_foreground，在 values-v31/ 与 values-night-v31/ 里映射到系统壁纸动态色，
+ * 低版本回退到品牌固定色。图形本身：「开门」用 Icons.Rounded.LockOpen 主体（与 App 内开锁同一图形），
+ * 「打卡」用 Icons.Rounded.WhereToVote 主体（与 App 内打卡同一图形）。
  */
 object UnlockShortcut {
 
@@ -81,10 +82,9 @@ object UnlockShortcut {
         return ShortcutInfoCompat.Builder(context, ID)
             .setShortLabel(context.getString(R.string.shortcut_unlock_short))
             .setLongLabel(context.getString(R.string.shortcut_unlock_long))
-            // 彩色品牌图标：主 Logo 配色（#D4E3FF 底 + #004784 主体）+ Icons.Rounded.LockOpen 开锁主体，
-            // 见 drawable/ic_shortcut_open_door.xml。启动器绘制的静态资源无法跟随主题，
-            // 因此不再依赖深浅色反色，浅色/深色模式下都清晰可见。
-            .setIcon(IconCompat.createWithResource(context, R.drawable.ic_shortcut_open_door))
+            // 图标配色引用资源而不是写死色值：values-v31 / values-night-v31 里映射到系统动态色，
+            // 低版本回退品牌色，见 drawable/ic_shortcut_open_door_dynamic.xml。
+            .setIcon(IconCompat.createWithResource(context, R.drawable.ic_shortcut_open_door_dynamic))
             .setIntent(intent)
             .setRank(1)
             .build()

@@ -206,6 +206,49 @@ class ProfileViewModel : ViewModel() {
     }
 
     /**
+     * 上传头像。
+     *
+     * 入参是已裁好、压好的 JPEG 字节。成功后把 [ProfileUiState.avatarVersion] 换成当前时间戳，
+     * 让界面用一个带版本号的地址重新拉头像（服务端是固定路径，不带版本号会命中本地缓存）。
+     */
+    fun uploadAvatar(bytes: ByteArray) {
+        if (_uiState.value.uploadingAvatar) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(uploadingAvatar = true, error = null) }
+            try {
+                container.repository.uploadAvatar(bytes)
+                _uiState.update {
+                    it.copy(
+                        uploadingAvatar = false,
+                        avatarVersion = System.currentTimeMillis(),
+                    )
+                }
+                Log.i(TAG, "avatar uploaded, bytes=" + bytes.size)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Log.i(TAG, "uploadAvatar failed: " + error.message)
+                _uiState.update {
+                    it.copy(
+                        uploadingAvatar = false,
+                        error = YunMeiApp.app.getString(
+                            R.string.profile_avatar_upload_failed,
+                            error.message.orEmpty(),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    /** 选图/读图阶段失败（解码不出图片、相机不可用等）：只提示，不进上传流程。 */
+    fun onAvatarPickedFailed(message: String) {
+        _uiState.update {
+            it.copy(error = YunMeiApp.app.getString(R.string.profile_avatar_upload_failed, message))
+        }
+    }
+
+    /**
      * 切号后把门锁快照刷一遍。
      *
      * 门锁是按账号/单位下发的，不同账号可能看到不同的锁；这里只更新本地已有的锁，

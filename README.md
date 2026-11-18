@@ -3,12 +3,13 @@
     
 # <image src="assets/yunmei-static-transparent.svg" height="28" width="28"/> 云莓氛围
 
-[![Stars](https://img.shields.io/github/stars/JustJoy122/yunmei_vibe?label=Stars)](https://github.com/JustJoy122/yunmei_vibe)
-[![正式版 Release](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?style=flat-square&color=%233fb950&label=正式版)](https://github.com/JustJoy122/yunmei_vibe/releases/latest)
-[![测试版 Release](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?include_prereleases&style=flat-square&label=测试版)](https://github.com/JustJoy122/yunmei_vibe/releases/)
-[![下载量](https://img.shields.io/github/downloads/JustJoy122/yunmei_vibe/total?style=social&label=下载量&logo=github)](https://github.com/JustJoy122/yunmei_vibe/releases/latest)<br/>
-![GitHub Repo size](https://img.shields.io/github/repo-size/JustJoy122/yunmei_vibe?style=flat-square&color=3cb371)
-[![GitHub Repo Languages](https://img.shields.io/github/languages/top/JustJoy122/yunmei_vibe?style=flat-square)](https://github.com/JustJoy122/yunmei_vibe/search?l=c%23)<br/>
+[![Stars](https://img.shields.io/github/stars/JustJoy122/yunmei_vibe?style=for-the-badge&color=orange&label=Star)](https://github.com/JustJoy122/yunmei_vibe)
+[![正式版](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?label=正式版&color=purple&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/releases)
+[![预览版](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?include_prereleases&label=%E9%A2%84%E8%A7%88%E7%89%88&color=yellow&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/releases)
+[![开源许可](https://img.shields.io/github/license/JustJoy122/yunmei_vibe?label=%E5%BC%80%E6%BA%90%E8%AE%B8%E5%8F%AF%E8%AF%81&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe)
+[![下载量](https://img.shields.io/github/downloads/JustJoy122/yunmei_vibe/total.svg?label=%E4%B8%8B%E8%BD%BD%E9%87%8F&color=darkgreen&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe)
+![GitHub Repo size](https://img.shields.io/github/repo-size/JustJoy122/yunmei_vibe?style=for-the-badge&color=3cb371)
+[![GitHub Repo Languages](https://img.shields.io/github/languages/top/JustJoy122/yunmei_vibe?style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/search?l=c%23)<br/>
 [<img alt="下载应用，请到 GitHub" src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" width="180">](https://github.com/JustJoy122/yunmei_vibe/releases/latest/)
 
 </div>

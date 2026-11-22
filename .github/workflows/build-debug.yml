@@ -2,6 +2,7 @@ name: 构建 Debug 包
 
 # 日常 Push 自动构建 Debug：
 # 本地不需要构建，推送到 main 由 Actions 出 Debug APK，并发布到 Debug 更新渠道（ci-* Pre-release）。
+# PR 只做校验（构建 + Lint），供分支保护的 Status checks 使用，不发布任何 Release。
 on:
   push:
     branches:
@@ -10,12 +11,19 @@ on:
     paths-ignore:
       - "**.md"
       - "docs/**"
+  pull_request:
+    branches:
+      - main
+    # 这里故意不加 paths-ignore：工作流级路径过滤会让「纯文档 PR」根本不产生 run，
+    # 必需检查永远停在 Expected → PR 卡死。文档过滤改由 job 内的 dorny/paths-filter 完成。
   workflow_dispatch:
 
 # 创建 Debug 渠道 Pre-release 需要写权限；拉取 GitHub Packages 上的 miuix 依赖需要读包权限
 permissions:
   contents: write
   packages: read
+  # dorny/paths-filter 在 pull_request 事件下走 REST API 取变更文件，需要该权限
+  pull-requests: read
 
 # 同一分支的旧构建直接取消，避免排队浪费额度
 concurrency:
@@ -32,16 +40,34 @@ env:
 
 jobs:
   debug:
-    name: 编译 Debug 包
+    name: Build & Lint Debug
     runs-on: ubuntu-latest
     steps:
+      # 先在 PR 事件下判定改动范围（该事件走 REST API，无需 checkout）。
+      # push 事件直接跳过判据，后续步骤一律执行（条件里的 github.event_name != 'pull_request'）。
+      - name: 判断改动范围
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            src:
+              - 'app/**'
+              - 'gradle/**'
+              - '**/*.kt'
+              - '**/*.kts'
+              - '**/*.xml'
+
       - name: 拉取代码
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
         uses: actions/checkout@v6
         with:
           # 需要取到 v* tag，用于生成 Full changelog 对比链接
           fetch-depth: 0
 
       - name: 设置 JDK 21
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
         uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -49,19 +75,23 @@ jobs:
 
       # Gradle 缓存：依赖（~/.gradle/caches）、wrapper 与 configuration cache 一并复用
       - name: 设置 Gradle
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
         uses: gradle/actions/setup-gradle@v6
 
       - name: 接受 Android SDK 许可
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - name: 安装所需的 Android SDK 组件
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             "$ANDROID_PLATFORM" \
             "$ANDROID_BUILD_TOOLS" > /dev/null
 
       - name: 读取版本信息
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
         id: version
         run: |
           VERSION_NAME=$(sed -n 's/.*versionName *= *"\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)
@@ -77,12 +107,22 @@ jobs:
 
       # 构建输出同时落盘，失败时随日志一起上传；-PbuildStamp 写入 BuildConfig.BUILD_STAMP
       - name: 构建 Debug 安装包
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
         run: |
           chmod +x gradlew
           set -o pipefail
           ./gradlew --no-daemon assembleDebug -PbuildStamp="$BUILD_STAMP" 2>&1 | tee gradle-build.log
 
+      # Lint 作为独立步骤：产物已在上一步生成，Lint 失败同样中断 Job 并留下报告
+      # （报告在 app/build/reports/lint-results-debug.*，失败时由「收集失败日志」一并上传）
+      - name: 运行 Lint 检查
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon :app:lintDebug 2>&1 | tee -a gradle-build.log
+
       - name: 打包构建产物
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
         run: |
           mkdir -p dist
           APK="YunmeiVibe-v${{ steps.version.outputs.name }}-debug-ci${{ steps.version.outputs.date_stamp }}-${{ github.run_number }}.apk"
@@ -91,6 +131,7 @@ jobs:
           ls -la dist
 
       - name: 上传 Debug 安装包
+        if: steps.filter.outputs.src == 'true' || github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7
         with:
           name: YunmeiVibe-debug-ci${{ steps.version.outputs.date_stamp }}-run${{ github.run_number }}

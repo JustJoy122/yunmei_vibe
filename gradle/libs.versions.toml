@@ -14,7 +14,7 @@ kotlinxCoroutines = "1.11.0"
 retrofit = "3.0.0"
 okhttp = "5.5.1"
 securityCrypto = "1.1.0"
-browser = "1.8.0"
+browser = "1.10.0"
 zxingCore = "3.5.4"
 materialKolor = "5.0.0"
 # 小米超级岛（澎湃 OS 焦点通知 V3）参数构建库，与 InstallerX Revived 同版本。

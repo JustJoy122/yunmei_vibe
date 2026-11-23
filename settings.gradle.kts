@@ -1,5 +1,11 @@
 pluginManagement {
     repositories {
+        // 阿里云镜像：放在最前面，规避 Maven Central 429 限流（CI 失败的主因）。
+        // 镜像缺件时 Gradle 会继续按顺序回落到 google() / mavenCentral() / 插件门户。
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
+
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
@@ -15,6 +21,11 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        // 阿里云镜像：与 pluginManagement 保持同一顺序，优先命中镜像，减少对 Maven Central 的直接请求。
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
+
         google()
         mavenCentral()
 

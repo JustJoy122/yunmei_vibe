@@ -1,18 +1,21 @@
 package com.yunmei.vibe.ui.unlock
 
-import com.yunmei.vibe.ui.util.requestPromotedOngoing
+import android.Manifest
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.MainActivity
-import com.yunmei.vibe.ui.util.NotificationDowngrade
 import com.yunmei.vibe.ui.theme.ThemeColors
+import com.yunmei.vibe.ui.util.NotificationDowngrade
+import com.yunmei.vibe.ui.util.requestPromotedOngoing
 
 /**
  * 快捷方式开门的通知（进行中 / 结果）。
@@ -460,6 +463,13 @@ object UnlockNotifications {
     fun post(context: Context, notification: Notification) {
         val manager = NotificationManagerCompat.from(context)
         if (!manager.areNotificationsEnabled()) return
+        // Lint MissingPermission：Android 13+ 未授予 POST_NOTIFICATIONS 时不允许 notify。
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         runCatching { manager.notify(UNLOCK_NOTIFICATION_ID, notification) }
     }
 

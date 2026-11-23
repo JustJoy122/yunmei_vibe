@@ -1,9 +1,13 @@
 package com.yunmei.vibe.ui.util
 
+import android.Manifest
 import android.app.Notification
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -64,6 +68,13 @@ object NotificationDowngrade {
                 manager.activeNotifications.any { it.id == id }
             }.getOrDefault(false)
             if (!alive) return@launch
+            // Lint MissingPermission：Android 13+ 未授予 POST_NOTIFICATIONS 时不允许 notify。
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                return@launch
+            }
             runCatching { manager.notify(id, normal) }
                 .onFailure { Log.w(TAG, "downgrade notify failed", it) }
 

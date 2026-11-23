@@ -20,7 +20,7 @@ materialKolor = "5.0.0"
 # 小米超级岛（澎湃 OS 焦点通知 V3）参数构建库，与 InstallerX Revived 同版本。
 focusApi = "1.4"
 miuix = "0.9.4"
-aboutLibraries = "15.2.0"
+aboutLibraries = "15.3.0"
 
 [libraries]
 # 小米超级岛参数库（JitPack）。

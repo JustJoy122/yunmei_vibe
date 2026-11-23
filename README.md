@@ -112,6 +112,13 @@
 <div align="center">
 
 **如果这个项目对您有帮助，请点亮 Star ⭐**
+<a href="https://www.star-history.com/?repos=justjoy122%2Fyunmei_vibe&type=timeline&releases=&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=justjoy122/yunmei_vibe&type=date&theme=dark&legend=bottom-right" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=justjoy122/yunmei_vibe&type=date&legend=bottom-right" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=justjoy122/yunmei_vibe&type=date&legend=bottom-right" />
+ </picture>
+</a>
 
 </div>
 

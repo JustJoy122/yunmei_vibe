@@ -2,7 +2,8 @@
 <div align="center">
     
 # <image src="assets/yunmei-static-transparent.svg" height="28" width="28"/> 云莓氛围
-<img alt="fabric" height="56" src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/supported/fabric_vector.svg"> <img alt="forge" height="56" src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/unsupported/forge_vector.svg">
+<img alt="fabric" height="45" src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/supported/fabric_vector.svg"> <img alt="forge" height="45" src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/unsupported/forge_vector.svg">
+
 [![Stars](https://img.shields.io/github/stars/JustJoy122/yunmei_vibe?style=for-the-badge&color=orange&label=Star)](https://github.com/JustJoy122/yunmei_vibe)
 [![正式版](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?label=正式版&color=purple&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/releases)
 [![预览版](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?include_prereleases&label=%E9%A2%84%E8%A7%88%E7%89%88&color=yellow&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/releases)

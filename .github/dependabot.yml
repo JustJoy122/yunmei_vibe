@@ -46,3 +46,11 @@ updates:
       - dependency-name: "com.android.tools.build:builder"
       - dependency-name: "com.android.tools.build:bundletool"
       - dependency-name: "com.android.tools.build.jetifier:*"
+      - dependency-name: "androidx.compose.material3:*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "org.jetbrains.kotlin:*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "com.android.tools.build:gradle"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "top.yukonga.miuix.kmp:*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]

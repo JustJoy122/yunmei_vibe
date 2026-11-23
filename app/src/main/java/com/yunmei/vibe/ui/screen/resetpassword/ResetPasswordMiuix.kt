@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.screen.resetpassword
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +24,7 @@ import com.yunmei.vibe.ui.component.miuix.EditText
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import com.yunmei.vibe.ui.component.miuix.WarningCard
 import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
 import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
@@ -107,6 +109,8 @@ fun ResetPasswordMiuix(state: ResetPasswordUiState, actions: ResetPasswordAction
                         onValueChange = actions.onCodeChange,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
+                    // 与确认类弹窗的按钮同款（textButtonColors 默认：主色文字 + 透明底），
+                    // 只缩小最小尺寸与字号，避免在输入行里比输入框更抢眼。
                     MiuixTextButton(
                         text = if (state.countdown > 0) {
                             stringResource(R.string.reset_password_resend, state.countdown)
@@ -115,6 +119,11 @@ fun ResetPasswordMiuix(state: ResetPasswordUiState, actions: ResetPasswordAction
                         },
                         onClick = actions.onSendCode,
                         enabled = state.canSendCode,
+                        minWidth = 0.dp,
+                        minHeight = 32.dp,
+                        insideMargin = PaddingValues(horizontal = 8.dp),
+                        textStyle = MiuixTheme.textStyles.footnote1,
+                        colors = ButtonDefaults.textButtonColors(),
                     )
                 }
                 // 密码规则单独一行小字，避免挤在输入框里。

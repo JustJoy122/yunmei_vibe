@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.only
@@ -16,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -122,9 +125,16 @@ fun ResetPasswordMaterial(state: ResetPasswordUiState, actions: ResetPasswordAct
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             )
+                            // 与确认类弹窗的按钮同款（TextButton 默认配色：主色文字 + 透明底），
+                            // 只把尺寸与字号调小，避免在输入行里显得比输入框还重。
                             TextButton(
                                 onClick = actions.onSendCode,
                                 enabled = state.canSendCode,
+                                modifier = Modifier.heightIn(min = 32.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp),
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.primary,
+                                ),
                             ) {
                                 Text(
                                     text = if (state.countdown > 0) {
@@ -132,7 +142,7 @@ fun ResetPasswordMaterial(state: ResetPasswordUiState, actions: ResetPasswordAct
                                     } else {
                                         stringResource(R.string.reset_password_get_code)
                                     },
-                                    style = MaterialTheme.typography.labelLarge,
+                                    style = MaterialTheme.typography.labelMedium,
                                 )
                             }
                         }

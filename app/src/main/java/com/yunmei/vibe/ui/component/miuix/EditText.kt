@@ -1,7 +1,5 @@
 package com.yunmei.vibe.ui.component.miuix
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -9,7 +7,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
@@ -21,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -90,21 +86,6 @@ fun EditText(
                         color = summaryColor.color(enabled)
                     )
                 }
-                // 输入区单独加底色与描边：Miuix 默认的「标题 + 右侧值」外观在表单里
-                // 看不出哪里可以输入，这里显式给出一块可点击的输入区域。
-                val inputShape = RoundedCornerShape(10.dp)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(inputShape)
-                        .background(colorScheme.surfaceContainerHighest)
-                        .border(
-                            width = 1.dp,
-                            color = if (isError) colorScheme.error else colorScheme.outline,
-                            shape = inputShape,
-                        )
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                ) {
                 BasicTextField(
                     value = value,
                     onValueChange = {
@@ -121,7 +102,7 @@ fun EditText(
                         },
                     enabled = enabled,
                     textStyle = MiuixTheme.textStyles.main.copy(
-                        textAlign = TextAlign.End,
+                        textAlign = TextAlign.Start,
                         color = if (isError) {
                             Color.Red.copy(alpha = if (isSystemInDarkTheme()) 0.3f else 0.6f)
                         } else {
@@ -135,12 +116,12 @@ fun EditText(
                     decorationBox =
                         @Composable { innerTextField ->
                             Box(
-                                contentAlignment = Alignment.CenterEnd
+                                contentAlignment = Alignment.CenterStart
                             ) {
                                 Text(
                                     text = if (value.isEmpty()) textHint else "",
                                     color = rightActionColor.color(enabled),
-                                    textAlign = TextAlign.End,
+                                    textAlign = TextAlign.Start,
                                     softWrap = false,
                                     maxLines = 1
                                 )
@@ -148,7 +129,6 @@ fun EditText(
                             }
                         }
                 )
-                }
             }
         ) { measurables, constraints ->
             val leftConstraints = constraints.copy(maxWidth = constraints.maxWidth / 2)

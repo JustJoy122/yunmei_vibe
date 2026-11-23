@@ -1,0 +1,45 @@
+name: Dependabot Auto-merge
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      # 白名单：这些依赖的 minor/patch 更新允许自动合并
+      - name: Auto-merge allowlisted dependencies (minor/patch)
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          # 白名单列表（逗号分隔），可按需增减
+          ALLOWLIST="androidx.browser,aboutlibraries,kotlinx-serialization,navigationevent-compose"
+          for dep in $(echo $ALLOWLIST | tr ',' ' '); do
+            if echo "${{ steps.metadata.outputs.dependency-names }}" | grep -qi "$dep"; then
+              echo "✅ 允许自动合并: ${{ steps.metadata.outputs.dependency-names }}"
+              gh pr merge --auto --squash "$PR_URL"
+              exit 0
+            fi
+          done
+          echo "⏭️ 不在白名单，跳过自动合并"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Patch 级别的更新，如果不在白名单，也允许自动合并（可选，更宽松）
+      - name: Auto-merge any patch updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

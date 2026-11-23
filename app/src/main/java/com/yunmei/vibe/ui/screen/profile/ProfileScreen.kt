@@ -23,11 +23,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PhotoCamera
-import androidx.compose.material.icons.rounded.Phone
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material3.AlertDialog
@@ -250,10 +250,7 @@ private fun ProfileScreenMaterial(state: ProfileUiState, actions: ProfileActions
                 )
             }
 
-            ProfileInfoGroupMaterial(
-                title = stringResource(R.string.profile_group_basic),
-                rows = basicRows(state),
-            )
+            ProfileBasicGroupMaterial(state, actions)
             ProfileInfoGroupMaterial(
                 title = stringResource(R.string.profile_group_education),
                 rows = educationRows(state),
@@ -324,10 +321,7 @@ private fun ProfileScreenMiuix(state: ProfileUiState, actions: ProfileActions) {
                 }
             }
 
-            ProfileInfoGroupMiuix(
-                title = stringResource(R.string.profile_group_basic),
-                rows = basicRows(state),
-            )
+            ProfileBasicGroupMiuix(state, actions)
             ProfileInfoGroupMiuix(
                 title = stringResource(R.string.profile_group_education),
                 rows = educationRows(state),
@@ -405,10 +399,9 @@ private data class ProfileRow(val label: String, val value: String)
 private fun basicRows(state: ProfileUiState): List<ProfileRow> {
     val stuNo = state.profile?.stuNo?.takeIf { it.isNotBlank() }
         ?: state.profile?.userId?.takeIf { it.isNotBlank() }
+    // 手机号不再是普通信息行：它在「账号信息」分组末尾以可点击列表项呈现（换绑入口）。
     return listOfNotNull(
         stuNo?.let { ProfileRow(stringResource(R.string.profile_stu_no), it) },
-        state.displayTel.takeIf { it.isNotBlank() }
-            ?.let { ProfileRow(stringResource(R.string.profile_mobile), it) },
     )
 }
 
@@ -440,6 +433,74 @@ private fun dormRows(state: ProfileUiState): List<ProfileRow> {
         profile?.attr1?.takeIf { it.isNotBlank() }
             ?.let { ProfileRow(stringResource(R.string.profile_attr), it) },
     )
+}
+
+/** 「账号信息」分组：普通信息行 + 末尾可点击的手机号行（点击进换绑页）。 */
+@Composable
+private fun ProfileBasicGroupMaterial(state: ProfileUiState, actions: ProfileActions) {
+    val rows = basicRows(state)
+    val tel = state.displayTel
+    if (rows.isEmpty() && tel.isBlank()) return
+    SegmentedColumn(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        title = stringResource(R.string.profile_group_basic),
+        content = buildList {
+            rows.forEach { row ->
+                add {
+                    SegmentedListItem(
+                        headlineContent = { Text(row.label) },
+                        supportingContent = { Text(row.value) },
+                    )
+                }
+            }
+            if (tel.isNotBlank()) {
+                add {
+                    // 手机号即换绑入口：整行可点击，右侧给箭头提示可跳转。
+                    SegmentedListItem(
+                        onClick = actions.onChangePhone,
+                        headlineContent = { Text(stringResource(R.string.profile_mobile)) },
+                        supportingContent = { Text(tel) },
+                        trailingContent = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                contentDescription = null,
+                            )
+                        },
+                    )
+                }
+            }
+        },
+    )
+}
+
+/** 「账号信息」分组的 Miuix 版：手机号用 ArrowPreference，天然带右箭头。 */
+@Composable
+private fun ProfileBasicGroupMiuix(state: ProfileUiState, actions: ProfileActions) {
+    val rows = basicRows(state)
+    val tel = state.displayTel
+    if (rows.isEmpty() && tel.isBlank()) return
+    SmallTitle(
+        text = stringResource(R.string.profile_group_basic),
+        insideMargin = PaddingValues(start = 16.dp, top = 12.dp, end = 28.dp, bottom = 0.dp),
+    )
+    Card(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth(),
+    ) {
+        Column {
+            rows.forEach { row ->
+                BasicComponent(title = row.label, summary = row.value)
+            }
+            if (tel.isNotBlank()) {
+                ArrowPreference(
+                    title = stringResource(R.string.profile_mobile),
+                    summary = tel,
+                    onClick = actions.onChangePhone,
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -606,14 +667,6 @@ private fun ProfileSecurityGroupMaterial(state: ProfileUiState, actions: Profile
             },
             {
                 SegmentedListItem(
-                    onClick = actions.onChangePhone,
-                    headlineContent = { Text(stringResource(R.string.profile_change_phone)) },
-                    supportingContent = { Text(stringResource(R.string.profile_change_phone_summary)) },
-                    leadingContent = { Icon(Icons.Rounded.Phone, null) },
-                )
-            },
-            {
-                SegmentedListItem(
                     onClick = actions.onDestroyAccount,
                     enabled = !state.destroying,
                     headlineContent = {
@@ -652,11 +705,6 @@ private fun ProfileSecurityGroupMiuix(state: ProfileUiState, actions: ProfileAct
                 title = stringResource(R.string.profile_reset_password),
                 summary = stringResource(R.string.profile_reset_password_summary),
                 onClick = actions.onResetPassword,
-            )
-            ArrowPreference(
-                title = stringResource(R.string.profile_change_phone),
-                summary = stringResource(R.string.profile_change_phone_summary),
-                onClick = actions.onChangePhone,
             )
             ArrowPreference(
                 title = stringResource(R.string.profile_destroy_account),

@@ -1,8 +1,5 @@
 package com.yunmei.vibe.ui.component.material
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -435,16 +432,6 @@ fun SegmentedTextField(
                 if (label.isNotEmpty()) {
                     Text(text = label, color = if (isError) colorScheme.error else colors.contentColor)
                 }
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = colorScheme.surfaceContainerHighest,
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = if (isError) colorScheme.error else colorScheme.outlineVariant,
-                    ),
-                ) {
-                Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
                 BasicTextField(
                     value = value,
                     onValueChange = onValueChange,
@@ -489,8 +476,6 @@ fun SegmentedTextField(
                         innerTextField()
                     }
                 )
-                }
-                }
             }
         }
     )

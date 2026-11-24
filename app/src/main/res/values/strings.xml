@@ -320,6 +320,8 @@
     <string name="sign_open_location_settings">去开启定位</string>
     <string name="shortcut_sign_short">打卡</string>
     <string name="shortcut_sign_long">一键打卡（默认门锁）</string>
+    <string name="tile_unlock_label">开门</string>
+    <string name="tile_sign_label">打卡</string>
     <string name="sign_retry">重试</string>
     <string name="sign_finish">完成</string>
     <string name="unlock_retry">重试</string>
@@ -428,6 +430,8 @@
     <string name="profile_destroy_final_content">此操作完全不可逆，账号一旦注销将无法恢复！真的要注销吗？</string>
     <string name="profile_destroy_final_confirm">立即注销</string>
     <string name="profile_destroy_final_abort">放弃</string>
+    <string name="profile_destroy_last_title">最终警告</string>
+    <string name="profile_destroy_last_content">你真的要注销这个账号吗？账号数据将会丢失很久（真的很久！）。</string>
 
     <string name="reset_password_title">重设密码</string>
     <string name="reset_password_tel">手机号</string>

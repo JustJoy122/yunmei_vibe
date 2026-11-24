@@ -44,7 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -57,8 +57,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yunmei.vibe.R
 import com.yunmei.vibe.data.local.StoredUser
-import com.yunmei.vibe.ui.component.dialog.ConfirmResult
-import com.yunmei.vibe.ui.component.dialog.rememberConfirmDialog
+import com.yunmei.vibe.ui.component.dialog.SteppedWarningDialog
+import com.yunmei.vibe.ui.component.dialog.WarningStepText
 import com.yunmei.vibe.ui.component.material.SegmentedColumn
 import com.yunmei.vibe.ui.component.material.SegmentedListItem
 import top.yukonga.miuix.kmp.preference.ArrowPreference
@@ -82,7 +82,6 @@ import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import kotlinx.coroutines.launch
 
 /**
  * 个人中心：只读展示本人档案 + 本机账号管理。
@@ -105,8 +104,8 @@ fun ProfileScreen(
     var pendingRemove by remember { mutableStateOf<StoredUser?>(null) }
     // 换头像的来源菜单（拍照 / 相册）。
     var showAvatarMenu by remember { mutableStateOf(false) }
-    val confirmDialog = rememberConfirmDialog()
-    val scope = rememberCoroutineScope()
+    // 注销是三级确认：0=不显示，1=标准警告，2=最后确认，3=最终警告（第 3 级确认后才真正注销）。
+    var destroyStep by remember { mutableIntStateOf(0) }
     val destroyTitle = stringResource(R.string.profile_destroy_account_confirm_title)
     val destroyContent = stringResource(R.string.profile_destroy_account_confirm_content)
     val destroyContinue = stringResource(R.string.profile_destroy_continue)
@@ -115,14 +114,14 @@ fun ProfileScreen(
     val destroyFinalContent = stringResource(R.string.profile_destroy_final_content)
     val destroyFinalConfirm = stringResource(R.string.profile_destroy_final_confirm)
     val destroyFinalAbort = stringResource(R.string.profile_destroy_final_abort)
+    val destroyLastTitle = stringResource(R.string.profile_destroy_last_title)
+    val destroyLastContent = stringResource(R.string.profile_destroy_last_content)
     val actions = remember(
         viewModel,
         onBack,
         onAddAccount,
         onResetPassword,
         onChangePhone,
-        confirmDialog,
-        scope,
     ) {
         ProfileActions(
             onBack = onBack,
@@ -133,26 +132,8 @@ fun ProfileScreen(
             onResetPassword = onResetPassword,
             onChangePhone = onChangePhone,
             onEditAvatar = { showAvatarMenu = true },
-            onDestroyAccount = {
-                // 注销不可逆：先标准警告，再红字强警告，两层都确认才真正执行。
-                scope.launch {
-                    val first = confirmDialog.awaitConfirm(
-                        title = destroyTitle,
-                        content = destroyContent,
-                        confirm = destroyContinue,
-                        dismiss = destroyCancel,
-                    )
-                    if (first != ConfirmResult.Confirmed) return@launch
-                    val second = confirmDialog.awaitConfirm(
-                        title = destroyFinalTitle,
-                        content = destroyFinalContent,
-                        confirm = destroyFinalConfirm,
-                        dismiss = destroyFinalAbort,
-                    )
-                    if (second != ConfirmResult.Confirmed) return@launch
-                    viewModel.destroyAccount()
-                }
-            },
+            // 注销不可逆：标准警告 → 最后确认 → 最终警告，三级都确认才真正执行。
+            onDestroyAccount = { destroyStep = 1 },
         )
     }
 
@@ -187,6 +168,37 @@ fun ProfileScreen(
             if (target != null) viewModel.removeAccount(target)
         },
         onDismiss = { pendingRemove = null },
+    )
+
+    // 与开锁页的三级危险确认共用同一个组件，标题样式与过渡动画完全一致。
+    SteppedWarningDialog(
+        step = destroyStep,
+        texts = { step ->
+            when {
+                step >= 3 -> WarningStepText(
+                    title = destroyLastTitle,
+                    message = destroyLastContent,
+                    isStrong = true,
+                )
+                step == 2 -> WarningStepText(
+                    title = destroyFinalTitle,
+                    message = destroyFinalContent,
+                    isStrong = true,
+                )
+                else -> WarningStepText(title = destroyTitle, message = destroyContent)
+            }
+        },
+        confirmText = if (destroyStep >= 3) destroyFinalConfirm else destroyContinue,
+        dismissText = if (destroyStep >= 2) destroyFinalAbort else destroyCancel,
+        onConfirm = {
+            if (destroyStep >= 3) {
+                destroyStep = 0
+                viewModel.destroyAccount()
+            } else {
+                destroyStep += 1
+            }
+        },
+        onDismiss = { destroyStep = 0 },
     )
 }
 

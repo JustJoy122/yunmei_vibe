@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.only
@@ -25,7 +24,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -125,16 +125,16 @@ fun ResetPasswordMaterial(state: ResetPasswordUiState, actions: ResetPasswordAct
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             )
-                            // 与确认类弹窗的按钮同款（TextButton 默认配色：主色文字 + 透明底），
-                            // 只把尺寸与字号调小，避免在输入行里显得比输入框还重。
-                            TextButton(
+                            // 主题强调色实心按钮：底色 primary、文字 onPrimary，尺寸压到输入行里不抢眼。
+                            Button(
                                 onClick = actions.onSendCode,
                                 enabled = state.canSendCode,
-                                modifier = Modifier.heightIn(min = 32.dp),
-                                contentPadding = PaddingValues(horizontal = 8.dp),
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.primary,
-                                ),
+                                modifier = Modifier
+                                    .padding(start = 8.dp, end = 12.dp)
+                                    .height(36.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                colors = ButtonDefaults.buttonColors(),
+                                shape = RoundedCornerShape(12.dp),
                             ) {
                                 Text(
                                     text = if (state.countdown > 0) {

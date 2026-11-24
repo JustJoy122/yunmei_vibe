@@ -148,6 +148,31 @@
             android:name=".ui.sign.SignService"
             android:exported="false"
             android:foregroundServiceType="location|dataSync" />
+
+        <!-- 控制中心磁贴：点击只把与桌面快捷方式相同的 Intent 交给跳板 Activity，
+             不直接启动前台服务（Android 12+ 后台启动限制、Android 14+ 必须用 PendingIntent）。
+             BIND_QUICK_SETTINGS_TILE 是系统签名级权限，写在 android:permission 上而不是 uses-permission。 -->
+        <service
+            android:name=".ui.tile.UnlockTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_unlock"
+            android:label="@string/tile_unlock_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".ui.tile.SignTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_sign"
+            android:label="@string/tile_sign_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

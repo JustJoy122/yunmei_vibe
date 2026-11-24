@@ -34,7 +34,7 @@ import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -109,22 +109,26 @@ fun ResetPasswordMiuix(state: ResetPasswordUiState, actions: ResetPasswordAction
                         onValueChange = actions.onCodeChange,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
-                    // 与确认类弹窗的按钮同款（textButtonColors 默认：主色文字 + 透明底），
-                    // 只缩小最小尺寸与字号，避免在输入行里比输入框更抢眼。
-                    MiuixTextButton(
-                        text = if (state.countdown > 0) {
-                            stringResource(R.string.reset_password_resend, state.countdown)
-                        } else {
-                            stringResource(R.string.reset_password_get_code)
-                        },
+                    // 主题强调色实心按钮：底色 primary、文字 onPrimary，尺寸压到输入行里不抢眼。
+                    MiuixButton(
                         onClick = actions.onSendCode,
                         enabled = state.canSendCode,
+                        modifier = Modifier.padding(start = 8.dp, end = 12.dp),
+                        cornerRadius = 12.dp,
                         minWidth = 0.dp,
-                        minHeight = 32.dp,
-                        insideMargin = PaddingValues(horizontal = 8.dp),
-                        textStyle = MiuixTheme.textStyles.footnote1,
-                        colors = ButtonDefaults.textButtonColors(),
-                    )
+                        minHeight = 36.dp,
+                        colors = ButtonDefaults.buttonColorsPrimary(),
+                        insideMargin = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    ) {
+                        Text(
+                            text = if (state.countdown > 0) {
+                                stringResource(R.string.reset_password_resend, state.countdown)
+                            } else {
+                                stringResource(R.string.reset_password_get_code)
+                            },
+                            style = MiuixTheme.textStyles.footnote1,
+                        )
+                    }
                 }
                 // 密码规则单独一行小字，避免挤在输入框里。
                 Column {

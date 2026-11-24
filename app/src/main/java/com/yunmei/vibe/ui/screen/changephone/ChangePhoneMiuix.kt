@@ -1,6 +1,7 @@
 package com.yunmei.vibe.ui.screen.changephone
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,7 +28,8 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -108,15 +110,25 @@ fun ChangePhoneMiuix(state: ChangePhoneUiState, actions: ChangePhoneActions) {
                         onValueChange = actions.onCodeChange,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
-                    MiuixTextButton(
-                        text = if (state.countdown > 0) {
-                            stringResource(R.string.change_phone_resend, state.countdown)
-                        } else {
-                            stringResource(R.string.change_phone_get_code)
-                        },
+                    MiuixButton(
                         onClick = actions.onSendCode,
                         enabled = state.canSendCode,
-                    )
+                        modifier = Modifier.padding(start = 8.dp, end = 12.dp),
+                        cornerRadius = 12.dp,
+                        minWidth = 0.dp,
+                        minHeight = 36.dp,
+                        colors = ButtonDefaults.buttonColorsPrimary(),
+                        insideMargin = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    ) {
+                        Text(
+                            text = if (state.countdown > 0) {
+                                stringResource(R.string.change_phone_resend, state.countdown)
+                            } else {
+                                stringResource(R.string.change_phone_get_code)
+                            },
+                            style = MiuixTheme.textStyles.footnote1,
+                        )
+                    }
                 }
             }
 

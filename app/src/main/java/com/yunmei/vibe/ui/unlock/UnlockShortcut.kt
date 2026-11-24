@@ -17,10 +17,9 @@ import java.util.UUID
  * 只负责快捷方式本身的创建 / 启用 / 禁用，以及给快捷方式 Intent 签发校验令牌；
  * 可用性完全由「是否存在默认门锁」决定（无默认门锁时调用 disableShortcuts 隐藏）。
  *
- * 图标：与主应用图标同一套取色规则——底色/主体色引用 @color/ic_shortcut_background 与
+ * 图标：drawable/ic_shortcut_open_door_dynamic.xml——底色/主体色引用 @color/ic_shortcut_background 与
  * @color/ic_shortcut_foreground，在 values-v31/ 与 values-night-v31/ 里映射到系统壁纸动态色，
- * 低版本回退到品牌固定色。图形本身：「开门」用 Icons.Rounded.LockOpen 主体（与 App 内开锁同一图形），
- * 「打卡」用 Icons.Rounded.WhereToVote 主体（与 App 内打卡同一图形）。
+ * 低版本回退到品牌固定色。图形本身用 Icons.Rounded.LockOpen 主体（与 App 内开锁同一图形）。
  */
 object UnlockShortcut {
 

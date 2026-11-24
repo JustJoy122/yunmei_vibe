@@ -6,6 +6,8 @@ import com.yunmei.vibe.YunMeiApp
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.preferences.AppSettings
 import com.yunmei.vibe.data.repository.SettingsRepository
+import com.yunmei.vibe.ui.screen.subsettings.DANGER_LEVEL_FINAL
+import com.yunmei.vibe.ui.screen.subsettings.DANGER_LEVEL_FIRST
 import com.yunmei.vibe.ui.screen.settings.SettingsUiState
 import com.yunmei.vibe.ui.theme.ColorMode
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +32,17 @@ class SettingsViewModel(
     /** 功能设置（DataStore）与已保存账号。 */
     private val _functionalState = MutableStateFlow(FunctionalSettingsState())
     val functionalState: StateFlow<FunctionalSettingsState> = _functionalState.asStateFlow()
+
+    /**
+     * 危险开关的两级互斥确认（自动开门 / 开门后自动退出）。
+     *
+     * 判断放在 ViewModel 里而不是 Composable 里，是因为界面拿到的 `state` 是组合时的快照：
+     * 用户两次点击间隔可以只有两百毫秒，而 `DataStore` 写入 + `refresh()` 回读 + 重组
+     * 未必跑完，闭包里读到的仍是旧值，互斥判断会被绕过（真机日志实测：先开自动开门，
+     * 253ms 后开自动退出，判断拿到的 autoConnect 仍是 false）。
+     */
+    private val _dangerToggle = MutableStateFlow<DangerToggleRequest?>(null)
+    val dangerToggle: StateFlow<DangerToggleRequest?> = _dangerToggle.asStateFlow()
 
     /** 上报对象编辑缓冲（点保存才写入）。 */
 
@@ -219,9 +232,54 @@ class SettingsViewModel(
 
     fun setQuickConnect(value: Boolean) = setSetting { container.appPreferences.setQuickConnect(value) }
 
-    fun setAutoConnect(value: Boolean) = setSetting { container.appPreferences.setAutoConnect(value) }
+    fun setAutoConnect(value: Boolean) {
+        val autoExit = _functionalState.value.settings.autoExit
+        if (value && autoExit) {
+            _dangerToggle.value = DangerToggleRequest(DangerToggleTarget.AUTO_CONNECT, value, DANGER_LEVEL_FIRST)
+        } else {
+            applyAutoConnect(value)
+        }
+    }
 
-    fun setAutoExit(value: Boolean) = setSetting { container.appPreferences.setAutoExit(value) }
+    fun setAutoExit(value: Boolean) {
+        val autoConnect = _functionalState.value.settings.autoConnect
+        if (value && autoConnect) {
+            _dangerToggle.value = DangerToggleRequest(DangerToggleTarget.AUTO_EXIT, value, DANGER_LEVEL_FIRST)
+        } else {
+            applyAutoExit(value)
+        }
+    }
+
+    /** 危险确认框点「确定」：前两级只升级文案，第三级才真正写入。 */
+    fun confirmDangerToggle() {
+        val request = _dangerToggle.value ?: return
+        if (request.level >= DANGER_LEVEL_FINAL) {
+            _dangerToggle.value = null
+            when (request.target) {
+                DangerToggleTarget.AUTO_CONNECT -> applyAutoConnect(request.value)
+                DangerToggleTarget.AUTO_EXIT -> applyAutoExit(request.value)
+            }
+        } else {
+            _dangerToggle.value = request.copy(level = request.level + 1)
+        }
+    }
+
+    /** 危险确认框点「放弃」或返回：丢弃待执行意图，开关保持原位。 */
+    fun dismissDangerToggle() {
+        _dangerToggle.value = null
+    }
+
+    private fun applyAutoConnect(value: Boolean) {
+        setSetting(optimistic = { it.copy(autoConnect = value) }) {
+            container.appPreferences.setAutoConnect(value)
+        }
+    }
+
+    private fun applyAutoExit(value: Boolean) {
+        setSetting(optimistic = { it.copy(autoExit = value) }) {
+            container.appPreferences.setAutoExit(value)
+        }
+    }
 
     fun setAutoCode(value: Boolean) = setSetting { container.appPreferences.setAutoCode(value) }
 
@@ -242,7 +300,18 @@ class SettingsViewModel(
         refresh()
     }
 
-    private fun setSetting(block: suspend () -> Unit) {
+    /**
+     * 写偏好并刷新状态。
+     *
+     * [optimistic] 先把新值同步落到内存状态，再异步落盘：DataStore 的 edit 要等磁盘提交，
+     * 若界面上的互斥判断读的是「上一次 refresh 的结果」，连续快速点两个开关时会读到旧值
+     * （先开「自动开门」、253ms 内再开「开门后自动退出」，判断会以为另一个还没开）。
+     */
+    private fun setSetting(
+        optimistic: (AppSettings) -> AppSettings = { it },
+        block: suspend () -> Unit,
+    ) {
+        _functionalState.update { it.copy(settings = optimistic(it.settings)) }
         viewModelScope.launch {
             block()
             refresh()
@@ -253,4 +322,16 @@ class SettingsViewModel(
 data class FunctionalSettingsState(
     val settings: AppSettings = AppSettings(),
     val accounts: List<StoredUser> = emptyList(),
+)
+
+/** 危险开关确认的目标。 */
+enum class DangerToggleTarget { AUTO_CONNECT, AUTO_EXIT }
+
+/**
+ * 待确认的危险开关操作：[level] 1/2/3 表示第几级警告，第三级确认后才执行 [target] = [value]。
+ */
+data class DangerToggleRequest(
+    val target: DangerToggleTarget,
+    val value: Boolean,
+    val level: Int,
 )

@@ -1,6 +1,7 @@
 package com.yunmei.vibe.ui.screen.changephone
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -22,7 +23,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -130,9 +133,15 @@ fun ChangePhoneMaterial(state: ChangePhoneUiState, actions: ChangePhoneActions) 
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             )
-                            TextButton(
+                            Button(
                                 onClick = actions.onSendCode,
                                 enabled = state.canSendCode,
+                                modifier = Modifier
+                                    .padding(start = 8.dp, end = 12.dp)
+                                    .height(36.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                colors = ButtonDefaults.buttonColors(),
+                                shape = RoundedCornerShape(12.dp),
                             ) {
                                 Text(
                                     text = if (state.countdown > 0) {
@@ -140,7 +149,7 @@ fun ChangePhoneMaterial(state: ChangePhoneUiState, actions: ChangePhoneActions) 
                                     } else {
                                         stringResource(R.string.change_phone_get_code)
                                     },
-                                    style = MaterialTheme.typography.labelLarge,
+                                    style = MaterialTheme.typography.labelMedium,
                                 )
                             }
                         }

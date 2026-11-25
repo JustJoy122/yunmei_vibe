@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -29,16 +31,21 @@ import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Save
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.WhereToVote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,7 +59,6 @@ import com.yunmei.vibe.ui.theme.isInDarkTheme
 import com.yunmei.vibe.ui.theme.LocalEnableBlur
 import com.yunmei.vibe.ui.util.BlurredBar
 import com.yunmei.vibe.ui.util.rememberBlurBackdrop
-import com.yunmei.vibe.ui.util.signStatusLine
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
@@ -360,36 +366,141 @@ private fun SignCard(
     state: HomeUiState,
     actions: HomeActions,
 ) {
-    // 仅在存在默认门锁时可用；未就绪时由 BasicComponent 自带的禁用配色灰显、
-    // 且不挂 clickable（无涟漪无点击），原因由顶部 Banner 说明。
+    // 仅在存在默认门锁时可用；未就绪时整卡降透明度且不挂点击，原因由顶部 Banner 说明。
     val enabled = state.defaultLock != null
-    // 学校开启打卡时多一行状态；null 表示未开启，保持原有副标题。
-    val statusLine = state.signStatus?.let { signStatusLine(it) }
-    val baseSummary = state.signMessage ?: signLocationLabel(state.settings.signLocationMode)
+    val status = state.signStatus
+    // 第一行副文本：已打卡给具体时间，否则给时段；都没有（学校未配置时段）时省略该行。
+    val windowText = when {
+        status == null -> null
+        status.signed -> stringResource(R.string.unlock_sign_status_signed, status.signTime)
+        status.hasWindow -> stringResource(
+            R.string.unlock_sign_window,
+            status.startTime.ifBlank { "—" },
+            status.endTime.ifBlank { "—" },
+        )
+        else -> null
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(if (enabled) 1f else DISABLED_CARD_ALPHA)
+            .alpha(if (enabled) 1f else DISABLED_CARD_ALPHA),
+        insideMargin = PaddingValues(0.dp),
+        pressFeedbackType = PressFeedbackType.Sink,
+        onClick = if (enabled) actions.onSign else null,
     ) {
-        BasicComponent(
-            title = stringResource(R.string.unlock_sign),
-            summary = if (statusLine != null) statusLine + " · " + baseSummary else baseSummary,
-            startAction = {
-                Icon(
-                    Icons.Rounded.WhereToVote,
-                    tint = if (enabled) {
-                        colorScheme.onSurface
-                    } else {
-                        colorScheme.onSurface.copy(alpha = 0.38f)
-                    },
-                    contentDescription = null,
-                )
-            },
-            enabled = enabled,
-            onClick = if (enabled) actions.onSign else null,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Rounded.WhereToVote,
+                tint = if (enabled) {
+                    colorScheme.onSurface
+                } else {
+                    colorScheme.onSurface.copy(alpha = 0.38f)
+                },
+                contentDescription = null,
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.unlock_sign),
+                        style = MiuixTheme.textStyles.body1,
+                        color = if (enabled) colorScheme.onSurface else colorScheme.onSurface.copy(alpha = 0.38f),
+                    )
+                    if (status != null) {
+                        Spacer(Modifier.width(8.dp))
+                        SignStatusBadge(signed = status.signed, enabled = enabled)
+                    }
+                }
+                Spacer(Modifier.height(2.dp))
+                // 元数据行：时段与定位并排，定位文案可能很长（错误提示），用 weight + 省略号兜底。
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    windowText?.let {
+                        SignMetaGroup(icon = Icons.Rounded.Schedule, text = it, enabled = enabled)
+                        Spacer(Modifier.width(10.dp))
+                    }
+                    SignMetaGroup(
+                        icon = Icons.Rounded.LocationOn,
+                        text = state.signMessage ?: signLocationLabel(state.settings.signLocationMode),
+                        enabled = enabled,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** 打卡状态徽章：已打卡走强调色容器，未打卡走中性容器；禁用时整体降低对比度。 */
+@Composable
+private fun SignStatusBadge(
+    signed: Boolean,
+    enabled: Boolean,
+) {
+    val container = when {
+        !enabled -> colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        signed -> colorScheme.primaryContainer
+        else -> colorScheme.surfaceVariant
+    }
+    val content = when {
+        !enabled -> colorScheme.onSurfaceVariantSummary.copy(alpha = 0.38f)
+        signed -> colorScheme.onPrimaryContainer
+        else -> colorScheme.onSurfaceVariantSummary
+    }
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(container)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    ) {
+        Text(
+            text = stringResource(
+                if (signed) R.string.unlock_sign_badge_signed else R.string.unlock_sign_badge_unsigned
+            ),
+            style = MiuixTheme.textStyles.footnote2,
+            color = content,
         )
     }
 }
+
+/** 打卡卡片的元数据组：小图标 + 次要色小字，超出一行时省略。 */
+@Composable
+private fun SignMetaGroup(
+    icon: ImageVector,
+    text: String,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val tint = if (enabled) {
+        colorScheme.onSurfaceVariantSummary
+    } else {
+        colorScheme.onSurfaceVariantSummary.copy(alpha = 0.38f)
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier,
+    ) {
+        Icon(
+            imageVector = icon,
+            tint = tint,
+            contentDescription = null,
+            modifier = Modifier.size(13.dp),
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = text,
+            style = MiuixTheme.textStyles.footnote2,
+            color = tint,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
 
 
 /**

@@ -381,8 +381,9 @@
     <string name="about_icp_notice">数据来源于官方服务 · 浙ICP备 19003558号-4X</string>
     <string name="about_privacy_policy_summary">前往云莓智能官方查看</string>
     <string name="unlock_sign_status_signed">已打卡 %1$s</string>
-    <string name="unlock_sign_status_unsigned">未打卡</string>
-    <string name="unlock_sign_status_window">未打卡 · 时段 %1$s - %2$s</string>
+    <string name="unlock_sign_badge_signed">已打卡</string>
+    <string name="unlock_sign_badge_unsigned">未打卡</string>
+    <string name="unlock_sign_window">时段 %1$s - %2$s</string>
     <!-- 个人中心 -->
     <string name="profile_title">个人中心</string>
     <string name="profile_current_account">当前账号</string>

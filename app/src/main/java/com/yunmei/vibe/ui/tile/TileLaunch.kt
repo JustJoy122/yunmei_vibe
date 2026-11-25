@@ -1,5 +1,6 @@
 package com.yunmei.vibe.ui.tile
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
@@ -40,9 +41,21 @@ internal object TileLaunch {
             )
             service.startActivityAndCollapse(pendingIntent)
         } else {
-            @Suppress("DEPRECATION")
-            service.startActivityAndCollapse(launchIntent)
+            startLegacy(service, launchIntent)
         }
+    }
+
+    /**
+     * Android 13 及以下的兼容路径。
+     *
+     * `startActivityAndCollapse(Intent)` 自 API 34 起被废弃并在 targetSdk ≥ 34 时直接抛异常，
+     * 但低版本没有 `PendingIntent` 重载可用 —— 只能继续调用旧方法。抑制只作用于这个兼容函数，
+     * 高版本的 `PendingIntent` 路径不受影响，若那边将来出问题仍会被检出。
+     */
+    @SuppressLint("StartActivityAndCollapseDeprecated")
+    @Suppress("DEPRECATION")
+    private fun startLegacy(service: TileService, intent: Intent) {
+        service.startActivityAndCollapse(intent)
     }
 
     private const val REQUEST_CODE = 0

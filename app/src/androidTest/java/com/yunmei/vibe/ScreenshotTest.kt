@@ -104,11 +104,17 @@ class ScreenshotTest {
             Log.w(TAG, "没有可导出的截图：${outputDir.absolutePath}")
             return
         }
-        shell("mkdir -p $PUBLIC_DIR")
+        Log.i(TAG, "shell 身份: " + shell("id").trim())
+        Log.i(TAG, "mkdir 输出: " + shell("mkdir -p $PUBLIC_DIR").trim())
+        var failures = 0
         files.forEach { file ->
-            shell("cp -f \"${file.absolutePath}\" \"$PUBLIC_DIR/${file.name}\"")
+            val out = shell("cp -f \"${file.absolutePath}\" \"$PUBLIC_DIR/${file.name}\"").trim()
+            if (out.isNotEmpty()) {
+                failures++
+                Log.w(TAG, "cp 失败(${file.name}): $out")
+            }
         }
-        Log.i(TAG, "已导出 ${files.size} 张到 $PUBLIC_DIR\n" + shell("ls -l $PUBLIC_DIR"))
+        Log.i(TAG, "已尝试导出 ${files.size} 张到 $PUBLIC_DIR（失败 $failures 张）\n" + shell("ls -l $PUBLIC_DIR"))
 
         // 目录能被 shell 读到，但 adb pull 需要的是真实路径；顺带回读一次确认非空。
         val count = shell("ls $PUBLIC_DIR | wc -l").trim()

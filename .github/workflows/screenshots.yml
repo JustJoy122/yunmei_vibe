@@ -108,8 +108,8 @@ jobs:
           script: |
             chmod +x gradlew
             ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest -Pdemo 2>&1 | tee gradle-screenshots.log
-            adb shell rm -rf "$REMOTE_SHOT_DIR"
-            adb shell mkdir -p "$REMOTE_SHOT_DIR"
+            adb shell rm -rf /sdcard/Download/yunmei-screenshots
+            adb shell mkdir -p /sdcard/Download/yunmei-screenshots
             adb install -r -t app/build/outputs/apk/debug/app-debug.apk
             adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell input keyevent 224
@@ -117,14 +117,15 @@ jobs:
             adb logcat -c
             adb shell am instrument -w -e class com.yunmei.vibe.ScreenshotTest com.yunmei.vibe.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | tee instrumentation.log || echo "am instrument 非零退出（细节见 instrumentation.log）"
             adb logcat -d -s ScreenshotTest | tail -100
-            adb shell find /sdcard -name "*.png" -type f 2>/dev/null | head -60 || true
-            adb shell ls -l "$REMOTE_SHOT_DIR" 2>&1 || true
+            adb shell ls -l /sdcard/Android/data/com.yunmei.vibe/files/screenshots 2>&1 || true
+            adb shell ls -l /sdcard/Download/yunmei-screenshots 2>&1 || true
             rm -rf build/screenshots
-            adb pull "$REMOTE_SHOT_DIR" build/screenshots || echo "adb pull 失败：$REMOTE_SHOT_DIR 不存在"
+            adb pull /sdcard/Android/data/com.yunmei.vibe/files/screenshots build/screenshots || echo "私有目录 pull 失败"
+            adb pull /sdcard/Download/yunmei-screenshots build/screenshots || echo "公共目录 pull 失败"
             mkdir -p docs/screenshots
             cp build/screenshots/*.png docs/screenshots/ 2>/dev/null || true
             ls -l build/screenshots || true
-            echo "::error::没有拿到任何截图，对照上面的 find 与 logcat 判断是没跑起来还是没落盘"
+            echo "::error::没有拿到任何截图，对照上面的 ls 与 logcat 判断是没跑起来还是没落盘"
             test -n "$(find build/screenshots -name '*.png' -type f -print -quit)"
             echo "本轮拉到 $(find build/screenshots -name '*.png' -type f | wc -l) 张"
 

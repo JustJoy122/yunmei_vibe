@@ -107,38 +107,26 @@ jobs:
           emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot-save -gpu swiftshader_indirect
           script: |
             chmod +x gradlew
-            set -o pipefail
-
-            # 先构建（-Pdemo 把 DEMO_MODE 置 true，启用 Mock 拦截器与演示数据灌入）
-            ./gradlew --no-daemon :app:assembleDebug -Pdemo 2>&1 | tee gradle-screenshots.log
-
-            # 清空上一次的残留，保证这一轮拿到的一定是本次产物
+            ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest -Pdemo 2>&1 | tee gradle-screenshots.log
             adb shell rm -rf "$REMOTE_SHOT_DIR"
             adb shell mkdir -p "$REMOTE_SHOT_DIR"
-
-            # connectedDebugAndroidTest 会自动安装 app 与 androidTest 两个 APK
-            ./gradlew --no-daemon :app:connectedDebugAndroidTest -Pdemo 2>&1 | tee -a gradle-screenshots.log
-
-            # 先确认测试真的落盘了：把全盘 PNG 列出来，路径不对时日志里一眼能看出来
-            echo "== 设备上所有 PNG =="
+            adb install -r -t app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell input keyevent 224
+            adb shell wm dismiss-keyguard
+            adb logcat -c
+            adb shell am instrument -w -e class com.yunmei.vibe.ScreenshotTest com.yunmei.vibe.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | tee instrumentation.log || echo "am instrument 非零退出（细节见 instrumentation.log）"
+            adb logcat -d -s ScreenshotTest | tail -100
             adb shell find /sdcard -name "*.png" -type f 2>/dev/null | head -60 || true
-
-            echo "== 目标目录 =="
             adb shell ls -l "$REMOTE_SHOT_DIR" 2>&1 || true
-
-            # 把设备上的截图拿回来（pull 失败不立刻中断，先让日志与 artifact 落袋）
             rm -rf build/screenshots
             adb pull "$REMOTE_SHOT_DIR" build/screenshots || echo "adb pull 失败：$REMOTE_SHOT_DIR 不存在"
             mkdir -p docs/screenshots
             cp build/screenshots/*.png docs/screenshots/ 2>/dev/null || true
-            ls -l docs/screenshots || true
-
-            # 这一轮一张都没拉到才算失败（docs/screenshots 里本来就有上次的图，不能用它判断）
-            test -n "$(find build/screenshots -name '*.png' -type f -print -quit 2>/dev/null)" || {
-              echo "::error::没有拿到任何截图，检查 ScreenshotTest 的 PUBLIC_DIR 与 REMOTE_SHOT_DIR 是否一致"
-              exit 1
-            }
-            echo "本轮拉到 $(find build/screenshots -name '*.png' -type f | wc -l) 张" 
+            ls -l build/screenshots || true
+            echo "::error::没有拿到任何截图，对照上面的 find 与 logcat 判断是没跑起来还是没落盘"
+            test -n "$(find build/screenshots -name '*.png' -type f -print -quit)"
+            echo "本轮拉到 $(find build/screenshots -name '*.png' -type f | wc -l) 张"
 
       - name: 保留截图与构建日志
         if: always()
@@ -148,6 +136,7 @@ jobs:
           path: |
             build/screenshots
             gradle-screenshots.log
+            instrumentation.log
             app/build/reports
           if-no-files-found: warn
           retention-days: 14

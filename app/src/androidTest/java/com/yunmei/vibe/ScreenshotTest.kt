@@ -170,6 +170,10 @@ class ScreenshotTest {
         device.takeScreenshot(target)
         // 状态栏里有时间/电量/运营商，README 里不需要这些噪声。
         cropStatusBar(target)
+        BitmapFactory.decodeFile(target.absolutePath)?.let { shot ->
+            Log.i(TAG, "尺寸: ${shot.width}x${shot.height} (${target.name})")
+            shot.recycle()
+        }
         Thread.sleep(SETTLE_MS / 2)
     }
 

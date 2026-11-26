@@ -58,13 +58,13 @@
     <td align="center">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/miuix_dark_home.png">
-        <img src="docs/screenshots/miuix_light_home.png" width="330" alt="Miuix 主题首页">
+        <img src="docs/screenshots/miuix_light_home.png" width="360" alt="Miuix 主题首页">
       </picture>
     </td>
     <td align="center">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/material_dark_home.png">
-        <img src="docs/screenshots/material_light_home.png" width="330" alt="Material 主题首页（莫奈取色）">
+        <img src="docs/screenshots/material_light_home.png" width="360" alt="Material 主题首页（莫奈取色）">
       </picture>
     </td>
   </tr>
@@ -78,13 +78,13 @@
     <td align="center">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/miuix_dark_locks.png">
-        <img src="docs/screenshots/miuix_light_locks.png" width="330" alt="Miuix 门锁页">
+        <img src="docs/screenshots/miuix_light_locks.png" width="360" alt="Miuix 门锁页">
       </picture>
     </td>
     <td align="center">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/material_dark_locks.png">
-        <img src="docs/screenshots/material_light_locks.png" width="330" alt="Material 门锁页">
+        <img src="docs/screenshots/material_light_locks.png" width="360" alt="Material 门锁页">
       </picture>
     </td>
   </tr>
@@ -99,13 +99,13 @@
     <td align="center">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/miuix_dark_settings.png">
-        <img src="docs/screenshots/miuix_light_settings.png" width="330" alt="Miuix 设置页">
+        <img src="docs/screenshots/miuix_light_settings.png" width="360" alt="Miuix 设置页">
       </picture>
     </td>
     <td align="center">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/material_dark_settings.png">
-        <img src="docs/screenshots/material_light_settings.png" width="330" alt="Material 设置页">
+        <img src="docs/screenshots/material_light_settings.png" width="360" alt="Material 设置页">
       </picture>
     </td>
   </tr>

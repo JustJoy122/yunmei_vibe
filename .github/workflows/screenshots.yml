@@ -15,6 +15,7 @@ on:
 permissions:
   contents: write
   packages: read
+  pull-requests: write
 
 concurrency:
   group: screenshots-${{ github.ref }}
@@ -26,8 +27,9 @@ env:
   # GitHub Packages 存取凭据（settings.gradle.kts 里读 GITHUB_ACTOR / GITHUB_TOKEN）
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PACKAGE_NAME: com.yunmei.vibe
-  # 截图最终落在公共 Download 目录：connectedDebugAndroidTest 结束后 AGP 会卸载 APK，
-  # /sdcard/Android/data/<pkg>/ 会随卸载被删，只有 Download 下的副本能活下来。
+  # 主路径：手工 `am instrument` 跑测试（不经 UTP，App 不会被卸载），
+  # 跑完直接从 /sdcard/Android/data/<pkg>/files/screenshots 拉；
+  # Download 下的副本只是兜底（测试里用 shell 身份 cp 过去，某些分区会失败）。
   REMOTE_SHOT_DIR: /sdcard/Download/yunmei-screenshots
 
 jobs:
@@ -45,6 +47,9 @@ jobs:
           ref: main
           fetch-depth: 0
           fetch-tags: true
+          # main 上挂着「必需状态检查」规则：GITHUB_TOKEN 推送会被 GH013 拒掉，
+          # 只有管理员身份（PAT）能绕过。没配 PAT 时退回 GITHUB_TOKEN，走分支兜底。
+          token: ${{ secrets.SCREENSHOTS_PAT || secrets.GITHUB_TOKEN }}
 
       - name: 设置 JDK 21
         uses: actions/setup-java@v6
@@ -144,11 +149,29 @@ jobs:
 
       # 提交信息带 [skip ci]，避免触发自己与 build-debug.yml 无限循环
       - name: 提交新截图
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: 更新自动截图 [skip ci]"
-          file_pattern: |
-            docs/screenshots/*.png
-            README.md
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+        env:
+          SCREENSHOTS_PAT: ${{ secrets.SCREENSHOTS_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots README.md
+          if git diff --cached --quiet; then
+            echo "截图与 README 没有变化，跳过提交"
+            exit 0
+          fi
+          git commit -m "chore: 更新自动截图 [skip ci]"
+          if [ -n "${SCREENSHOTS_PAT:-}" ]; then
+            git push origin HEAD:main
+          else
+            # 走 PR 时不能带 [skip ci]：否则该提交上所有工作流都会被跳过，
+            # 必需状态检查永远不出现，PR 反而合不进去。
+            git commit --amend -m "chore: 更新自动截图"
+            BRANCH="chore/screenshots-${GITHUB_RUN_NUMBER}"
+            git push origin "HEAD:${BRANCH}"
+            echo "::warning::未配置 SCREENSHOTS_PAT，截图已推到分支 ${BRANCH}"
+            gh pr create --base main --head "${BRANCH}" \
+              --title "chore: 更新自动截图" \
+              --body "由 .github/workflows/screenshots.yml 生成。合并后 README 会使用这批图。" || true
+          fi

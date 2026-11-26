@@ -148,7 +148,9 @@ private fun LockStatusCard(
             }
         val statusSummary =
             if (ready) {
-                UnitCodes.name(default.schoolNo) ?: default.schoolNo
+                // 学校域名优先用服务端下发的名称，本地 UnitCodes 只做兜底：
+                // 老版本清单里没有的单位（例如新学校）也该显示全名而不是编号。
+                default.schoolName.ifBlank { UnitCodes.name(default.schoolNo) ?: default.schoolNo }
             } else if (state.lockCount == 0) {
                 stringResource(R.string.home_status_add_action)
             } else {

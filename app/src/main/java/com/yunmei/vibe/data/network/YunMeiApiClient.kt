@@ -9,6 +9,7 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
+import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Retrofit
@@ -16,7 +17,16 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-class YunMeiApiClient {
+/**
+ * 云莓接口客户端。
+ *
+ * [extraInterceptors] 是给演示/测试用的 seam：默认空列表，正式包的请求链路不受影响。
+ * 追加的拦截器排在鉴权拦截器**之前**（OkHttp 的 application 拦截器按添加顺序执行），
+ * 这样 Mock 命中时不会先被打印/会话判定逻辑处理一遍。
+ */
+class YunMeiApiClient(
+    extraInterceptors: List<Interceptor> = emptyList(),
+) {
 
     @Volatile
     var token: String? = null
@@ -43,6 +53,7 @@ class YunMeiApiClient {
     private val okHttpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
+        .apply { extraInterceptors.forEach(::addInterceptor) }
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
                 .header("x-requested-with", "XMLHttpRequest")

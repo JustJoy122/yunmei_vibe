@@ -39,21 +39,75 @@
 - [x] **兼容旧客户端**：分享二维码 / 链接双向解析。
 
 ## 软件截图
-左：Miuix（未开启莫奈取色）；右：Material 3 Expressive（已开启莫奈取色）
 
-### 首页
-![首页截图](assets/index.jpg)
+左：Miuix（未开启莫奈取色）；右：Material 3 Expressive（已开启莫奈取色）。深浅色随 GitHub 主题自动切换。
+
+<div align="center">
+
+<table>
+  <tr>
+    <th align="center">Miuix</th>
+    <th align="center">Material 3 Expressive</th>
+  </tr>
+  <tr>
+    <td align="center">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/miuix_dark_home.png">
+        <img src="docs/screenshots/miuix_light_home.png" width="330" alt="Miuix 主题首页">
+      </picture>
+    </td>
+    <td align="center">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/material_dark_home.png">
+        <img src="docs/screenshots/material_light_home.png" width="330" alt="Material 主题首页（莫奈取色）">
+      </picture>
+    </td>
+  </tr>
+</table>
 
 <details>
-<summary>查看更多软件截图……</summary>
-
-### 门锁
-![门锁截图](assets/locks.jpg)
-
-### 设置
-![设置截图](assets/settings.jpg)
-
+<summary><b>门锁页</b></summary>
+<br>
+<table>
+  <tr>
+    <td align="center">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/miuix_dark_locks.png">
+        <img src="docs/screenshots/miuix_light_locks.png" width="330" alt="Miuix 门锁页">
+      </picture>
+    </td>
+    <td align="center">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/material_dark_locks.png">
+        <img src="docs/screenshots/material_light_locks.png" width="330" alt="Material 门锁页">
+      </picture>
+    </td>
+  </tr>
+</table>
 </details>
+
+<details>
+<summary><b>设置页</b></summary>
+<br>
+<table>
+  <tr>
+    <td align="center">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/miuix_dark_settings.png">
+        <img src="docs/screenshots/miuix_light_settings.png" width="330" alt="Miuix 设置页">
+      </picture>
+    </td>
+    <td align="center">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/material_dark_settings.png">
+        <img src="docs/screenshots/material_light_settings.png" width="330" alt="Material 设置页">
+      </picture>
+    </td>
+  </tr>
+</table>
+</details>
+
+</div>
 
 ## 开始使用
 

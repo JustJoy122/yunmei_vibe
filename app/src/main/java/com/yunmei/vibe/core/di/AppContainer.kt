@@ -7,10 +7,12 @@ import com.yunmei.vibe.data.ble.UnlockManager
 import com.yunmei.vibe.data.local.AccountStore
 import com.yunmei.vibe.data.local.LockStore
 import com.yunmei.vibe.data.local.SecureStore
+import com.yunmei.vibe.data.local.SessionStore
 import com.yunmei.vibe.data.location.LocationProvider
 import com.yunmei.vibe.data.network.YunMeiApiClient
 import com.yunmei.vibe.data.preferences.AppPreferences
 import com.yunmei.vibe.data.repository.YunMeiRepository
+import okhttp3.Interceptor
 
 /**
  * 轻量手动依赖容器。规模变大后可平滑替换为 Hilt：
@@ -39,8 +41,37 @@ class AppContainer(context: Context) {
         LockStore(secureStore)
     }
 
+    /**
+     * 会话持久化。
+     *
+     * 仓储内部也持有一个实例（同一个 [SecureStore] 单例，读写的是同一份加密偏好），
+     * 这里额外暴露一个引用，供演示数据灌入等启动期场景使用。
+     */
+    val sessionStore: SessionStore by lazy {
+        SessionStore(secureStore)
+    }
+
     private val apiClient: YunMeiApiClient by lazy {
-        YunMeiApiClient()
+        YunMeiApiClient(extraInterceptors = demoInterceptors())
+    }
+
+    /**
+     * 演示模式的拦截器。
+     *
+     * `DemoMockInterceptor` 只存在于 debug 源集，主源集编译 release 时看不到它，
+     * 因此按类名反射加载；任何一步失败（release、类被移除、参数变化）都退化成空列表，
+     * 正式包的请求链路与之前完全一致。
+     */
+    private fun demoInterceptors(): List<Interceptor> {
+        if (!com.yunmei.vibe.BuildConfig.DEBUG) return emptyList()
+        return runCatching {
+            val gate = Class.forName("com.yunmei.vibe.demo.DemoGate")
+            if (gate.getMethod("enabled").invoke(null) != true) return emptyList()
+            val interceptor = Class.forName("com.yunmei.vibe.demo.DemoMockInterceptor")
+                .getDeclaredConstructor()
+                .newInstance() as Interceptor
+            listOf(interceptor)
+        }.getOrElse { emptyList() }
     }
 
     val repository: YunMeiRepository by lazy {

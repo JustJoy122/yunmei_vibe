@@ -36,6 +36,17 @@ class YunMeiApp : Application() {
         // FastBle 初始化已下沉到 UnlockManager（首次真正用到蓝牙时才 init），避免拖慢冷启动。
         container = AppContainer(this)
 
+        // 演示模式（仅 debug 源集）：把假账号/假门锁写进本地存储，让界面上有内容。
+        // DemoGate 只在 debug 源集存在，这里按类名反射调用；release 包找不到类，
+        // 被 runCatching 吃掉，初始化顺序与之前完全一致。
+        runCatching {
+            Class.forName("com.yunmei.vibe.demo.DemoGate")
+                .getMethod("seed", AppContainer::class.java)
+                .invoke(null, container)
+        }.onFailure { error ->
+            Log.i("YunMei", "demo seed skipped: " + (error.message ?: ""))
+        }
+
         // 「开门」快捷方式：通知渠道只建一次；可用性随默认门锁变化。
         // LockStore.revision 是 StateFlow，订阅时会先收到当前值，因此启动即完成一次同步。
         UnlockNotifications.ensureChannel(this)

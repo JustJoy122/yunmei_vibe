@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
@@ -58,7 +60,8 @@ fun ProfileAvatar(
         if (bitmap != null) {
             Image(
                 bitmap = bitmap,
-                contentDescription = null,
+                // 语义标记：无障碍朗读它，截图测试也靠它判断「头像已经下载并渲染」。
+                contentDescription = AVATAR_LOADED_DESCRIPTION,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -68,6 +71,9 @@ fun ProfileAvatar(
                 color = contentColor,
                 fontSize = fontSize.sp,
                 fontWeight = FontWeight(550),
+                modifier = Modifier.semantics {
+                    contentDescription = AVATAR_PLACEHOLDER_DESCRIPTION
+                },
             )
         }
     }
@@ -118,3 +124,9 @@ private fun avatarFileName(url: String): String {
     val digest = MessageDigest.getInstance("MD5").digest(url.toByteArray())
     return digest.joinToString("") { "%02x".format(it) } + ".png"
 }
+
+/** 头像已下载并渲染时的无障碍描述；截图测试用它判断异步头像是否就绪。 */
+const val AVATAR_LOADED_DESCRIPTION = "用户头像"
+
+/** 头像还没下载完成时的占位描述（姓名首字）。 */
+const val AVATAR_PLACEHOLDER_DESCRIPTION = "用户头像加载中"

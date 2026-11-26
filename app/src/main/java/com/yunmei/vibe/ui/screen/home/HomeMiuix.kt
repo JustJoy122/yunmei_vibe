@@ -175,7 +175,9 @@ private fun LockStatusCardMiuix(
             ready -> {
                 MiuixStatusCard(
                     title = stringResource(R.string.home_status_ready_title),
-                    subtitle = UnitCodes.name(default.schoolNo) ?: default.schoolNo,
+                    subtitle = default.schoolName.ifBlank {
+                        UnitCodes.name(default.schoolNo) ?: default.schoolNo
+                    },
                     footer = default.label.ifBlank { default.mac },
                     icon = Icons.Rounded.CheckCircleOutline,
                     iconTint = if (isDynamicColor) {

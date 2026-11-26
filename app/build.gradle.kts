@@ -63,6 +63,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            // 演示模式开关：仅 debug 包存在，DemoGate 用它决定是否灌演示数据 +
+            // 往 OkHttp 里塞 DemoMockInterceptor。release 变体没有这个字段，
+            // 主源集也不会引用它（只通过反射读 DemoGate）。
+            //
+            // 默认关闭：`./gradlew :app:assembleDebug` 还是真实数据；
+            // 需要出 README 截图时才加 `-Pdemo`：
+            //   ./gradlew :app:assembleDebug -Pdemo
+            val demoMode = project.hasProperty("demo")
+            buildConfigField("boolean", "DEMO_MODE", demoMode.toString())
+        }
         release {
             if (releaseStoreFile?.exists() == true) {
                 signingConfig = signingConfigs.getByName("release")
@@ -187,4 +198,12 @@ dependencies {
     implementation(libs.aboutlibraries.compose.m3)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // 本地截图测试（app/src/androidTest）：Compose 测试规则抓图，UiAutomator 点底栏。
+    // 只在 androidTest 变体里生效，不进正式包。
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }

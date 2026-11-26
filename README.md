@@ -42,7 +42,7 @@
 
 左：Miuix（未开启莫奈取色）；右：Material 3 Expressive（已开启莫奈取色）。深浅色随 GitHub 主题自动切换。
 
-<p align="center"><i>以下截图由 GitHub Actions 自动生成，对应当前版本：<b><!--VER-->0.4.9-dev (f3e4518)<!--/VER--></b></i></p>
+<p align="center"><i>以下截图由 GitHub Actions 自动生成，对应当前版本：<b><!--VER-->0.4.9-dev (e692896)<!--/VER--></b></i></p>
 <!-- 上面这一行的版本号由 .github/workflows/screenshots.yml 自动替换：
      打 tag 触发时为 tag 名，手动触发时为「versionName-dev (短 commit)」。
      手改 README 时请保留该行里的 VER 起止标记（形如 HTML 注释），否则自动替换会失效。 -->

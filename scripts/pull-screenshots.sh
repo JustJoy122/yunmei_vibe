@@ -15,7 +15,9 @@ set -euo pipefail
 
 PKG="com.yunmei.vibe"
 TEST_PKG="com.yunmei.vibe.test"
-REMOTE_DIR="/sdcard/Android/data/${PKG}/files/screenshots"
+# 测试自己会把图复制到公共目录（/sdcard/Android/data 会随卸载被清掉），
+# 所以这里统一从 Download 拉。
+REMOTE_DIR="/sdcard/Download/yunmei-screenshots"
 LOCAL_DIR="build/screenshots"
 
 echo "==> 安装 debug 包与测试包"
@@ -29,6 +31,9 @@ echo "==> 运行截图测试（四种状态 × 三页）"
 adb shell am instrument -w \
   -e class "${PKG}.ScreenshotTest" \
   "${TEST_PKG}/androidx.test.runner.AndroidJUnitRunner"
+
+echo "==> 设备上的 PNG 清单（排查用）"
+adb shell find /sdcard -name "*.png" -type f 2>/dev/null | head -40 || true
 
 echo "==> 拉取到 ${LOCAL_DIR}"
 rm -rf "${LOCAL_DIR}"

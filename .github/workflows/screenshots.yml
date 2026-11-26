@@ -26,7 +26,9 @@ env:
   # GitHub Packages 存取凭据（settings.gradle.kts 里读 GITHUB_ACTOR / GITHUB_TOKEN）
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PACKAGE_NAME: com.yunmei.vibe
-  REMOTE_SHOT_DIR: /sdcard/Android/data/com.yunmei.vibe/files/screenshots
+  # 截图最终落在公共 Download 目录：connectedDebugAndroidTest 结束后 AGP 会卸载 APK，
+  # /sdcard/Android/data/<pkg>/ 会随卸载被删，只有 Download 下的副本能活下来。
+  REMOTE_SHOT_DIR: /sdcard/Download/yunmei-screenshots
 
 jobs:
   screenshots:
@@ -110,15 +112,33 @@ jobs:
             # 先构建（-Pdemo 把 DEMO_MODE 置 true，启用 Mock 拦截器与演示数据灌入）
             ./gradlew --no-daemon :app:assembleDebug -Pdemo 2>&1 | tee gradle-screenshots.log
 
+            # 清空上一次的残留，保证这一轮拿到的一定是本次产物
+            adb shell rm -rf "$REMOTE_SHOT_DIR"
+            adb shell mkdir -p "$REMOTE_SHOT_DIR"
+
             # connectedDebugAndroidTest 会自动安装 app 与 androidTest 两个 APK
             ./gradlew --no-daemon :app:connectedDebugAndroidTest -Pdemo 2>&1 | tee -a gradle-screenshots.log
 
-            # 把设备上的截图拿回来
+            # 先确认测试真的落盘了：把全盘 PNG 列出来，路径不对时日志里一眼能看出来
+            echo "== 设备上所有 PNG =="
+            adb shell find /sdcard -name "*.png" -type f 2>/dev/null | head -60 || true
+
+            echo "== 目标目录 =="
+            adb shell ls -l "$REMOTE_SHOT_DIR" 2>&1 || true
+
+            # 把设备上的截图拿回来（pull 失败不立刻中断，先让日志与 artifact 落袋）
             rm -rf build/screenshots
-            adb pull "$REMOTE_SHOT_DIR" build/screenshots
+            adb pull "$REMOTE_SHOT_DIR" build/screenshots || echo "adb pull 失败：$REMOTE_SHOT_DIR 不存在"
             mkdir -p docs/screenshots
-            cp build/screenshots/*.png docs/screenshots/
-            ls -l docs/screenshots
+            cp build/screenshots/*.png docs/screenshots/ 2>/dev/null || true
+            ls -l docs/screenshots || true
+
+            # 这一轮一张都没拉到才算失败（docs/screenshots 里本来就有上次的图，不能用它判断）
+            test -n "$(find build/screenshots -name '*.png' -type f -print -quit 2>/dev/null)" || {
+              echo "::error::没有拿到任何截图，检查 ScreenshotTest 的 PUBLIC_DIR 与 REMOTE_SHOT_DIR 是否一致"
+              exit 1
+            }
+            echo "本轮拉到 $(find build/screenshots -name '*.png' -type f | wc -l) 张" 
 
       - name: 保留截图与构建日志
         if: always()

@@ -2,6 +2,8 @@ package com.yunmei.vibe
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.ParcelFileDescriptor
+import android.util.Log
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -24,7 +26,13 @@ import java.io.FileOutputStream
  * 所以这里只用 UiAutomator 点按 + `UiDevice.takeScreenshot`，不碰 Espresso。
  *
  * 流程：写偏好 → 冷启 `MainActivity` → 依次点底栏三页 → 每页截一张（裁掉状态栏），
- * 产物落在 `getExternalFilesDir(null)/screenshots/`：
+ * 产物先落在 `getExternalFilesDir(null)/screenshots/`，结束时再以 shell 身份复制到
+ * `/sdcard/Download/yunmei-screenshots/`：
+ *
+ * **为什么必须多这一步**：CI 走的是 `connectedDebugAndroidTest`，AGP / UTP 在测试
+ * 跑完后会 **卸载 APK**，而 `/sdcard/Android/data/<pkg>/` 会随卸载一起被删掉，
+ * 于是紧跟着的 `adb pull` 自然找不到目录（GitHub Actions 上就是这么挂的）。
+ * `/sdcard/Download/` 属于公共目录，卸载 App 不会动它。
  *
  * ```
  * adb shell am instrument -w \
@@ -40,8 +48,13 @@ class ScreenshotTest {
     private val context = instrumentation.targetContext
     private val device: UiDevice by lazy { UiDevice.getInstance(instrumentation) }
 
+    /** 应用私有外部目录：测试期间写这里，卸载后会被系统清掉。 */
     private val outputDir: File by lazy {
-        File(context.getExternalFilesDir(null), "screenshots").apply { mkdirs() }
+        val base = context.getExternalFilesDir(null) ?: context.filesDir
+        File(base, "screenshots").apply {
+            mkdirs()
+            Log.i(TAG, "私有输出目录: ${absolutePath}（存在=${exists()}）")
+        }
     }
 
     @Test
@@ -72,6 +85,34 @@ class ScreenshotTest {
                 capture(state, PAGE_SETTINGS)
             }
         }
+
+        publishToPublicDir()
+    }
+
+    /**
+     * 把私有目录里的 PNG 复制到 `/sdcard/Download/yunmei-screenshots/`。
+     *
+     * 用 [android.app.UiAutomation.executeShellCommand] 以 shell 身份执行，
+     * 既不需要 `WRITE_EXTERNAL_STORAGE` / MANAGE_EXTERNAL_STORAGE 权限，
+     * 也能保证「App 被卸载后截图还在」。
+     */
+    private fun publishToPublicDir() {
+        val files = outputDir.listFiles { file -> file.isFile && file.name.endsWith(".png") }
+            .orEmpty()
+            .sortedBy { it.name }
+        if (files.isEmpty()) {
+            Log.w(TAG, "没有可导出的截图：${outputDir.absolutePath}")
+            return
+        }
+        shell("mkdir -p $PUBLIC_DIR")
+        files.forEach { file ->
+            shell("cp -f \"${file.absolutePath}\" \"$PUBLIC_DIR/${file.name}\"")
+        }
+        Log.i(TAG, "已导出 ${files.size} 张到 $PUBLIC_DIR\n" + shell("ls -l $PUBLIC_DIR"))
+
+        // 目录能被 shell 读到，但 adb pull 需要的是真实路径；顺带回读一次确认非空。
+        val count = shell("ls $PUBLIC_DIR | wc -l").trim()
+        Log.i(TAG, "$PUBLIC_DIR 内文件数 = $count")
     }
 
     /**
@@ -97,6 +138,13 @@ class ScreenshotTest {
         Thread.sleep(SETTLE_MS)
     }
 
+    /** 以 shell 身份执行命令并取回输出（instrumentation 的 uiAutomation 天然具备 shell 权限）。 */
+    private fun shell(command: String): String {
+        val descriptor = instrumentation.uiAutomation.executeShellCommand(command)
+        return ParcelFileDescriptor.AutoCloseInputStream(descriptor)
+            .use { it.readBytes().toString(Charsets.UTF_8) }
+    }
+
     private fun applyPrefs(uiMode: String, colorMode: Int) {
         SettingsPrefs.of(context).edit()
             // 启动自动检查更新会弹「发现新版本」对话框，把底栏整个盖住，截图必须关掉。
@@ -112,6 +160,7 @@ class ScreenshotTest {
     private fun capture(state: ShotState, page: String) {
         device.waitForIdle()
         val target = File(outputDir, "${state.prefix}_$page.png")
+        Log.i(TAG, "Saved to: ${target.absolutePath}")
         device.takeScreenshot(target)
         // 状态栏里有时间/电量/运营商，README 里不需要这些噪声。
         cropStatusBar(target)
@@ -186,5 +235,10 @@ class ScreenshotTest {
 
         /** 与 [com.yunmei.vibe.ui.component.profile.AVATAR_LOADED_DESCRIPTION] 保持一致。 */
         const val AVATAR_LOADED = "用户头像"
+
+        const val TAG = "ScreenshotTest"
+
+        /** 公共导出目录：属于 /sdcard/Download，卸载 App 不会被清掉，CI 从这里 pull。 */
+        const val PUBLIC_DIR = "/sdcard/Download/yunmei-screenshots"
     }
 }

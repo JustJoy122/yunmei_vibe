@@ -2,12 +2,14 @@ name: 自动截图
 
 # 用于生成 README 里的界面截图：在模拟器里跑 -Pdemo（假数据 + Mock 网络），
 # 把 4 种主题状态 × 3 个页面的截图拿回来并提交到 docs/screenshots/。
-# 触发方式：手动点按，或每周一凌晨（北京时间）定时跑一次。
+# 触发方式：
+#   - 打 tag（v*）时自动跑：截图上标注的就是这个正式版本号；
+#   - 也可以手动点按跑：截图上标注「versionName-dev (短 commit)」，便于确认图是哪次构建出的。
 on:
   workflow_dispatch:
-  schedule:
-    # 17:00 UTC = 次日 01:00 北京时间，错开工作日的构建高峰
-    - cron: "0 17 * * 0"
+  push:
+    tags:
+      - "v*"
 
 # 自动提交截图需要写权限；拉 GitHub Packages 上的 miuix 依赖需要读包权限
 permissions:
@@ -32,8 +34,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+      # 始终检出 main：tag 触发时 checkout 会落在 detached HEAD，
+      # 后面 git-auto-commit 就没法在分支上提交。tag 名只用于「标注版本号」，
+      # 截图内容取自 main 的最新代码（本项目的 release tag 都打在 main 上）。
       - name: 拉取代码
         uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: 设置 JDK 21
         uses: actions/setup-java@v6
@@ -43,6 +52,28 @@ jobs:
 
       - name: 设置 Gradle
         uses: gradle/actions/setup-gradle@v6
+
+      # 版本号要写进 README 的截图说明里，所以放在构建之前算好并落盘：
+      #   - tag 触发：用 tag 名（v0.4.9）
+      #   - 手动/branch 触发：versionName + 短 commit（0.4.9-dev (abc1234)）
+      - name: 计算版本号并写入 README
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION_LABEL="${GITHUB_REF_NAME}"
+          else
+            VERSION_NAME=$(sed -n 's/.*versionName *= *"\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)
+            VERSION_LABEL="${VERSION_NAME}-dev (${GITHUB_SHA:0:7})"
+          fi
+          echo "版本号: ${VERSION_LABEL}"
+          printf '%s\n' "${VERSION_LABEL}" > version.txt
+
+          # 只替换 <!--VER-->…<!--/VER--> 之间的内容，README 其余部分一个字都不动
+          sed -i "s|<!--VER-->.*<!--/VER-->|<!--VER-->${VERSION_LABEL}<!--/VER-->|" README.md
+          grep -n "<!--VER-->" README.md
+
+          echo "label=${VERSION_LABEL}" >> "$GITHUB_OUTPUT"
 
       # KVM 不开则 x86_64 模拟器走纯软件模拟，启动要数分钟，很容易超时
       - name: 启用 KVM
@@ -106,6 +137,8 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: 更新自动截图 [skip ci]"
-          file_pattern: "docs/screenshots/*.png"
+          file_pattern: |
+            docs/screenshots/*.png
+            README.md
           commit_user_name: "github-actions[bot]"
           commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"

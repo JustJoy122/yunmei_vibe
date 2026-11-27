@@ -4,30 +4,21 @@ import android.app.Notification
 import com.yunmei.vibe.ui.util.ForegroundPlaceholder
 import com.yunmei.vibe.ui.util.NotificationDowngrade
 import android.app.Service
-import android.bluetooth.BluetoothManager
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.IBinder
 import androidx.core.app.ServiceCompat
-import androidx.core.content.ContextCompat
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
-import com.yunmei.vibe.data.ble.UnlockCooldown
+import com.yunmei.vibe.data.repository.UnlockBlocker
 import com.yunmei.vibe.data.ble.UnlockManager
-import com.yunmei.vibe.data.local.StoredUser
-import com.yunmei.vibe.data.model.Lock
-import com.yunmei.vibe.ui.util.BLE_PERMISSIONS
+import com.yunmei.vibe.data.repository.UnlockPreparation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -125,77 +116,48 @@ class UnlockService : Service() {
 
     private suspend fun runUnlock() {
         val container = YunMeiApp.app.container
-        // 蓝牙未开启（含「重试」时仍关着的情况）：不要闷头失败，给出「开启蓝牙」入口。
-        if (!isBluetoothEnabled()) {
-            postBluetoothFailure()
-            return
-        }
-        val lock = withContext(Dispatchers.IO) { container.lockStore.getDefault() }
-        if (lock == null) {
-            finishWithFailure(getString(R.string.unlock_shortcut_no_default))
-            return
-        }
-        if (!hasBlePermissions()) {
-            finishWithFailure(getString(R.string.unlock_shortcut_no_permission))
-            return
-        }
-        if (!lock.isUsable) {
-            finishWithFailure(getString(R.string.unlock_lock_unusable))
-            return
-        }
-        // 8 秒开门冷却（官方 openDelay）：快捷方式、通知按钮、小组件都走这里，统一拦住。
-        val cooldownMs = UnlockCooldown.remainingMs()
-        if (cooldownMs > 0L) {
-            val seconds = ((cooldownMs + 999L) / 1000L).toInt()
-            finishWithFailure(getString(R.string.unlock_cooldown_wait, seconds))
-            return
-        }
-        // 打开门之前先刷新一次 secret：本地保存的可能是首次添加时的旧快照，服务端会轮换。
-        // 未登录时用已保存账号重新登录；刷新超时 / 离线直接沿用旧 secret，不阻塞开锁。
-        val settings = withContext(Dispatchers.IO) { container.appPreferences.settings.first() }
-        val quickConnect = settings.quickConnect
-        val account = withContext(Dispatchers.IO) {
-            container.accountStore.getByUsernameMd5(lock.usernameMd5)
-                ?: if (settings.alwaysCode) container.accountStore.getAll().firstOrNull() else null
-        }
-        val effectiveLock = refreshLockInfo(lock, account)
-
-        // 兜底超时：底层回调偶发不返回时也要给出结果并退出前台服务。
-        val timeoutJob = scope.launch {
-            delay(UNLOCK_TIMEOUT_MS)
-            finishWithFailure(getString(R.string.unlock_timeout))
-        }
-
-        container.unlockManager.openDoor(effectiveLock, quickConnect, object : UnlockManager.Listener {
-            override fun onProgress(percent: Int, message: String) {
-                updateProgress(message, percent)
+        // 前置检查（蓝牙开关 / 默认门锁 / 权限 / 可用性 / 8 秒冷却 / secret 刷新）统一放在 UnlockFlow，
+        // 与首页按钮共用同一份实现；这里只负责把阻塞原因翻译成通知文案。
+        when (val preparation = container.unlockFlow.prepare(lock = null)) {
+            is UnlockPreparation.Blocked -> when (val blocker = preparation.blocker) {
+                // 蓝牙关着（含「重试」时仍关着）：不要闷头失败，给出「开启蓝牙」入口。
+                UnlockBlocker.BluetoothOff -> postBluetoothFailure()
+                UnlockBlocker.NoDefaultLock -> finishWithFailure(getString(R.string.unlock_shortcut_no_default))
+                UnlockBlocker.MissingPermissions -> finishWithFailure(getString(R.string.unlock_shortcut_no_permission))
+                UnlockBlocker.LockUnusable -> finishWithFailure(getString(R.string.unlock_lock_unusable))
+                is UnlockBlocker.CoolingDown -> finishWithFailure(getString(R.string.unlock_cooldown_wait, blocker.seconds))
             }
 
-            override fun onBattery(percent: Int) = Unit
+            is UnlockPreparation.Ready -> {
+                // 兜底超时：底层回调偶发不返回时也要给出结果并退出前台服务。
+                val timeoutJob = scope.launch {
+                    delay(UNLOCK_TIMEOUT_MS)
+                    finishWithFailure(getString(R.string.unlock_timeout))
+                }
 
-            override fun onSuccess() {
-                timeoutJob.cancel()
-                finishWithSuccess()
+                container.unlockManager.openDoor(
+                    preparation.lock,
+                    preparation.quickConnect,
+                    object : UnlockManager.Listener {
+                        override fun onProgress(percent: Int, message: String) {
+                            updateProgress(message, percent)
+                        }
+
+                        override fun onBattery(percent: Int) = Unit
+
+                        override fun onSuccess() {
+                            timeoutJob.cancel()
+                            finishWithSuccess()
+                        }
+
+                        override fun onFailure(message: String) {
+                            timeoutJob.cancel()
+                            finishWithFailure(message)
+                        }
+                    },
+                )
             }
-
-            override fun onFailure(message: String) {
-                timeoutJob.cancel()
-                finishWithFailure(message)
-            }
-        })
-    }
-
-    /**
-     * 开门前刷新门锁信息（secret 与型号能力）；拿不到（未登录 / 无网络 / 超时）时原样返回本地门锁，
-     * 保证离线也能开门。AES 型号的拦截在 UnlockManager.openDoor 里按刷新后的 aesSupport 判断。
-     */
-    private suspend fun refreshLockInfo(lock: Lock, account: StoredUser?): Lock {
-        val container = YunMeiApp.app.container
-        val refreshed = withTimeoutOrNull(SECRET_REFRESH_TIMEOUT_MS) {
-            container.repository.refreshLock(lock, account)
-        } ?: return lock
-        withContext(Dispatchers.IO) { container.lockStore.updateFromServer(refreshed) }
-        return refreshed
+        }
     }
 
     private fun updateProgress(text: String, percent: Int) {
@@ -307,27 +269,15 @@ class UnlockService : Service() {
         stopSelf()
     }
 
-    private fun isBluetoothEnabled(): Boolean = runCatching {
-        val manager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
-        manager?.adapter?.isEnabled == true
-    }.getOrDefault(false)
-
     private fun stopSelfSafely() {
         // 结果通知保留在通知栏，只撤掉前台服务身份（detach 而非 remove：remove 会删掉通知）。
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
         stopSelf()
     }
 
-    private fun hasBlePermissions(): Boolean = BLE_PERMISSIONS.all { permission ->
-        ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
-    }
-
     companion object {
         private const val TAG = "UnlockService"
         private const val UNLOCK_TIMEOUT_MS = 45_000L
-
-        /** 开门前刷新 secret 的等待上限：超时直接按旧 secret 开门。 */
-        private const val SECRET_REFRESH_TIMEOUT_MS = 8_000L
 
         /** 失败通知保持实况的最长时间（10 分钟），超时后释放前台服务。 */
         private const val FAILURE_KEEP_MS = 10 * 60 * 1000L

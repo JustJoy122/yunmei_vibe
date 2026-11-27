@@ -4,10 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yunmei.vibe.R
 import com.yunmei.vibe.YunMeiApp
-import android.bluetooth.BluetoothManager
-import android.content.Context
-import com.yunmei.vibe.data.ble.UnlockCooldown
 import com.yunmei.vibe.data.ble.UnlockManager
+import com.yunmei.vibe.data.repository.UnlockBlocker
+import com.yunmei.vibe.data.repository.UnlockPreparation
 import com.yunmei.vibe.data.local.StoredUser
 import com.yunmei.vibe.data.model.Lock
 import com.yunmei.vibe.ui.util.SystemInfo
@@ -24,7 +23,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface HomeEvent {
     /** 开门成功且开启「开门后自动退出」。 */
@@ -149,21 +147,33 @@ class HomeViewModel : ViewModel() {
         if (_uiState.value.defaultLock == null) return
         val lock = currentLock ?: return
         if (_uiState.value.isOpening) return
-        // 官方客户端有 8 秒开门冷却（服务端 openDelay），冷却期内不发起蓝牙连接，
-        // 避免连续开门把门锁打进异常状态；UI 层的按钮防抖只挡重复点击，挡不住其它入口。
-        val cooldownMs = UnlockCooldown.remainingMs()
-        if (cooldownMs > 0L) {
-            val seconds = ((cooldownMs + 999L) / 1000L).toInt()
-            _uiState.update { it.copy(statusText = YunMeiApp.app.getString(R.string.unlock_cooldown_wait, seconds)) }
-            return
+        viewModelScope.launch {
+            // 前置检查（蓝牙开关 / 权限 / 可用性 / 8 秒冷却 / secret 刷新）统一由 UnlockFlow 完成，
+            // 与通知动作、桌面快捷方式、控制中心磁贴共用同一份实现，避免各处校验分叉。
+            when (val preparation = container.unlockFlow.prepare(lock, findUser(lock))) {
+                is UnlockPreparation.Blocked -> onUnlockBlocked(preparation.blocker)
+                is UnlockPreparation.Ready -> {
+                    _uiState.update {
+                        it.copy(
+                            isOpening = true,
+                            progress = 0,
+                            battery = null,
+                            statusText = str(R.string.unlock_preparing),
+                        )
+                    }
+                    startUnlock(preparation.lock, preparation.quickConnect)
+                }
+            }
         }
-        if (!lock.isUsable) {
-            _uiState.update { it.copy(statusText = str(R.string.unlock_lock_unusable)) }
-            return
-        }
-        // 蓝牙未开启时先请系统对话框开启，不直接失败（由 UI 层拉起对话框，同意后回到 onBluetoothEnableResult）。
-        if (!isBluetoothEnabled()) {
-            _uiState.update {
+    }
+
+    /** 把统一的阻塞原因翻译成首页文案；蓝牙关闭时交给 UI 拉起系统对话框。 */
+    private fun onUnlockBlocked(blocker: UnlockBlocker) {
+        when (blocker) {
+            // 没有默认门锁：静默返回，原因由顶部 Banner 说明。
+            UnlockBlocker.NoDefaultLock -> Unit
+
+            UnlockBlocker.BluetoothOff -> _uiState.update {
                 it.copy(
                     isOpening = false,
                     progress = 0,
@@ -171,29 +181,28 @@ class HomeViewModel : ViewModel() {
                     pendingBluetoothEnable = true,
                 )
             }
-            return
-        }
-        _uiState.update { it.copy(isOpening = true, progress = 0, battery = null, statusText = str(R.string.unlock_preparing)) }
-        // 开门前先向服务端刷新一次门锁信息（secret 会被轮换，型号能力也会更新）。
-        // 放进协程避免网络阻塞点击响应；刷新超时 / 离线时沿用本地门锁。
-        // AES 型号的拦截由 UnlockManager.openDoor 依据刷新后的 aesSupport 判断，
-        // 即使本地是首次添加时的旧快照也能在开门前被识别出来。
-        viewModelScope.launch {
-            startUnlock(withFreshLock(lock))
+
+            UnlockBlocker.MissingPermissions -> _uiState.update {
+                it.copy(isOpening = false, progress = 0, statusText = str(R.string.unlock_permission_denied))
+            }
+
+            UnlockBlocker.LockUnusable -> _uiState.update {
+                it.copy(isOpening = false, progress = 0, statusText = str(R.string.unlock_lock_unusable))
+            }
+
+            is UnlockBlocker.CoolingDown -> _uiState.update {
+                it.copy(
+                    isOpening = false,
+                    progress = 0,
+                    // str() 只接受单个资源 id，带参格式化需要显式 getString。
+                    statusText = YunMeiApp.app.getString(R.string.unlock_cooldown_wait, blocker.seconds),
+                )
+            }
         }
     }
 
-    /** 用服务端最新信息覆盖本地快照；拿不到（未登录 / 无网络 / 超时）时原样返回。 */
-    private suspend fun withFreshLock(lock: Lock): Lock {
-        val refreshed = withTimeoutOrNull(SECRET_REFRESH_TIMEOUT_MS) {
-            container.repository.refreshLock(lock, findUser(lock))
-        } ?: return lock
-        withContext(Dispatchers.IO) { container.lockStore.updateFromServer(refreshed) }
-        return refreshed
-    }
-
-    private fun startUnlock(lock: Lock) {
-        container.unlockManager.openDoor(lock, _uiState.value.quickConnect, object : UnlockManager.Listener {
+    private fun startUnlock(lock: Lock, quickConnect: Boolean) {
+        container.unlockManager.openDoor(lock, quickConnect, object : UnlockManager.Listener {
             override fun onProgress(percent: Int, message: String) {
                 _uiState.update { it.copy(progress = percent, statusText = message) }
             }
@@ -235,11 +244,6 @@ class HomeViewModel : ViewModel() {
             }
         }
     }
-
-    private fun isBluetoothEnabled(): Boolean = runCatching {
-        val manager = YunMeiApp.app.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
-        manager?.adapter?.isEnabled == true
-    }.getOrDefault(false)
 
     fun openDoorDenied() {
         _uiState.update { it.copy(isOpening = false, progress = 0, statusText = str(R.string.unlock_permission_denied)) }
@@ -368,10 +372,5 @@ class HomeViewModel : ViewModel() {
             block()
             loadLockAndSettings()
         }
-    }
-
-    private companion object {
-        /** 开门前刷新 secret 的等待上限：超时直接按旧 secret 开门，不让网络拖住开锁。 */
-        const val SECRET_REFRESH_TIMEOUT_MS = 8_000L
     }
 }

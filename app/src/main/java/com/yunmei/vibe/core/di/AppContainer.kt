@@ -11,6 +11,7 @@ import com.yunmei.vibe.data.local.SessionStore
 import com.yunmei.vibe.data.location.LocationProvider
 import com.yunmei.vibe.data.network.YunMeiApiClient
 import com.yunmei.vibe.data.preferences.AppPreferences
+import com.yunmei.vibe.data.repository.UnlockFlow
 import com.yunmei.vibe.data.repository.YunMeiRepository
 import okhttp3.Interceptor
 
@@ -81,6 +82,16 @@ class AppContainer(context: Context) {
 
     val unlockManager: UnlockManager by lazy {
         UnlockManager(appContext)
+    }
+
+    /**
+     * 开门前置检查（蓝牙 / 权限 / 冷却 / secret 刷新）。
+     *
+     * 首页与 [com.yunmei.vibe.ui.unlock.UnlockService] 共用同一份实现，
+     * 避免两处校验顺序与文案继续分叉。
+     */
+    val unlockFlow: UnlockFlow by lazy {
+        UnlockFlow(appContext, lockStore, accountStore, appPreferences, repository)
     }
 
     val locationProvider: LocationProvider by lazy {

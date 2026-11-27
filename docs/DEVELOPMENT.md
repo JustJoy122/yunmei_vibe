@@ -221,7 +221,7 @@ app/src/main/java/com/yunmei/vibe/
 - **通知**：开门与打卡各持固定通知 ID（1001 / 1002）与独立渠道；进行中、失败与结束状态统一使用实况渠道；实况短文本用 `setShortCriticalText`，小米超级岛用 `MiIslandNotification.extras(...)` 的短文本槽位。
 - **快捷方式与跳板**：动态快捷方式（开门 / 打卡）与通知动作都经带令牌校验的透明跳板 Activity 启动前台服务，跳板在前台调用 `startForegroundService`。
 
-## 与 [原项目](https://github.com/zxy19/yunmei_unintelligent) 的兼容性
+## 与 [yunmei_unintelligent](https://github.com/zxy19/yunmei_unintelligent) 的兼容性
 
 - 分享协议：`https://yunmeiui.xypp.cc/#/lock_info/<Base64>`（9 段 `|` 格式）可双向解析，
   支持 `addlock/`、`lock_id/`、`lock_info/`、`lockInfo/` 前缀与 4 段旧格式。

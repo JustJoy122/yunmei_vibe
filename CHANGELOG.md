@@ -9,7 +9,48 @@
 并在文件末尾维护链接定义，使版本号在 Markdown 渲染时可点击。
 
 ---
-## [Unreleased]
+## [0.5.0] - 2026-11-27
+
+**Full changelog**: [v0.4.9...v0.5.0](https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.9...v0.5.0)
+
+### 添加
+- 控制中心磁贴：新增「开门」「打卡」两个快捷设置磁贴，与桌面快捷方式共用同一套跳板 Activity 与前台服务，兼容 Android 14 对磁贴启动 Activity 的限制。
+- 安全存储迁移到 Tink：账号与门锁数据改用 Tink AEAD（`AES256_GCM`，主密钥存 Android Keystore），旧版加密数据首次启动时一次性迁移，备份规则排除密钥相关文件。
+- 个人中心页：展示学号、姓名、手机号，以及学籍（学院 / 专业 / 班级 / 年级）与住宿信息（校区 / 楼栋 / 宿舍 / 床位）；支持多账号切换与删除。
+- 头像更换：个人中心头像角标可拍照或从相册选择，自动居中裁方压缩后上传到服务端。
+- 账号安全：新增「重设密码」（短信验证码 + 60 秒倒计时 + 密码强度校验）、「换绑手机号」与「注销账号」；换绑与注销成功后回到登录页。
+- 多级危险确认：新增可复用的阶梯式警告弹窗（内容淡入过渡），「自动开门 / 开门后自动退出」的互斥冲突与「注销账号」均改为逐级加重的确认，最后一级使用红色强警告文案。
+- 通知结束态：任务结束后通知不再被系统回收重建，而是先降级为可滑动的普通通知；成功任务 10 秒后自动清除，点击通知进入应用会取消待执行的清除。
+- 登录会话持久化：重启应用后自动恢复登录态与学校域 token，会话过期时静默续期并重试一次，不再直接退到登录页。
+- 打卡卡片重做：新增「已打卡 / 未打卡」状态徽章，第二行按状态显示打卡时间或打卡时段，禁用态整体降透明。
+- 应用图标动态取色：新增 `values-v31` 动态色定义，图标背景与前景在 Android 12+ 跟随系统强调色。
+- 截图自动化：新增 Debug 演示数据与网络 Mock、androidTest 截图用例以及 GitHub Actions 工作流，自动生成 README 用图（4 种主题组合 × 3 个页面）。
+- 关于页：新增「官方服务条款」（服务协议 / 隐私政策，用 Custom Tabs 打开）与备案号展示。
+
+### 更改
+- 架构：抽离 `UnlockFlow`，统一「首页直接开锁」与「快捷方式 / 磁贴经前台服务」两条链路的前置校验（蓝牙开关、默认门锁、蓝牙权限、门锁可用性、8 秒冷却、密钥刷新），消除两份实现不一致的风险。
+- 首页、门锁列表、门锁详情、设置页按 KernelSU 取色 Token 统一：页面 `surfaceContainer`、卡片 `surfaceBright`、说明文字 `onSurfaceVariant`，卡片与状态标签风格一致。
+- Miuix 输入框改为标题与内容左对齐（原为值右对齐），登录与账号相关表单风格统一。
+- 账号入口从设置页迁至门锁页，门锁页新增「我的账号」卡片（头像 + 姓名 + 学号）；个人中心新增「账号安全」分组。
+- 个人档案与群组成员名单改为「缓存优先 + 静默刷新」（SWR）：先显示本地缓存再回源，刷新失败时保留列表并提示「已展示本地记录」。
+- 依赖升级：Tink 1.24.0、materialKolor 5.0.1、AboutLibraries 15.3.0、AndroidX Browser 1.10.0、kotlinx-serialization 1.13.0、NavigationEvent 1.2.0、Gradle Wrapper 9.9.2。
+- CI：Pull Request 增加 lint 检查与改动路径过滤（纯文档改动跳过构建），Maven 依赖源补充阿里云镜像，截图工作流支持手动触发与 tag 触发并自动回写 README。
+- 外部链接统一走 Chrome Custom Tabs：关于页「查看源代码」、服务协议 / 隐私政策，以及开源许可弹窗内各库的主页与许可证链接，不再调用系统浏览器或 Compose 的 `UriHandler`。
+- 文档同步：README 截图区改为深浅色自适应模板，`DEPENDENCIES.md` 与 `DEVELOPMENT.md` 更新依赖版本与项目结构。
+
+### 修复
+- 个人中心头像不显示：网络请求移出主线程。
+- 底栏切页动画改用 spring 动画，切换更跟手（不再按像素距离算时长）。
+- 弹窗不响应返回键：为 Material 对话框与底部弹窗补充导航事件桥接，返回键只关闭弹窗而不再退出页面。
+- 通知相关 Lint 报错与磁贴低版本 API 废弃告警。
+- AMOLED 模式下卡片仍为深灰：补齐 `surfaceBright` 并让 Miuix 色板在 AMOLED 下压黑。
+- 首页单位名称显示为编号：优先使用服务端下发的单位名，本地映射表仅作兜底。
+
+### 移除
+- NFC 权限与 `uses-feature` 声明（官方应用不具备 NFC 能力，属历史遗留）。
+- `security-crypto` 依赖与旧加密库兼容代码：旧格式数据不再读取，`yunmei_secure.xml` 原样保留但不再使用。
+- 未使用的搜索与筛选组件（`SuperSearchBar`、`FilterNumber`、`BaseFieldFilter`、`MenuPositionProvider`、`SearchStatus`）、废弃文案与调试日志。
+- 根目录旧整屏示例图，截图统一由 CI 生成到 `docs/screenshots/`。
 
 ## [0.4.9] - 2026-11-09
 
@@ -616,7 +657,8 @@
 版本对比链接定义（Keep a Changelog 惯例）。
 注意：标签需与标题中的 [x.y.z] 完全一致，Markdown 渲染时版本号才可点击。
 -->
-[Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.9...HEAD
+[Unreleased]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.9...v0.5.0
 [0.4.9]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/JustJoy122/yunmei_vibe/compare/v0.4.6...v0.4.7

@@ -45,7 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -58,6 +58,7 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.style.m3VariantColors
 import com.mikepenz.aboutlibraries.ui.compose.variant.LibraryDetailMode
 import com.mikepenz.aboutlibraries.ui.compose.variant.LibraryRow
 import com.yunmei.vibe.R
+import com.yunmei.vibe.ui.util.openUrlWithCustomTab
 import com.yunmei.vibe.ui.navigation.LocalNavigator
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
@@ -143,7 +144,7 @@ fun OpenSourceLicensePage() {
         )
 
         selectedLibrary?.let { library ->
-            val uriHandler = LocalUriHandler.current
+            val context = LocalContext.current
             AlertDialog(
                 onDismissRequest = { selectedLibrary = null },
                 confirmButton = {
@@ -153,7 +154,7 @@ fun OpenSourceLicensePage() {
                 },
                 dismissButton = {
                     library.website?.let { url ->
-                        OutlinedButton(onClick = { uriHandler.openUri(url) }) {
+                        OutlinedButton(onClick = { openUrlWithCustomTab(context, url) }) {
                             Text(stringResource(R.string.visit_home_page))
                         }
                     }
@@ -196,7 +197,7 @@ fun OpenSourceLicensePage() {
                                                 .clip(RoundedCornerShape(8.dp))
                                                 .clickable {
                                                     license.url?.let { url ->
-                                                        uriHandler.openUri(url)
+                                                        openUrlWithCustomTab(context, url)
                                                     }
                                                 },
                                         )

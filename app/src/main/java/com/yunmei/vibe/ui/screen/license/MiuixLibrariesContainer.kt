@@ -28,7 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,6 +38,7 @@ import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.entity.Library
 import com.mikepenz.aboutlibraries.ui.compose.util.author
 import com.yunmei.vibe.R
+import com.yunmei.vibe.ui.util.openUrlWithCustomTab
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
@@ -53,7 +54,7 @@ import top.yukonga.miuix.kmp.window.WindowDialog
 
 @Composable
 fun MiuixLibrariesContainer(modifier: Modifier = Modifier, contentPadding: PaddingValues, libraries: Libs?) {
-    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
     var selectedLibrary by remember { mutableStateOf<Library?>(null) }
     var showLicenseDialog by remember { mutableStateOf(false) }
 
@@ -118,7 +119,7 @@ fun MiuixLibrariesContainer(modifier: Modifier = Modifier, contentPadding: Paddi
                                             style = MiuixTheme.textStyles.title4,
                                             color = MiuixTheme.colorScheme.primary,
                                             modifier = Modifier.clickable {
-                                                license.url?.let { uriHandler.openUri(it) }
+                                                license.url?.let { url -> openUrlWithCustomTab(context, url) }
                                             },
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
@@ -143,7 +144,7 @@ fun MiuixLibrariesContainer(modifier: Modifier = Modifier, contentPadding: Paddi
                         if (!library.website.isNullOrBlank()) {
                             TextButton(
                                 modifier = Modifier.weight(1f),
-                                onClick = { library.website?.let { url -> uriHandler.openUri(url) } },
+                                onClick = { library.website?.let { url -> openUrlWithCustomTab(context, url) } },
                                 text = stringResource(R.string.visit_home_page),
                             )
                         }

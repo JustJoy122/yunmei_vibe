@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import com.yunmei.vibe.data.repository.SettingsRepository
 import com.yunmei.vibe.ui.navigation.PendingLockImport
 import com.yunmei.vibe.ui.util.NotificationDowngrade
+import com.yunmei.vibe.ui.util.openUrlWithCustomTab
 import top.yukonga.miuix.kmp.utils.PagerFlingTrackerConnection
 import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
 import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
@@ -50,7 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -236,12 +237,12 @@ class MainActivity : ComponentActivity() {
                     // 应用启动自检更新：check_update 开启且存在更高的正式 Release 时弹窗提示。
                     // Debug 包不会产生结果（见 ui/util/UpdateChecker.kt 的 BuildConfig.DEBUG 判断）。
                     val latestVersion by viewModel.latestVersion.collectAsStateWithLifecycle()
-                    val uriHandler = LocalUriHandler.current
+                    val context = LocalContext.current
                     val updateDialog = rememberConfirmDialog(
                         onConfirm = {
                             latestVersion?.downloadUrl
                                 ?.takeIf { it.isNotBlank() }
-                                ?.let(uriHandler::openUri)
+                                ?.let { url -> openUrlWithCustomTab(context, url) }
                             viewModel.dismissUpdate()
                         },
                         onDismiss = { viewModel.dismissUpdate() },

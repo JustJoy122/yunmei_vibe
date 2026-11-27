@@ -2,7 +2,6 @@ package com.yunmei.vibe.ui.screen.about
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.dropUnlessResumed
 import com.yunmei.vibe.BuildConfig
@@ -21,7 +20,6 @@ private const val SOURCE_CODE_URL = "https://github.com/JustJoy122/yunmei_vibe"
 @Composable
 fun AboutScreen() {
     val navigator = LocalNavigator.current
-    val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
 
     // 版本号按构建类型区分，统一在此生成（Material / Miuix 两个主题共用同一个 state，不各自硬编码）：
@@ -46,7 +44,7 @@ fun AboutScreen() {
     // 「获取更新」入口已移除（检查更新统一由设置页负责），关于页仅保留两项。
     val actions = AboutScreenActions(
         onBack = dropUnlessResumed { navigator.pop() },
-        onOpenSource = { uriHandler.openUri(SOURCE_CODE_URL) },
+        onOpenSource = { openUrlWithCustomTab(context, SOURCE_CODE_URL) },
         onOpenLicense = dropUnlessResumed { navigator.push(Route.OpenSourceLicense) },
         onOpenServiceAgreement = { openUrlWithCustomTab(context, serviceAgreementUrl()) },
         onOpenPrivacyPolicy = { openUrlWithCustomTab(context, privacyPolicyUrl()) },

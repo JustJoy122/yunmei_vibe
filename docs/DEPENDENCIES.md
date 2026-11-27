@@ -68,6 +68,6 @@
 - [KernelSU](https://github.com/tiann/KernelSU) 与 [KernelSU-Style-UI-Kit](https://github.com/chenaizhang/KernelSU-Style-UI-Kit)：Material / Miuix 双端组件形态与取色 Token 的对照实现。
 - [InstallerX Revived](https://github.com/wxxsfxyzm/InstallerX-Revived)：跳板 Activity、通知渠道与预测性返回过渡的早期实现参考。
 - [yunmei_unintelligent](https://github.com/zxy19/yunmei_unintelligent)：项目起步阶段的灵感来源；当前实现已完全重写。
-- [云莓 Lite](https://github.com/PhoenixTreeZh/yunmei-lite)：早期 BLE 协议的逆向分析参考；当前 BLE 模块独立实现。
+- [@PhoenixTreeZh](https://github.com/PhoenixTreeZh) 的 [云莓 Lite](https://github.com/PhoenixTreeZh/yunmei-lite)：早期 BLE 协议的逆向分析参考；当前 BLE 模块独立实现。
 
 > 各库对应的许可证类型（GPL-3.0 / MIT / Apache-2.0）已在应用内「设置 → 关于 → 开放源代码许可」页中展示。

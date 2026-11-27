@@ -9,8 +9,8 @@
 [![预览版](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?include_prereleases&label=%E9%A2%84%E8%A7%88%E7%89%88&color=yellow&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/releases)
 [![开源许可](https://img.shields.io/github/license/JustJoy122/yunmei_vibe?label=%E5%BC%80%E6%BA%90%E8%AE%B8%E5%8F%AF%E8%AF%81&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/blob/main/LICENSE.txt)
 [![下载量](https://img.shields.io/github/downloads/JustJoy122/yunmei_vibe/total.svg?label=%E4%B8%8B%E8%BD%BD%E9%87%8F&color=darkgreen&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/releases)
-![GitHub Repo size](https://img.shields.io/github/repo-size/JustJoy122/yunmei_vibe?style=for-the-badge&color=3cb371)
-[![GitHub Repo Languages](https://img.shields.io/github/languages/top/JustJoy122/yunmei_vibe?style=for-the-badge)](https://github.com/search?q=repo%3AJustJoy122%2Fyunmei_vibe++language%3AKotlin&type=code)
+![仓库大小](https://img.shields.io/github/repo-size/JustJoy122/yunmei_vibe?style=for-the-badge&color=3cb371)(https://github.com/JustJoy122/yunmei_vibe)
+[![仓库语言](https://img.shields.io/github/languages/top/JustJoy122/yunmei_vibe?style=for-the-badge)](https://github.com/search?q=repo%3AJustJoy122%2Fyunmei_vibe++language%3AKotlin)
 [![最低 Android 8.0](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe)<br/>
 [<img alt="下载应用，请到 GitHub" src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" width="180">](https://github.com/JustJoy122/yunmei_vibe/releases/latest/)
 

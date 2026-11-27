@@ -235,8 +235,6 @@
     <string name="color_brown">棕色</string>
     <string name="color_blue_grey">灰蓝</string>
     <string name="color_sakura">樱花</string>
-    <string name="settings_account_hint">登录并拉取单位与门锁</string>
-    <string name="settings_account_login">登录 / 切换账号</string>
     <string name="settings_remove_account">移除</string>
     <string name="settings_ui_mode">界面风格</string>
     <string name="settings_theme_mode_system">跟随系统</string>
@@ -388,17 +386,11 @@
     <string name="profile_title">个人中心</string>
     <string name="profile_current_account">当前账号</string>
     <string name="profile_group_account">账号</string>
-    <string name="profile_group_today">今日概览</string>
-    <string name="profile_sign_status">打卡状态</string>
-    <string name="profile_default_lock">默认门锁</string>
-    <string name="profile_no_default_lock">未设置默认门锁</string>
     <string name="profile_remove_account">删除此账号</string>
     <string name="profile_load_failed">档案加载失败</string>
     <string name="profile_switch_failed">切换账号失败：%1$s</string>
     <string name="profile_account_entry">我的账号</string>
     <string name="profile_add_account">登录其他账号</string>
-    <string name="profile_headimg_failed">头像加载失败</string>
-    <string name="profile_sign_unavailable">未开启打卡</string>
     <string name="profile_group_basic">账号信息</string>
     <string name="profile_group_education">学籍信息</string>
     <string name="profile_group_dorm">住宿信息</string>
@@ -419,9 +411,7 @@
     <string name="profile_destroy_account_summary">永久删除账号与门锁绑定，不可恢复</string>
     <string name="profile_destroy_account_confirm_title">注销账号</string>
     <string name="profile_destroy_account_confirm_content">注销后将清空所有本地数据并退出登录，是否继续？</string>
-    <string name="profile_destroy_confirm">注销</string>
     <string name="profile_destroy_cancel">取消</string>
-    <string name="profile_destroying">注销中…</string>
     <string name="profile_remove_account_confirm_title">移除账号</string>
     <string name="profile_remove_account_confirm_content">确定要移除该账号吗？此操作不会注销云端账号，仅清理本地数据。</string>
     <string name="profile_remove_account_confirm">移除</string>
@@ -451,8 +441,6 @@
     <string name="reset_password_invalid_password">密码需 8-16 位，且同时包含大写字母、小写字母和数字</string>
     <string name="reset_password_success">密码已修改</string>
     <string name="reset_password_failed">修改失败：%1$s</string>
-    <string name="profile_change_phone">换绑手机号</string>
-    <string name="profile_change_phone_summary">用短信验证码更换绑定号码</string>
     <string name="change_phone_title">换绑手机号</string>
     <string name="change_phone_current_tel">当前手机号</string>
     <string name="change_phone_current_tel_missing">未绑定手机号</string>

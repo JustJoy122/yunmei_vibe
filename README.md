@@ -1,16 +1,17 @@
 
 <div align="center">
     
-# <image src="assets/yunmei-static-transparent.svg" height="28" width="28"/> 云莓氛围
+# <image src="docs/assets/yunmei-static-transparent.svg" height="28" width="28"/> 云莓氛围
 <img alt="fabric" height="45" src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/supported/fabric_vector.svg"> <img alt="forge" height="45" src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/unsupported/forge_vector.svg">
 
 [![Stars](https://img.shields.io/github/stars/JustJoy122/yunmei_vibe?style=for-the-badge&color=orange&label=Star)](https://github.com/JustJoy122/yunmei_vibe)
 [![正式版](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?label=正式版&color=purple&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/releases)
 [![预览版](https://img.shields.io/github/v/release/JustJoy122/yunmei_vibe?include_prereleases&label=%E9%A2%84%E8%A7%88%E7%89%88&color=yellow&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/releases)
-[![开源许可](https://img.shields.io/github/license/JustJoy122/yunmei_vibe?label=%E5%BC%80%E6%BA%90%E8%AE%B8%E5%8F%AF%E8%AF%81&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe)
-[![下载量](https://img.shields.io/github/downloads/JustJoy122/yunmei_vibe/total.svg?label=%E4%B8%8B%E8%BD%BD%E9%87%8F&color=darkgreen&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe)
+[![开源许可](https://img.shields.io/github/license/JustJoy122/yunmei_vibe?label=%E5%BC%80%E6%BA%90%E8%AE%B8%E5%8F%AF%E8%AF%81&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/blob/main/LICENSE.txt)
+[![下载量](https://img.shields.io/github/downloads/JustJoy122/yunmei_vibe/total.svg?label=%E4%B8%8B%E8%BD%BD%E9%87%8F&color=darkgreen&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/releases)
 ![GitHub Repo size](https://img.shields.io/github/repo-size/JustJoy122/yunmei_vibe?style=for-the-badge&color=3cb371)
-[![GitHub Repo Languages](https://img.shields.io/github/languages/top/JustJoy122/yunmei_vibe?style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe/search?l=c%23)<br/>
+[![GitHub Repo Languages](https://img.shields.io/github/languages/top/JustJoy122/yunmei_vibe?style=for-the-badge)](https://github.com/search?q=repo%3AJustJoy122%2Fyunmei_vibe++language%3AKotlin&type=code)
+[![最低 Android 8.0](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&style=for-the-badge)](https://github.com/JustJoy122/yunmei_vibe)<br/>
 [<img alt="下载应用，请到 GitHub" src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" width="180">](https://github.com/JustJoy122/yunmei_vibe/releases/latest/)
 
 </div>
@@ -71,7 +72,7 @@
 </table>
 
 <details>
-<summary><b>门锁页</b></summary>
+<summary>查看更多软件截图……</summary>
 <br>
 <table>
   <tr>
@@ -89,10 +90,7 @@
     </td>
   </tr>
 </table>
-</details>
 
-<details>
-<summary><b>设置页</b></summary>
 <br>
 <table>
   <tr>
@@ -161,7 +159,7 @@
 
 ## 相关活跃项目
 
-- [云莓 Lite](https://github.com/PhoenixTreeZh/yunmei-lite) - 由 [@PhoenixTreeZh](https://github.com/PhoenixTreeZh) 独立逆向开发的开源极简客户端。本项目早期曾参考其协议分析结论，当前 BLE 实现已独立完成。
+- [云莓 Lite](https://github.com/PhoenixTreeZh/yunmei-lite) - 独立逆向开发的开源极简客户端。本项目早期曾参考其协议分析结论，当前 BLE 实现已独立完成。
 - [CloessyHarmony](https://github.com/Hannyueh/CloessyHarmony) - 基于云莓 Lite 核心逻辑开发的鸿蒙原生客户端版本。
 
 ## 隐私处理

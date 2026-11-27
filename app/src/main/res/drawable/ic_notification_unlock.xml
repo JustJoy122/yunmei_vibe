@@ -9,7 +9,7 @@
    - 主体缩到画布 65%（约 60%-70%），四周留白，避免被状态栏或气泡裁切；
    - 标准 24dp 矢量（viewport 108），任意屏幕密度都清晰。
 
-  几何来源：品牌源文件 assets/yunmei-static-transparent.svg（与自适应图标的
+  几何来源：品牌源文件 docs/assets/yunmei-static-transparent.svg（与自适应图标的
   foreground / monochrome 层同一个 path），仅把填充改为白色并去掉背景。
 
   说明：遵循 Android 规范的系统（原生 Android 与其他 ROM）会按 alpha 通道渲染单色剪影

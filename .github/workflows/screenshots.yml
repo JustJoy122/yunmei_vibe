@@ -27,10 +27,8 @@ env:
   # GitHub Packages 存取凭据（settings.gradle.kts 里读 GITHUB_ACTOR / GITHUB_TOKEN）
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PACKAGE_NAME: com.yunmei.vibe
-  # 主路径：手工 `am instrument` 跑测试（不经 UTP，App 不会被卸载），
-  # 跑完直接从 /sdcard/Android/data/<pkg>/files/screenshots 拉；
-  # Download 下的副本只是兜底（测试里用 shell 身份 cp 过去，某些分区会失败）。
-  REMOTE_SHOT_DIR: /sdcard/Download/yunmei-screenshots
+  # 截图落在应用私有外部目录，测试跑完（App 仍安装）直接 adb pull 取走。
+  REMOTE_SHOT_DIR: /sdcard/Android/data/com.yunmei.vibe/files/screenshots
 
 jobs:
   screenshots:
@@ -115,8 +113,6 @@ jobs:
           script: |
             chmod +x gradlew
             ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest -Pdemo 2>&1 | tee gradle-screenshots.log
-            adb shell rm -rf /sdcard/Download/yunmei-screenshots
-            adb shell mkdir -p /sdcard/Download/yunmei-screenshots
             adb install -r -t app/build/outputs/apk/debug/app-debug.apk
             adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell input keyevent 224
@@ -127,16 +123,13 @@ jobs:
             adb logcat -c
             adb shell am instrument -w -e class com.yunmei.vibe.ScreenshotTest com.yunmei.vibe.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | tee instrumentation.log || echo "am instrument 非零退出（细节见 instrumentation.log）"
             adb logcat -d -s ScreenshotTest | tail -100
-            adb shell ls -l /sdcard/Android/data/com.yunmei.vibe/files/screenshots 2>&1 || true
-            adb shell ls -l /sdcard/Download/yunmei-screenshots 2>&1 || true
-            rm -rf build/screenshots
-            adb pull /sdcard/Android/data/com.yunmei.vibe/files/screenshots build/screenshots || echo "私有目录 pull 失败"
-            adb pull /sdcard/Download/yunmei-screenshots build/screenshots || echo "公共目录 pull 失败"
+            adb shell ls -l "$REMOTE_SHOT_DIR" 2>&1 || true
+            mkdir -p build/screenshots
+            adb pull "$REMOTE_SHOT_DIR/." build/screenshots/ || echo "私有目录 pull 失败"
             mkdir -p docs/screenshots
             cp build/screenshots/*.png docs/screenshots/ 2>/dev/null || true
             ls -l build/screenshots || true
-            echo "::error::没有拿到任何截图，对照上面的 ls 与 logcat 判断是没跑起来还是没落盘"
-            test -n "$(find build/screenshots -name '*.png' -type f -print -quit)"
+            test -n "$(find build/screenshots -name '*.png' -type f -print -quit)" || { echo "::error::没有拿到任何截图，对照上面的 ls 与 logcat 判断是没跑起来还是没落盘"; exit 1; }
             echo "本轮拉到 $(find build/screenshots -name '*.png' -type f | wc -l) 张"
 
       - name: 保留截图与构建日志

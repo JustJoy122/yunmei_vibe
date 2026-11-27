@@ -2,7 +2,6 @@ package com.yunmei.vibe
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -26,19 +25,19 @@ import java.io.FileOutputStream
  * 所以这里只用 UiAutomator 点按 + `UiDevice.takeScreenshot`，不碰 Espresso。
  *
  * 流程：写偏好 → 冷启 `MainActivity` → 依次点底栏三页 → 每页截一张（裁掉状态栏），
- * 产物先落在 `getExternalFilesDir(null)/screenshots/`，结束时再以 shell 身份复制到
- * `/sdcard/Download/yunmei-screenshots/`：
+ * 产物落在 `getExternalFilesDir(null)/screenshots/`，由 CI 用 `adb pull` 直接取走。
  *
- * **为什么必须多这一步**：CI 走的是 `connectedDebugAndroidTest`，AGP / UTP 在测试
- * 跑完后会 **卸载 APK**，而 `/sdcard/Android/data/<pkg>/` 会随卸载一起被删掉，
- * 于是紧跟着的 `adb pull` 自然找不到目录（GitHub Actions 上就是这么挂的）。
- * `/sdcard/Download/` 属于公共目录，卸载 App 不会动它。
+ * **为什么不导出到 `/sdcard/Download/`**：CI 不走 UTP（`connectedDebugAndroidTest` 跑完会卸载
+ * APK，连带删掉 `/sdcard/Android/data/<pkg>/`），而是自己 `adb install` + `am instrument`，
+ * 测试结束后 App 仍然装着，私有目录里的文件可以直接 pull。往 `/sdcard/Download/` 再 `cp`
+ * 一份既需要 shell 权限、在分区上又常常失败（`/sdcard/Android/data` 与 `/sdcard/Download`
+ * 属于不同挂载点），纯属多余，故已移除。
  *
  * ```
  * adb shell am instrument -w \
  *   -e class com.yunmei.vibe.ScreenshotTest \
  *   com.yunmei.vibe.test/androidx.test.runner.AndroidJUnitRunner
- * adb pull /sdcard/Android/data/com.yunmei.vibe/files/screenshots build/screenshots
+ * adb pull /sdcard/Android/data/com.yunmei.vibe/files/screenshots/. build/screenshots/
  * ```
  */
 @RunWith(AndroidJUnit4::class)
@@ -86,39 +85,8 @@ class ScreenshotTest {
             }
         }
 
-        publishToPublicDir()
-    }
-
-    /**
-     * 把私有目录里的 PNG 复制到 `/sdcard/Download/yunmei-screenshots/`。
-     *
-     * 用 [android.app.UiAutomation.executeShellCommand] 以 shell 身份执行，
-     * 既不需要 `WRITE_EXTERNAL_STORAGE` / MANAGE_EXTERNAL_STORAGE 权限，
-     * 也能保证「App 被卸载后截图还在」。
-     */
-    private fun publishToPublicDir() {
-        val files = outputDir.listFiles { file -> file.isFile && file.name.endsWith(".png") }
-            .orEmpty()
-            .sortedBy { it.name }
-        if (files.isEmpty()) {
-            Log.w(TAG, "没有可导出的截图：${outputDir.absolutePath}")
-            return
-        }
-        Log.i(TAG, "shell 身份: " + shell("id").trim())
-        Log.i(TAG, "mkdir 输出: " + shell("mkdir -p $PUBLIC_DIR").trim())
-        var failures = 0
-        files.forEach { file ->
-            val out = shell("cp -f \"${file.absolutePath}\" \"$PUBLIC_DIR/${file.name}\"").trim()
-            if (out.isNotEmpty()) {
-                failures++
-                Log.w(TAG, "cp 失败(${file.name}): $out")
-            }
-        }
-        Log.i(TAG, "已尝试导出 ${files.size} 张到 $PUBLIC_DIR（失败 $failures 张）\n" + shell("ls -l $PUBLIC_DIR"))
-
-        // 目录能被 shell 读到，但 adb pull 需要的是真实路径；顺带回读一次确认非空。
-        val count = shell("ls $PUBLIC_DIR | wc -l").trim()
-        Log.i(TAG, "$PUBLIC_DIR 内文件数 = $count")
+        Log.i(TAG, "截图已写入 ${outputDir.absolutePath}，共 "
+            + outputDir.listFiles { file -> file.isFile && file.name.endsWith(".png") }.orEmpty().size + " 张")
     }
 
     /**
@@ -142,13 +110,6 @@ class ScreenshotTest {
     private fun waitForAvatar() {
         device.wait(Until.hasObject(By.desc(AVATAR_LOADED)), AVATAR_TIMEOUT_MS)
         Thread.sleep(SETTLE_MS)
-    }
-
-    /** 以 shell 身份执行命令并取回输出（instrumentation 的 uiAutomation 天然具备 shell 权限）。 */
-    private fun shell(command: String): String {
-        val descriptor = instrumentation.uiAutomation.executeShellCommand(command)
-        return ParcelFileDescriptor.AutoCloseInputStream(descriptor)
-            .use { it.readBytes().toString(Charsets.UTF_8) }
     }
 
     private fun applyPrefs(uiMode: String, colorMode: Int) {
@@ -247,8 +208,5 @@ class ScreenshotTest {
         const val AVATAR_LOADED = "用户头像"
 
         const val TAG = "ScreenshotTest"
-
-        /** 公共导出目录：属于 /sdcard/Download，卸载 App 不会被清掉，CI 从这里 pull。 */
-        const val PUBLIC_DIR = "/sdcard/Download/yunmei-screenshots"
     }
 }

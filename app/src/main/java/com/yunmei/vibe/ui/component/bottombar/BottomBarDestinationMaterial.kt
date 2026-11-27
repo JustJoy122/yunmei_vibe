@@ -17,8 +17,16 @@ import com.yunmei.vibe.R
 internal enum class BottomBarDestinationMaterial(
     val label: Int,
     val icon: ImageVector,
+    /**
+     * UI 测试用的稳定标识。
+     *
+     * 底栏的文字/图标在自动化点击时可能因为渲染时机、系统弹窗遮挡而找不到，
+     * 这里给每个 Tab 一个与文案无关的 tag，测试侧用 `By.res("tab_locks")` 定位
+     * （底栏根节点设置了 `testTagsAsResourceId = true`，见 [BottomBarMaterial]）。
+     */
+    val testTag: String,
 ) {
-    Home(R.string.home, Icons.TwoTone.Home),
-    Locks(R.string.locks, Icons.TwoTone.Lock),
-    Settings(R.string.settings, Icons.TwoTone.Settings),
+    Home(R.string.home, Icons.TwoTone.Home, "tab_home"),
+    Locks(R.string.locks, Icons.TwoTone.Lock, "tab_locks"),
+    Settings(R.string.settings, Icons.TwoTone.Settings, "tab_settings"),
 }

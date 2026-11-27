@@ -2,12 +2,14 @@ package com.yunmei.vibe
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import com.yunmei.vibe.data.preferences.SettingsPrefs
 import com.yunmei.vibe.ui.MainActivity
@@ -32,6 +34,9 @@ import java.io.FileOutputStream
  * 测试结束后 App 仍然装着，私有目录里的文件可以直接 pull。往 `/sdcard/Download/` 再 `cp`
  * 一份既需要 shell 权限、在分区上又常常失败（`/sdcard/Android/data` 与 `/sdcard/Download`
  * 属于不同挂载点），纯属多余，故已移除。
+ *
+ * 失败诊断：任何一步找不到控件都会 dump 当前窗口结构（`fail_<label>.xml`）与整屏截图
+ * （`fail_<label>.png`），两者都在同一私有目录里，CI 失败时可以直接 pull 出来看。
  *
  * ```
  * adb shell am instrument -w \
@@ -58,6 +63,8 @@ class ScreenshotTest {
 
     @Test
     fun captureAllStates() {
+        wakeAndUnlock()
+
         val states = listOf(
             ShotState("miuix_light", uiMode = "miuix", colorMode = 1),
             ShotState("material_light", uiMode = "material", colorMode = 4),
@@ -70,23 +77,63 @@ class ScreenshotTest {
             // 主题在 setContent 时一次性解析，必须换一个 Activity 实例才会生效。
             ActivityScenario.launch(MainActivity::class.java).use {
                 device.waitForIdle()
+                // 首次启动可能弹通知权限 / 崩溃上报之类的系统对话框，挡在底栏前面。
+                dismissBlockingDialogs()
                 // 打卡状态要等一次网络往返才落到 UI 上；等到角标出现再拍，
                 // 否则首页那张图会缺「已打卡 / 未打卡」。
                 waitForSignBadge()
                 Thread.sleep(SETTLE_MS)
 
                 capture(state, PAGE_HOME)
-                clickBottomTab(TAB_LOCKS)
+                clickBottomTab(tag = TAG_LOCKS, label = TAB_LOCKS)
                 // 账号头像走 OkHttp 异步下载，1.2s 的常规等待经常拍成姓名首字。
                 waitForAvatar()
                 capture(state, PAGE_LOCKS)
-                clickBottomTab(TAB_SETTINGS)
+                clickBottomTab(tag = TAG_SETTINGS, label = TAB_SETTINGS)
                 capture(state, PAGE_SETTINGS)
             }
         }
 
         Log.i(TAG, "截图已写入 ${outputDir.absolutePath}，共 "
             + outputDir.listFiles { file -> file.isFile && file.name.endsWith(".png") }.orEmpty().size + " 张")
+    }
+
+    /**
+     * 唤醒并解锁设备。
+     *
+     * 模拟器冷启后可能停在锁屏（`mDreamingLockscreen=true`），此时 UiAutomator 看不到
+     * 任何应用控件，直接报「底栏标签不存在」。`wm dismiss-keyguard` 在无锁屏密码的
+     * 模拟器上等价于上滑解锁；有密码的真机上它会失败，失败也不影响后续步骤。
+     */
+    private fun wakeAndUnlock() {
+        runCatching { shell("input keyevent 224") }
+        Thread.sleep(1_000L)
+        runCatching { shell("wm dismiss-keyguard") }
+        Thread.sleep(1_500L)
+        Log.i(TAG, "唤醒后前台包名: " + runCatching { device.currentPackageName }.getOrNull())
+    }
+
+    /**
+     * 关掉可能挡住界面的系统弹窗（权限申请、「已停止运行」等）。
+     *
+     * 只点与权限/确认有关的少数几个文案，且每一个都用 [runCatching] 包住：
+     * 找不到就跳过，点错了也不会让整个截图任务失败。
+     */
+    private fun dismissBlockingDialogs() {
+        val labels = listOf("允许", "始终允许", "仅在使用中允许", "允许所有", "确定", "知道了", "关闭应用")
+        labels.forEach { label ->
+            runCatching {
+                val candidates = device.findObjects(By.text(label))
+                if (candidates.isNotEmpty()) {
+                    // 取最靠下的那个：系统权限对话框的按钮通常位于屏幕下半部。
+                    val target = candidates.maxByOrNull { it.visibleBounds.top }
+                    Log.i(TAG, "点击疑似系统弹窗按钮: $label @ ${target?.visibleBounds}")
+                    target?.click()
+                    device.waitForIdle()
+                    Thread.sleep(600L)
+                }
+            }.onFailure { Log.w(TAG, "处理系统弹窗失败（$label）: ${it.message}") }
+        }
     }
 
     /**
@@ -159,22 +206,64 @@ class ScreenshotTest {
     }
 
     /**
-     * 点底栏。同一屏可能有两个同名文本（页面标题 + 底栏标签），
-     * 底栏在最下方，所以取 `visibleBounds.top` 最大的那个。
+     * 点底栏。
+     *
+     * 三级兜底，越靠前越稳定：
+     * 1. `By.res(tag)`——底栏节点设置了 `testTagsAsResourceId`，tag 会以 resource-id 暴露；
+     * 2. `By.desc(label)`——底栏图标自带 `contentDescription`（与文案相同）；
+     * 3. `By.text(label)`——最后才退回文本，同一屏可能有页面标题与底栏标签两个同名节点，
+     *    取 `visibleBounds.top` 最大的那个（底栏在最下方）。
+     *
+     * 每级都先等 [TAB_TIMEOUT_MS]；全都拿不到才判失败，并在失败时 dump XML + 截图。
      */
-    private fun clickBottomTab(label: String) {
-        val target = device.findObjects(By.text(label))
-            .maxByOrNull { it.visibleBounds.top }
-            ?: run {
-                // 找不到就先把当前界面结构 dump 下来，便于定位是导航错了还是控件没渲染。
-                runCatching {
-                    device.dumpWindowHierarchy(File(outputDir, "fail_$label.xml"))
-                }
-                error("底栏标签不存在: $label")
-            }
+    private fun clickBottomTab(tag: String, label: String) {
+        val target = waitForTab(tag = tag, label = label) ?: run {
+            dumpFailureArtifacts("tab_$tag")
+            // 顺带把前台包名打出来：多半是被别的界面（锁屏 / 崩溃对话框 / 桌面）占住了。
+            Log.e(TAG, "当前前台包名: " + runCatching { device.currentPackageName }.getOrNull())
+            error("底栏标签不存在: $label（tag=$tag）")
+        }
+        Log.i(TAG, "点击底栏 $label: bounds=${target.visibleBounds}")
         target.click()
         device.waitForIdle()
         Thread.sleep(SETTLE_MS)
+    }
+
+    private fun waitForTab(tag: String, label: String): UiObject2? {
+        if (device.wait(Until.hasObject(By.res(tag)), TAB_TIMEOUT_MS)) {
+            device.findObject(By.res(tag))?.let { return it }
+        }
+        if (device.wait(Until.hasObject(By.desc(label)), TAB_TIMEOUT_MS)) {
+            device.findObject(By.desc(label))?.let { return it }
+        }
+        device.wait(Until.hasObject(By.text(label)), TAB_TIMEOUT_MS)
+        return device.findObjects(By.text(label)).maxByOrNull { it.visibleBounds.top }
+    }
+
+    /**
+     * 失败现场取证：窗口结构 + 整屏截图。
+     *
+     * 只 dump XML 的话，看不出是被锁屏、权限对话框还是崩溃对话框挡住；补一张 PNG
+     * 就能一眼判断，CI 失败时直接从 artifact 里拉下来看。
+     */
+    private fun dumpFailureArtifacts(prefix: String) {
+        runCatching {
+            val xml = File(outputDir, "fail_$prefix.xml")
+            device.dumpWindowHierarchy(xml)
+            Log.w(TAG, "已 dump 窗口结构: ${xml.absolutePath}（${xml.length()} B）")
+        }.onFailure { Log.w(TAG, "dump 窗口结构失败: ${it.message}") }
+        runCatching {
+            val png = File(outputDir, "fail_$prefix.png")
+            device.takeScreenshot(png)
+            Log.w(TAG, "已保存失败截图: ${png.absolutePath}（${png.length()} B）")
+        }.onFailure { Log.w(TAG, "失败截图保存失败: ${it.message}") }
+    }
+
+    /** 以 shell 身份执行命令并取回输出（UiAutomation 天然具备 shell 权限）。 */
+    private fun shell(command: String): String {
+        val descriptor = instrumentation.uiAutomation.executeShellCommand(command)
+        return ParcelFileDescriptor.AutoCloseInputStream(descriptor)
+            .use { it.readBytes().toString(Charsets.UTF_8) }
     }
 
     private data class ShotState(
@@ -188,15 +277,21 @@ class ScreenshotTest {
         const val PAGE_LOCKS = "locks"
         const val PAGE_SETTINGS = "settings"
 
-        const val TAB_HOME = "首页"
         const val TAB_LOCKS = "门锁"
         const val TAB_SETTINGS = "设置"
+
+        /** 与 `BottomBarDestination*.testTag` 保持一致。 */
+        const val TAG_LOCKS = "tab_locks"
+        const val TAG_SETTINGS = "tab_settings"
 
         const val TAB_SIGNED = "已打卡"
         const val TAB_UNSIGNED = "未打卡"
 
         /** 等一次重组 + 淡入动画落定；截图对时序很敏感。 */
         const val SETTLE_MS = 1_200L
+
+        /** 单个定位方式（res / desc / text）的最长等待。 */
+        const val TAB_TIMEOUT_MS = 5_000L
 
         /** 等打卡角标出现的最长时间：冷启时门锁/打卡都是异步拉的。 */
         const val SIGN_BADGE_TIMEOUT_MS = 8_000L

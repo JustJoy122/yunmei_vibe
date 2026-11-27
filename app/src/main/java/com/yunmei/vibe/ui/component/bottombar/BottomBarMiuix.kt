@@ -30,6 +30,9 @@ import androidx.compose.ui.unit.sp
 import com.yunmei.vibe.R
 import com.yunmei.vibe.ui.LocalMainPagerState
 import com.yunmei.vibe.ui.component.FloatingBottomBar
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import com.yunmei.vibe.ui.component.FloatingBottomBarItem
 import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBar
 import com.yunmei.vibe.ui.theme.LocalEnableFloatingBottomBarBlur
@@ -59,10 +62,12 @@ fun BottomBarMiuix(
             icon = destination.icon,
         )
     }
+    // 让底栏的 testTag 以 resource-id 曝光给 UiAutomator（截图测试用 By.res 点击 Tab）。
+    val testTagModifier = Modifier.semantics { testTagsAsResourceId = true }
     if (!enableFloatingBottomBar) {
         BlurredBar(blurBackdrop) {
             NavigationBar(
-                modifier = modifier,
+                modifier = modifier.then(testTagModifier),
                 color = if (blurBackdrop != null) Color.Transparent else MiuixTheme.colorScheme.surface,
                 // 与悬浮底栏保持一致：悬浮态没有顶部分割线，这里也关掉库自带的 showDivider，
                 // 避免切换「悬浮底栏」时多出一条线。
@@ -70,7 +75,9 @@ fun BottomBarMiuix(
                 content = {
                     items.forEachIndexed { index, item ->
                         NavigationBarItem(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag(BottomBarDestination.entries[index].testTag),
                             icon = item.icon,
                             label = item.label,
                             selected = mainState.selectedPage == index,
@@ -85,6 +92,7 @@ fun BottomBarMiuix(
     } else {
         FloatingBottomBar(
             modifier = modifier
+                .then(testTagModifier)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -102,7 +110,9 @@ fun BottomBarMiuix(
                     onClick = {
                         mainState.animateToPage(index)
                     },
-                    modifier = Modifier.defaultMinSize(minWidth = 76.dp)
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 76.dp)
+                        .testTag(BottomBarDestination.entries[index].testTag)
                 ) {
                     Icon(
                         imageVector = item.icon,
@@ -129,8 +139,16 @@ enum class BottomBarDestination(
     val icon: ImageVector,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
+    /** UI 测试用的稳定标识，见 [BottomBarDestinationMaterial.testTag]。 */
+    val testTag: String,
 ) {
-    Home(R.string.home, Icons.Rounded.Cottage, Icons.Filled.Home, Icons.Outlined.Home),
-    Locks(R.string.locks, Icons.Rounded.Lock, Icons.Filled.Lock, Icons.Outlined.Lock),
-    Settings(R.string.settings, Icons.Rounded.Settings, Icons.Filled.Settings, Icons.Outlined.Settings),
+    Home(R.string.home, Icons.Rounded.Cottage, Icons.Filled.Home, Icons.Outlined.Home, "tab_home"),
+    Locks(R.string.locks, Icons.Rounded.Lock, Icons.Filled.Lock, Icons.Outlined.Lock, "tab_locks"),
+    Settings(
+        R.string.settings,
+        Icons.Rounded.Settings,
+        Icons.Filled.Settings,
+        Icons.Outlined.Settings,
+        "tab_settings",
+    ),
 }

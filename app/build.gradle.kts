@@ -180,7 +180,8 @@ dependencies {
     implementation(libs.okhttp)
 
     // 加密存储（账号/门锁敏感数据）与二维码能力。
-    implementation(libs.androidx.security.crypto)
+    // 账号与门锁的敏感数据用 Tink AEAD 加密（见 SecureStore.kt）。
+    implementation(libs.tink.android)
     implementation(libs.zxing.core)
 
     // 小米超级岛（澎湃 OS 焦点通知 V3）参数构建：与 InstallerX Revived 同款依赖。
@@ -201,9 +202,9 @@ dependencies {
 
     // 本地截图测试（app/src/androidTest）：Compose 测试规则抓图，UiAutomator 点底栏。
     // 只在 androidTest 变体里生效，不进正式包。
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test:runner:1.6.2")
-    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }

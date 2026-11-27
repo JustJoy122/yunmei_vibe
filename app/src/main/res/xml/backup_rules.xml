@@ -4,12 +4,16 @@
 
   排除项（本次安全审计确认）：
    - settings.xml：全局偏好，含快捷方式校验令牌；
-   - yunmei_secure.xml：账号（用户名/密码 MD5）与门锁密钥（BLE secret）的加密存储；
-     它依赖 Android Keystore 密钥，换机后本就无法解密，备份它只会带来困惑与数据损坏风险。
+   - yunmei_secure.xml：旧版加密存储（账号用户名/密码 MD5、门锁 BLE secret）；
+   - yunmei_secure_v2.xml：新版加密存储（值用 Tink AEAD + Android Keystore 主密钥加密）；
+   - yunmei_secure_keyset.xml：Tink keyset 文件（本身也是密文，主密钥在 Keystore）。
+  这几份文件都依赖 Android Keystore 密钥，换机后本就无法解密，备份只会带来困惑与数据损坏风险。
   说明：上次打卡位置已迁入加密存储，DataStore 里不再保存位置，因此 DataStore 文件保留在备份中，
   以维持其余偏好（主题/开关等）的换机迁移体验。
 -->
 <full-backup-content>
     <exclude domain="sharedpref" path="settings.xml" />
     <exclude domain="sharedpref" path="yunmei_secure.xml" />
+    <exclude domain="sharedpref" path="yunmei_secure_v2.xml" />
+    <exclude domain="sharedpref" path="yunmei_secure_keyset.xml" />
 </full-backup-content>

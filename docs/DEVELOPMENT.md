@@ -20,7 +20,7 @@
 | --- | --- | --- |
 | 网络 | Retrofit + OkHttp + kotlinx-serialization | 3.0.0 / 5.5.1 / 1.12.0 |
 | 并发 | kotlinx-coroutines | 1.11.0 |
-| 加密存储 | AndroidX Security Crypto | 1.1.0 |
+| 加密存储 | Tink（AEAD + Android Keystore） | 1.24.0 |
 | 偏好存储 | DataStore Preferences | 1.1.1 |
 | 蓝牙 | FastBleLib（本地 AAR） | 2.3.4 |
 | 二维码 | ZXing Core（静态图解码 + 二维码生成） | 3.5.4 |

@@ -88,20 +88,17 @@ class SessionStore(private val secureStore: SecureStore) {
             ?: return null
         secureStore.putJson(key, legacy)
         secureStore.putJson(KEY_PROFILE_LEGACY, EMPTY_PROFILE)
-        rememberProfileKey(usernameMd5)
         return legacy
     }
 
     fun saveProfile(usernameMd5: String, profile: UserProfile) {
         if (usernameMd5.isBlank()) return
         secureStore.putJson(profileKey(usernameMd5), profile)
-        rememberProfileKey(usernameMd5)
     }
 
     fun clearProfile(usernameMd5: String) {
         if (usernameMd5.isBlank()) return
-        secureStore.putJson(profileKey(usernameMd5), EMPTY_PROFILE)
-        secureStore.putJson(KEY_PROFILE_INDEX, loadProfileKeys().filterNot { it == usernameMd5 })
+        secureStore.remove(profileKey(usernameMd5))
     }
 
     /** 退出登录 / 注销账号：账号级、学校级会话与全部账号的档案快照一并作废。 */
@@ -124,9 +121,10 @@ class SessionStore(private val secureStore: SecureStore) {
     }
 
     fun clearAll() {
-        // SecureStore 没有「列键」能力，只能靠索引记住写过哪些账号。
-        loadProfileKeys().forEach { md5 -> secureStore.putJson(profileKey(md5), EMPTY_PROFILE) }
-        secureStore.putJson(KEY_PROFILE_INDEX, emptyList<String>())
+        // SecureStore.keys() 直接列出真实存在的键，不再靠手工索引记「写过哪些账号」。
+        secureStore.keys()
+            .filter { it.startsWith(PROFILE_KEY_PREFIX) }
+            .forEach { secureStore.remove(it) }
         secureStore.putJson(KEY_DORM_MEMBERS, emptyMap<String, List<DormMember>>())
         secureStore.putJson(KEY_PROFILE_LEGACY, EMPTY_PROFILE)
         clearSession()
@@ -135,14 +133,6 @@ class SessionStore(private val secureStore: SecureStore) {
 
     /** 分键档案的键名，保证每个账号各占一份。 */
     private fun profileKey(usernameMd5: String): String = PROFILE_KEY_PREFIX + usernameMd5
-
-    private fun loadProfileKeys(): List<String> = secureStore.getJson(KEY_PROFILE_INDEX, emptyList())
-
-    private fun rememberProfileKey(usernameMd5: String) {
-        val keys = loadProfileKeys()
-        if (usernameMd5 in keys) return
-        secureStore.putJson(KEY_PROFILE_INDEX, keys + usernameMd5)
-    }
 
     private fun UserProfile.isFilled(): Boolean =
         userId.isNotBlank() || realName.isNotBlank() || stuNo.isNotBlank()
@@ -153,9 +143,6 @@ class SessionStore(private val secureStore: SecureStore) {
 
         /** 分键前缀：`profile_<usernameMd5>`。 */
         const val PROFILE_KEY_PREFIX = "profile_"
-
-        /** 写过档案的账号 md5 列表，退出登录时据此逐个清空。 */
-        const val KEY_PROFILE_INDEX = "account_profile_index"
 
         /** 旧版本的单一全局档案键，仅用于一次性迁移。 */
         const val KEY_PROFILE_LEGACY = "account_profile"

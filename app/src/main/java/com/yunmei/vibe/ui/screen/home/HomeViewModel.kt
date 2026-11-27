@@ -312,7 +312,7 @@ class HomeViewModel : ViewModel() {
         _uiState.update { it.copy(signAsk = null) }
     }
 
-    /** 读取加密存储（EncryptedSharedPreferences + JSON 解码），统一切到 IO 线程。 */
+    /** 读取加密存储（Tink AEAD + JSON 解码），统一切到 IO 线程。 */
     private suspend fun findUser(lock: Lock): StoredUser? = withContext(Dispatchers.IO) {
         container.accountStore.getByUsernameMd5(lock.usernameMd5)
             ?: if (_uiState.value.settings.alwaysCode) {

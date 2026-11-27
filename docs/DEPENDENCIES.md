@@ -44,7 +44,7 @@
 
 | 依赖 | 版本 | 说明 |
 | --- | --- | --- |
-| [AndroidX Security Crypto](https://developer.android.com/jetpack/androidx/releases/security) | 1.1.0 | `EncryptedSharedPreferences` 加密存储账号与门锁 |
+| [Tink](https://github.com/tink-crypto/tink-java) | 1.24.0 | `Aead`（AES256_GCM）+ Android Keyset 加密账号与门锁数据，主密钥存 Android Keystore |
 | [AndroidHiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) | 6.2 | 调用 `ApplicationInfo.setEnableOnBackInvokedCallback` |
 | [ZXing Core](https://github.com/zxing/zxing) | 3.5.4 | 分享二维码的生成与静态图解码 |
 | [Focus API](https://github.com/xzakota/HyperNotificationFocus) | 1.4 | 小米超级岛（澎湃 OS 焦点通知 V3）参数构建 |

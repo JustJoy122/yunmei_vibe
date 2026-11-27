@@ -8,8 +8,12 @@
     <cloud-backup>
         <exclude domain="sharedpref" path="settings.xml" />
         <exclude domain="sharedpref" path="yunmei_secure.xml" />
+        <exclude domain="sharedpref" path="yunmei_secure_v2.xml" />
+        <exclude domain="sharedpref" path="yunmei_secure_keyset.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="yunmei_secure.xml" />
+        <exclude domain="sharedpref" path="yunmei_secure_v2.xml" />
+        <exclude domain="sharedpref" path="yunmei_secure_keyset.xml" />
     </device-transfer>
 </data-extraction-rules>
